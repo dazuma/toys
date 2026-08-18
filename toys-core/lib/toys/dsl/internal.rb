@@ -227,7 +227,7 @@ module Toys
         def current_source_from_context
           source = ::Thread.current[:__toys_current_source]
           if source.nil?
-            raise ToolDefinitionError, "Toys::Tool can be subclassed only from a Toys config file"
+            raise ToolDefinitionError, "Toys::Tool can be subclassed only from a Toys tool file"
           end
           unless source.source_type == :file
             raise ToolDefinitionError, "Toys::Tool cannot be subclassed inside a tool block"

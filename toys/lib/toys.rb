@@ -23,7 +23,7 @@ $LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
 require "toys-core"
 
 ##
-# Toys is a configurable command line tool. Write commands in config files
+# Toys is a configurable command line tool. Write commands in source files
 # using a simple DSL, and Toys will provide the command line executable and
 # take care of all the details such as argument parsing, online help, and error
 # reporting. Toys is designed for software developers, IT professionals, and

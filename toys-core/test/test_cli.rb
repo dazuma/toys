@@ -541,7 +541,7 @@ describe Toys::CLI do
     it "supports a custom handler that receives definition errors" do
       my_handler = proc do |error|
         assert_nil(error.tool_name)
-        assert_includes(error.config_path, "/errors/definition.rb")
+        assert_includes(error.tool_file_path, "/errors/definition.rb")
         assert_kind_of(NameError, error.cause)
         9
       end
@@ -553,7 +553,7 @@ describe Toys::CLI do
     it "supports a custom handler that receives runtime errors" do
       my_handler = proc do |error|
         assert_equal(["runtime", "hello"], error.tool_name)
-        assert_includes(error.config_path, "/errors/runtime.rb")
+        assert_includes(error.tool_file_path, "/errors/runtime.rb")
         assert_kind_of(NameError, error.cause)
         10
       end

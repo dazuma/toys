@@ -10,7 +10,7 @@ module Toys
   # Specifically, a middleware can perform two functions.
   #
   # First, it can modify the configuration of a tool. After tools are defined
-  # from configuration, the middleware stack can make modifications to each
+  # from their sources, the middleware stack can make modifications to each
   # tool. A middleware can add flags and arguments to the tool, modify the
   # description, or make any other changes to how the tool is set up.
   #

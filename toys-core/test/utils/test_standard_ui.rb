@@ -99,7 +99,7 @@ describe Toys::Utils::StandardUI do
     end
 
     # Raises from a synthetic file, so that a capture given that path resolves
-    # a config location pointing into it rather than into this test file. The
+    # a tool file location pointing into it rather than into this test file. The
     # fabricated backtrace location is the whole point here, which is why the
     # eval does not use __FILE__ as the cop would otherwise want.
     def raise_from(path, line)
@@ -132,7 +132,7 @@ describe Toys::Utils::StandardUI do
       assert_includes(output_content, "    called from tool: \"front\"")
     end
 
-    it "omits a config location that repeats from the frame within it" do
+    it "omits a tool file location that repeats from the frame within it" do
       error =
         begin
           Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
@@ -147,12 +147,12 @@ describe Toys::Utils::StandardUI do
           e
         end
       default_ui.handle_error(error)
-      assert_equal(1, output_content.scan("in config file: /fake/inner.rb:7").length,
-                   "expected the repeated config location to be printed once")
+      assert_equal(1, output_content.scan("in tool file: /fake/inner.rb:7").length,
+                   "expected the repeated tool file location to be printed once")
       assert_includes(output_content, "    called from tool: \"front\"")
     end
 
-    it "displays a config location that differs from the frame within it" do
+    it "displays a tool file location that differs from the frame within it" do
       error =
         begin
           Toys::ContextualError.capture(banner: "b", path: __FILE__,
@@ -167,8 +167,8 @@ describe Toys::Utils::StandardUI do
           e
         end
       default_ui.handle_error(error)
-      assert_includes(output_content, "      in config file: /fake/inner.rb:7")
-      assert_includes(output_content, "      in config file: #{__FILE__}:")
+      assert_includes(output_content, "      in tool file: /fake/inner.rb:7")
+      assert_includes(output_content, "      in tool file: #{__FILE__}:")
     end
 
     it "keeps a frame's lines indented under the line naming its tool" do
@@ -196,7 +196,7 @@ describe Toys::Utils::StandardUI do
         end
       default_ui.handle_error(error)
       lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
-      assert_equal(["RuntimeError: foobar", "b", "    in config file: /fake/inner.rb:7"], lines)
+      assert_equal(["RuntimeError: foobar", "b", "    in tool file: /fake/inner.rb:7"], lines)
     end
 
     it "omits arguments that repeat from the frame within it" do

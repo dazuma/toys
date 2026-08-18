@@ -523,7 +523,7 @@ module Toys
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
         DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, self) do
-          ContextualError.capture(banner: "Error while loading Toys config") do
+          ContextualError.capture(banner: "Error while evaluating tool definition") do
             tool_class.class_eval(&source.source_proc)
           end
         end

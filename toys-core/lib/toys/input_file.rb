@@ -2,12 +2,12 @@
 
 ##
 # This module is the root namespace for tool definitions loaded from files.
-# Whenever a toys configuration file is parsed, a module is created under this
-# parent for that file's contents. Tool classes defined in that file, along
-# with mixins and templates, and any other classes, modules, and constants
-# defined, are located within that file's module. This isolates the namespace,
-# so that, for example, constants defined in the file are not defined as
-# top-level constants but are isolated from other files.
+# Whenever a tool file is parsed, a module is created under this parent for
+# that file's contents. Tool classes defined in that file, along with mixins
+# and templates, and any other classes, modules, and constants defined, are
+# located within that file's module. This isolates the namespace, so that, for
+# example, constants defined in the file are not defined as top-level constants
+# but are isolated from other files.
 #
 module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   ##
@@ -33,7 +33,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     if str
       const_set(name, namespace)
       ::Toys::DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, loader) do
-        ::Toys::ContextualError.capture(banner: "Error while loading Toys config", path: path) do
+        ::Toys::ContextualError.capture(banner: "Error while loading tool file", path: path) do
           eval(str, __binding, path) # rubocop:disable Security/Eval
         end
       end

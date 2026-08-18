@@ -16,7 +16,7 @@ line interface for your project's build tasks.
 Unlike most command line frameworks, Toys is *not primarily* designed for
 building and shipping a custom command line executable written in Ruby. Rather,
 it provides a single executable called `toys` whose functionality you can
-define by writing configuration files. (You can, however, build your own custom
+define by writing source files. (You can, however, build your own custom
 command line executable using the related **toys-core** library.)
 
 If this is your first time using Toys, we recommend starting with the
@@ -44,8 +44,8 @@ Tools can recognize command line arguments in the form of **flags** and
 arguments can be required or optional. Flags can be organized into
 **flag groups** that support marking flags or flag combinations as required.
 
-The configuration of a tool can include descriptions, for the tool itself, and
-for each command line argument. These descriptions are displayed in the tool's
+The definition of a tool can include descriptions, for the tool itself, and for
+each command line argument. These descriptions are displayed in the tool's
 online help screen. Descriptions come in long and short forms, which appear in
 different styles of help.
 

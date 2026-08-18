@@ -406,7 +406,7 @@ module Toys
       end
 
       ##
-      # Load another config file or directory, as if its contents were inserted
+      # Load another tool file or directory, as if its contents were inserted
       # at the current location.
       #
       # @param path [String] The file or directory to load.
@@ -1818,7 +1818,7 @@ module Toys
 
       ##
       # Return the context directory for this tool. Generally, this defaults
-      # to the directory containing the toys config directory structure being
+      # to the directory containing the toys tool directory structure being
       # read, but it may be changed by setting a different context directory
       # for the tool.
       #
@@ -1831,8 +1831,8 @@ module Toys
       end
 
       ##
-      # Return the current tool config. This object can be queried to determine
-      # such information as the name, but it should not be altered.
+      # Return the current tool definition. This object can be queried to
+      # determine such information as the name, but it should not be altered.
       #
       # @return [Toys::ToolDefinition]
       #

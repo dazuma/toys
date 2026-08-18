@@ -212,25 +212,25 @@ describe Toys::ContextualError do
       assert_nil error.tool_args
     end
 
-    it "leaves config_path and config_line nil when no path provided" do
+    it "leaves tool_file_path and tool_file_line nil when no path provided" do
       error = assert_raises(Toys::ContextualError) do
         Toys::ContextualError.capture { raise "oops" }
       end
-      assert_nil error.config_path
-      assert_nil error.config_line
+      assert_nil error.tool_file_path
+      assert_nil error.tool_file_line
     end
 
-    it "leaves config_path and config_line nil when path does not match backtrace" do
+    it "leaves tool_file_path and tool_file_line nil when path does not match backtrace" do
       error = assert_raises(Toys::ContextualError) do
         Toys::ContextualError.capture(path: "/no/such/path.rb") { raise "oops" }
       end
-      assert_nil error.config_path
-      assert_nil error.config_line
+      assert_nil error.tool_file_path
+      assert_nil error.tool_file_line
     end
   end
 
-  describe "config_path and config_line from backtrace" do
-    it "sets config_path and config_line when path matches a backtrace frame" do
+  describe "tool_file_path and tool_file_line from backtrace" do
+    it "sets tool_file_path and tool_file_line when path matches a backtrace frame" do
       raise_line = nil
       error = assert_raises(Toys::ContextualError) do
         Toys::ContextualError.capture(path: __FILE__) do
@@ -238,15 +238,15 @@ describe Toys::ContextualError do
           raise "oops"
         end
       end
-      assert_equal __FILE__, error.config_path
-      assert_equal raise_line, error.config_line
+      assert_equal __FILE__, error.tool_file_path
+      assert_equal raise_line, error.tool_file_line
     end
 
     # A wrapper locates the config line by searching its cause's backtrace
     # locations. Those survive from one wrapper to the next only on Rubies
     # where Exception#set_backtrace accepts location objects, so on older
     # Rubies only the innermost frame of a chain can resolve a config path.
-    it "sets config_path on an outer frame wrapping a finalized error" do
+    it "sets tool_file_path on an outer frame wrapping a finalized error" do
       skip "Skipped test because Ruby is older than 3.4" if Toys::Compat::RUBY_VERSION_CODE < 30_400
       raise_line = nil
       error = assert_raises(Toys::ContextualError) do
@@ -260,8 +260,8 @@ describe Toys::ContextualError do
       # The outer capture built a new wrapper around the finalized inner one.
       assert_kind_of Toys::ContextualError, error.cause
       assert_equal "outer", error.banner
-      assert_equal __FILE__, error.config_path
-      assert_equal raise_line, error.config_line
+      assert_equal __FILE__, error.tool_file_path
+      assert_equal raise_line, error.tool_file_line
     end
 
     it "retains backtrace locations across a wrapper" do
@@ -280,7 +280,7 @@ describe Toys::ContextualError do
     end
   end
 
-  describe "config_path and config_line from SyntaxError message" do
+  describe "tool_file_path and tool_file_line from SyntaxError message" do
     it "extracts line from SyntaxError message when path matches" do
       path = "/fake/config/file.rb"
       error = assert_raises(Toys::ContextualError) do
@@ -288,8 +288,8 @@ describe Toys::ContextualError do
           raise ::SyntaxError, "#{path}:42: unexpected keyword end"
         end
       end
-      assert_equal path, error.config_path
-      assert_equal 42, error.config_line
+      assert_equal path, error.tool_file_path
+      assert_equal 42, error.tool_file_line
     end
 
     it "still wraps SyntaxError even when path does not match message" do
@@ -302,8 +302,8 @@ describe Toys::ContextualError do
         end
       end
       assert_kind_of Toys::ContextualError, error
-      assert_nil error.config_path
-      assert_nil error.config_line
+      assert_nil error.tool_file_path
+      assert_nil error.tool_file_line
     end
 
     it "extracts line from a SyntaxError wrapped in a nested contextual error" do
@@ -320,8 +320,8 @@ describe Toys::ContextualError do
         end
       end
       assert_kind_of ::SyntaxError, error.root_cause
-      assert_equal path, error.config_path
-      assert_equal 42, error.config_line
+      assert_equal path, error.tool_file_path
+      assert_equal 42, error.tool_file_line
     end
 
     it "extracts line from a SyntaxError when updating fields on a nested error" do
@@ -338,8 +338,8 @@ describe Toys::ContextualError do
         end
       end
       assert_kind_of ::SyntaxError, error.root_cause
-      assert_equal path, error.config_path
-      assert_equal 42, error.config_line
+      assert_equal path, error.tool_file_path
+      assert_equal 42, error.tool_file_line
     end
 
     it "falls back to backtrace for SyntaxError when message does not contain path" do
@@ -350,8 +350,8 @@ describe Toys::ContextualError do
           raise ::SyntaxError, "generic syntax error with no path"
         end
       end
-      assert_equal __FILE__, error.config_path
-      assert_equal raise_line, error.config_line
+      assert_equal __FILE__, error.tool_file_path
+      assert_equal raise_line, error.tool_file_line
     end
   end
 
@@ -400,7 +400,7 @@ describe Toys::ContextualError do
       assert_equal ["inner-arg"], error.tool_args
     end
 
-    it "outer capture fills in nil config_path when path matches backtrace" do
+    it "outer capture fills in nil tool_file_path when path matches backtrace" do
       # Inner capture has no path; outer capture provides the path.
       # The exception was raised in __FILE__, so the outer path lookup succeeds.
       error = assert_raises(Toys::ContextualError) do
@@ -410,11 +410,11 @@ describe Toys::ContextualError do
           end
         end
       end
-      assert_equal __FILE__, error.config_path
-      assert_kind_of ::Integer, error.config_line
+      assert_equal __FILE__, error.tool_file_path
+      assert_kind_of ::Integer, error.tool_file_line
     end
 
-    it "inner config_path is preserved when outer capture also has a path" do
+    it "inner tool_file_path is preserved when outer capture also has a path" do
       # Inner capture provides path: __FILE__, which matches the backtrace.
       # Outer capture has a different (non-matching) path and should not overwrite.
       error = assert_raises(Toys::ContextualError) do
@@ -424,7 +424,7 @@ describe Toys::ContextualError do
           end
         end
       end
-      assert_equal __FILE__, error.config_path
+      assert_equal __FILE__, error.tool_file_path
     end
   end
 

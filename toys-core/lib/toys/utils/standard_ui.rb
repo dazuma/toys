@@ -281,9 +281,9 @@ module Toys
 
       # Renders one frame of the error chain. The innermost frame, for which
       # `previous` is nil, says where the error happened; each subsequent frame
-      # names the tool that invoked the frame before it. The banner, the config
-      # location, and the arguments are omitted when they would merely repeat
-      # that frame, which they usually do for a delegation.
+      # names the tool that invoked the frame before it. The banner, the tool
+      # definition location, and the arguments are omitted when they would
+      # merely repeat that frame, which they usually do for a delegation.
       #
       # A frame leads with the line naming its tool, and indents the rest of
       # its lines under that, so that the frames stay visually separable even
@@ -303,21 +303,21 @@ module Toys
             lines << "#{indent}with arguments: #{error.tool_args.inspect}"
           end
         end
-        if show_config_location?(error, previous)
-          lines << "#{indent}in config file: #{error.config_path}:#{error.config_line}"
+        if show_definition_location?(error, previous)
+          lines << "#{indent}in tool file: #{error.tool_file_path}:#{error.tool_file_line}"
         end
         lines.join("\n")
       end
 
-      # Returns whether a frame's config location should be shown. It is
+      # Returns whether a frame's definition location should be shown. It is
       # suppressed when it points at the same place as the frame within it,
       # which happens whenever both tools are defined in the same file, because
       # every frame resolves its location from the original error's backtrace
       # and so lands on the innermost tool's line.
-      def show_config_location?(error, previous)
-        return false if error.config_path.nil?
+      def show_definition_location?(error, previous)
+        return false if error.tool_file_path.nil?
         return true if previous.nil?
-        error.config_path != previous.config_path || error.config_line != previous.config_line
+        error.tool_file_path != previous.tool_file_path || error.tool_file_line != previous.tool_file_line
       end
     end
   end
