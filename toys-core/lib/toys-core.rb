@@ -42,7 +42,7 @@
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them. A loader is created
-#   from a fixed list of starting sources, which {Toys::SourceListBuilder}
+#   from a fixed list of starting sources, which {Toys::SourceList}
 #   accumulates and assigns priorities to.
 # * **Definition** — models a tool. {Toys::ToolDefinition} is the central
 #   class, with {Toys::Flag}, {Toys::FlagGroup}, and {Toys::PositionalArg} as
@@ -178,7 +178,7 @@ require "toys/module_lookup"
 require "toys/positional_arg"
 require "toys/runner"
 require "toys/source_info"
-require "toys/source_list_builder"
+require "toys/source_list"
 require "toys/template"
 require "toys/tool_definition"
 require "toys/tool_name_splitter"

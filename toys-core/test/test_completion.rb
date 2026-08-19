@@ -73,15 +73,15 @@ end
 
 describe Toys::Completion::Context do
   let(:loader) {
-    builder = Toys::SourceListBuilder.new
-    builder.add_block do
+    source_list = Toys::SourceList.new
+    source_list.add_block do
       tool "foo" do
         flag :bar, "--bar VALUE"
         optional_arg :arg1
         def run; end
       end
     end
-    Toys::Loader.new(builder.sources,
+    Toys::Loader.new(source_list,
                      tool_name_splitter: Toys::ToolNameSplitter.new(":"))
   }
 

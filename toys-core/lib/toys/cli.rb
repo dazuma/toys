@@ -71,9 +71,7 @@ module Toys
     #  *  Options affecting tool sources
     #      *  `toplevel_tool_dir_name`: Directory name containing tool files
     #      *  `toplevel_tool_file_name`: File name for tools
-    #      *  `git_cache`: Custom GitCache to use for git sources
-    #      *  `gems_util`: Custom Gems utility to use for gem sources
-    #      *  `sources`: Initial sources to populate
+    #      *  `source_list`: Initial sources to populate
     #
     # @param logger [Logger] A global logger to use for all tools. This can be
     #     set if the CLI will call at most one tool at a time. However, it will
@@ -144,13 +142,8 @@ module Toys
     #     The standard toys executable sets this to `".toys.rb"`.
     #     Note: This setting does not affect the name of "index" toys files,
     #     which is fixed at `".toys.rb"`.
-    # @param git_cache [Toys::Utils::GitCache] A custom GitCache instance to
-    #     use to resolve git sources. Optional.
-    # @param gems_util [Toys::Utils::Gems] A custom Gems utility instance to
-    #     use to resolve gem sources. Optional.
-    # @param sources [Array<Toys::SourceInfo>] An optional list of sources to
-    #     populate into the source list. Most callers, however, should make
-    #     calls to the `add_*` methods instead.
+    # @param source_list [Toys::SourceList] An optional list of sources to
+    #     prepopulate into the CLI.
     #
     def initialize(executable_name: nil,
                    middleware_stack: nil,
@@ -165,9 +158,7 @@ module Toys
                    base_level: nil,
                    error_handler: nil,
                    completion: nil,
-                   git_cache: nil,
-                   gems_util: nil,
-                   sources: nil)
+                   source_list: nil)
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @middleware_stack = middleware_stack || CLI.default_middleware_stack
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
@@ -183,9 +174,7 @@ module Toys
       @tool_name_splitter = ToolNameSplitter.new(extra_delimiters)
       @toplevel_tool_dir_name = toplevel_tool_dir_name
       @toplevel_tool_file_name = toplevel_tool_file_name
-      @git_cache = git_cache
-      @gems_util = gems_util
-      @source_list_builder = SourceListBuilder.new(git_cache: git_cache, gems_util: gems_util, sources: sources)
+      @source_list = source_list&.dup || SourceList.new
       @loader = @runner = nil
       @source_definition_mutex = ::Monitor.new
     end
@@ -321,10 +310,10 @@ module Toys
                         source_name: nil,
                         context_directory: :parent)
       ensure_open_source_list do
-        @source_list_builder.add_path(path,
-                                      high_priority: high_priority,
-                                      source_name: source_name,
-                                      context_directory: context_directory)
+        @source_list.add_path(path,
+                              high_priority: high_priority,
+                              source_name: source_name,
+                              context_directory: context_directory)
       end
       self
     end
@@ -356,10 +345,10 @@ module Toys
                          context_directory: nil,
                          &block)
       ensure_open_source_list do
-        @source_list_builder.add_block(high_priority: high_priority,
-                                       source_name: source_name,
-                                       context_directory: context_directory,
-                                       &block)
+        @source_list.add_block(high_priority: high_priority,
+                               source_name: source_name,
+                               context_directory: context_directory,
+                               &block)
       end
       self
     end
@@ -401,13 +390,13 @@ module Toys
                        source_name: nil,
                        context_directory: nil)
       ensure_open_source_list do
-        @source_list_builder.add_gem(gem_name,
-                                     gem_version: gem_version,
-                                     gem_path: gem_path,
-                                     gem_toys_dir: gem_toys_dir,
-                                     high_priority: high_priority,
-                                     source_name: source_name,
-                                     context_directory: context_directory)
+        @source_list.add_gem(gem_name,
+                             gem_version: gem_version,
+                             gem_path: gem_path,
+                             gem_toys_dir: gem_toys_dir,
+                             high_priority: high_priority,
+                             source_name: source_name,
+                             context_directory: context_directory)
       end
       self
     end
@@ -451,13 +440,13 @@ module Toys
                        source_name: nil,
                        context_directory: nil)
       ensure_open_source_list do
-        @source_list_builder.add_git(git_remote,
-                                     git_path: git_path,
-                                     git_commit: git_commit,
-                                     high_priority: high_priority,
-                                     source_name: source_name,
-                                     update: update,
-                                     context_directory: context_directory)
+        @source_list.add_git(git_remote,
+                             git_path: git_path,
+                             git_commit: git_commit,
+                             high_priority: high_priority,
+                             source_name: source_name,
+                             update: update,
+                             context_directory: context_directory)
       end
       self
     end
@@ -496,9 +485,9 @@ module Toys
           dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
           paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
         end
-        @source_list_builder.add_path_set(search_path, paths,
-                                          high_priority: high_priority,
-                                          context_directory: context_directory)
+        @source_list.add_path_set(search_path, paths,
+                                  high_priority: high_priority,
+                                  context_directory: context_directory)
       end
       self
     end
@@ -608,9 +597,7 @@ module Toys
     def finalize_sources!
       @source_definition_mutex.synchronize do
         unless @loader
-          loader = Loader.new(@source_list_builder.sources,
-                              git_cache: @git_cache,
-                              gems_util: @gems_util,
+          loader = Loader.new(@source_list,
                               middleware_stack: @middleware_stack,
                               tool_name_splitter: @tool_name_splitter,
                               mixin_lookup: @mixin_lookup,
@@ -738,7 +725,13 @@ module Toys
     # arguments suitable for creating a copy.
     #
     def current_settings(copy_sources)
-      result = {
+      source_list =
+        if copy_sources
+          @source_definition_mutex.synchronize { @source_list.dup }
+        else
+          SourceList.new(git_cache: @source_list.git_cache, gems_util: @source_list.gems_util)
+        end
+      {
         executable_name: @executable_name,
         toplevel_tool_dir_name: @toplevel_tool_dir_name,
         toplevel_tool_file_name: @toplevel_tool_file_name,
@@ -752,11 +745,8 @@ module Toys
         base_level: @base_level,
         error_handler: @error_handler,
         completion: @completion,
-        git_cache: @git_cache,
-        gems_util: @gems_util,
+        source_list: source_list,
       }
-      result[:sources] = @source_definition_mutex.synchronize { @source_list_builder.sources } if copy_sources
-      result
     end
   end
 end

@@ -1079,8 +1079,8 @@ describe Toys::ToolDefinition do
 
     describe "default completion using only a loader" do
       def make_loader(extra_delimiters: ":")
-        builder = Toys::SourceListBuilder.new
-        builder.add_block do
+        source_list = Toys::SourceList.new
+        source_list.add_block do
           tool "ns" do
             tool "sub1" do
               to_run do
@@ -1095,7 +1095,7 @@ describe Toys::ToolDefinition do
           end
           tool "deleg", delegate_to: ["ns"]
         end
-        Toys::Loader.new(builder.sources,
+        Toys::Loader.new(source_list,
                          tool_name_splitter: Toys::ToolNameSplitter.new(extra_delimiters))
       end
 

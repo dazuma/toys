@@ -1225,15 +1225,15 @@ above under [the Loader](#the-loader).
     from a fixed list of the various sources of tool definitions (such as files
     and blocks) and responds to requests for tools by name, returning a
     {Toys::ToolDefinition}.
- *  {Toys::SourceListBuilder} - This class accumulates the list of sources that
-    a loader is created from, assigning each a priority. A {Toys::CLI} owns one
+ *  {Toys::SourceList} - This class accumulates the list of sources that a
+    loader is created from, assigning each a priority. A {Toys::CLI} owns one
     of these, and its `add_source_*` methods delegate to it, but you can also
     use it directly if you are constructing a {Toys::Loader} yourself.
  *  {Toys::SourceInfo} - This object provides metadata about a source for a
     tool definition, which could be a directory, a file, or a block. It also
     resolves gem and git sources to local file system paths, activating gems
-    and populating a local git cache as needed; pass `git_cache` or `gems_util`
-    to {Toys::CLI#initialize} if you need control over the
+    and populating a local git cache as needed; use a custom {Toys::SourceList}
+    with explicit `git_cache` or `gems_util` if you need control over the
     {Toys::Utils::GitCache} or {Toys::Utils::Gems} objects it uses. This
     information is used to reference at the source when listing tools, and when
     reporting errors.
