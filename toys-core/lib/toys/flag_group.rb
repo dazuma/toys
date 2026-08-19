@@ -177,8 +177,10 @@ module Toys
       # This provides the behavioral distinctions between subclasses, returning
       # errors for any validations not satisfied by the current flags.
       #
-      # @param _seen [Array<Object>] A list of the keys of the flags actually
-      #     passed to the invocation
+      # @param _seen [Array<Toys::Flag>] A list of the flag definitions
+      #     actually matched during the invocation. Flags are identified by
+      #     object identity rather than by key, because multiple flag
+      #     definitions may share a context key.
       # @return [Array<String>] A list of messages describing the constraints
       #     that were not satisfied, or the empty array if all were satisfied.
       #     The caller is responsible for converting these into errors.
@@ -198,7 +200,7 @@ module Toys
       def validation_errors(seen)
         results = []
         flags.each do |flag|
-          unless seen.include?(flag.key)
+          unless seen.include?(flag)
             results << "Flag \"#{flag.display_name}\" is required."
           end
         end
@@ -228,7 +230,7 @@ module Toys
       def validation_errors(seen)
         seen_names = []
         flags.each do |flag|
-          seen_names << flag.display_name if seen.include?(flag.key)
+          seen_names << flag.display_name if seen.include?(flag)
         end
         if seen_names.size > 1
           str = "Exactly one flag out of group #{summary} is required, but #{seen_names.size}" \
@@ -253,7 +255,7 @@ module Toys
       def validation_errors(seen)
         seen_names = []
         flags.each do |flag|
-          seen_names << flag.display_name if seen.include?(flag.key)
+          seen_names << flag.display_name if seen.include?(flag)
         end
         if seen_names.size > 1
           str = "At most one flag out of group #{summary} is required, but #{seen_names.size}" \
@@ -273,7 +275,7 @@ module Toys
       # @private
       #
       def validation_errors(seen)
-        return [] if flags.any? { |flag| seen.include?(flag.key) }
+        return [] if flags.any? { |flag| seen.include?(flag) }
         str = "At least one flag out of group #{summary} is required, but none were provided."
         [str]
       end
