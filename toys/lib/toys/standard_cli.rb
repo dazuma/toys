@@ -81,10 +81,17 @@ module Toys
     # @param include_builtins [boolean] Add the builtin tools. Default is true.
     # @param cur_dir [String,nil] Starting search directory for sources.
     #     Defaults to the current working directory.
+    # @param source_list [Toys::SourceList,nil] An optional source list, used
+    #     to configure the resolvers (such as the git cache and the gems
+    #     utility) employed when sources are added. It is not intended for
+    #     seeding sources, because this class adds the standard paths after
+    #     the list is installed, meaning any sources already in the list would
+    #     take priority over the standard paths.
     #
     def initialize(custom_paths: nil,
                    include_builtins: true,
-                   cur_dir: nil)
+                   cur_dir: nil,
+                   source_list: nil)
       require "toys/utils/standard_ui"
       ui = Toys::Utils::StandardUI.new
       super(
@@ -94,6 +101,7 @@ module Toys
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup,
+        source_list: source_list,
         **ui.cli_args
       )
       if custom_paths
