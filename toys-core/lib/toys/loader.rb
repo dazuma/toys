@@ -7,7 +7,11 @@ module Toys
   #
   class Loader
     ##
-    # Create a Loader
+    # Create a Loader.
+    #
+    # Note that the middleware stack and lookup objects are needed only for
+    # building ToolDefinition objects, and are necessary because the Loader is
+    # the factory for these objects.
     #
     # @param source_list [Toys::SourceList] The list of sources to use. The
     #     sources are snapshotted from the SourceList on construction, so if
@@ -75,7 +79,8 @@ module Toys
     # Returns a tuple of the found tool, and the array of remaining arguments
     # that are not part of the tool name and should be passed as tool args.
     #
-    # @param args [Array<String>] Command line arguments
+    # @param args [Array<String>] Command line arguments. The first argument
+    #     may be a full tool name with delimiters.
     # @return [Array(Toys::ToolDefinition,Array<String>)]
     #
     def lookup(args)
@@ -99,12 +104,12 @@ module Toys
     # priority tool that has been defined. If no tool has been defined with
     # the given name, returns `nil`.
     #
-    # @param words [Array<String>] The tool name
+    # @param words [Array<String>] The tool name. It must be in the form of
+    #     an array of strings; it cannot be a single string with delimiters.
     # @return [Toys::ToolDefinition] if the tool was found
     # @return [nil] if no such tool exists
     #
     def lookup_specific(words)
-      words = @tool_name_splitter.split(words.first) if words.size == 1
       load_for_prefix(words)
       tool = @mutex.synchronize { get_tool_data(words, false)&.cur_definition }
       finish_definitions_in_tree(words) if tool
@@ -115,7 +120,8 @@ module Toys
     # Returns a list of subtools for the given path, loading from their sources
     # if necessary. The list will be sorted by name.
     #
-    # @param words [Array<String>] The name of the parent tool
+    # @param words [Array<String>] The name of the parent tool. It must be an
+    #     array of strings; it cannot be a single string with delimiters.
     # @param recursive [boolean] If true, return all subtools recursively
     #     rather than just the immediate children (the default)
     # @param include_hidden [boolean] If true, include hidden subtools,
@@ -149,7 +155,8 @@ module Toys
     # Returns true if the given path has at least one subtool, even if they are
     # hidden or non-runnable. Loads from the sources if necessary.
     #
-    # @param words [Array<String>] The name of the parent tool
+    # @param words [Array<String>] The name of the parent tool. It must be an
+    #     array of strings; it cannot be a single string with delimiters.
     # @return [boolean]
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
