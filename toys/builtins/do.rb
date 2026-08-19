@@ -33,9 +33,17 @@ flag :delim do
   long_desc "Sets the delimiter that separates tool invocations. The default value is \",\"."
 end
 
-flag :gems do
+# The source flags all share the :sources key, and their handlers append to
+# the same array, tagging each value with the kind of source requested. That
+# way the array records the order in which the flags appeared on the command
+# line, across all of the flags, which is the order that determines priority.
+# The handlers store the raw value; parsing happens later, in build_cli,
+# because an error raised from a handler would come out of the argument parser
+# as a stack trace rather than as a simple message.
+
+flag :sources do
   flags "--gem=GEM"
-  handler :push
+  handler { |val, prev| prev + [[:gem, val]] }
   default []
   desc "Make the tools from the given gem available"
   long_desc \
@@ -48,6 +56,18 @@ flag :gems do
       " all separated by commas. Whitespace surrounding each element is ignored. The version" \
       " requirements use the same syntax as Rubygems and Bundler. For example:",
     ["    --gem=\"my-tools, ~> 1.5, >= 1.5.2\""]
+end
+
+flag :sources do
+  flags "--path=PATH"
+  handler { |val, prev| prev + [[:path, val]] }
+  default []
+  complete_values :file_system
+  desc "Make the tools from the given path available"
+  long_desc \
+    "Adds the tools from the given file system path. The path must name either a directory" \
+      " of tools, or a single Ruby file defining tools. For example:",
+    ["    --path=/path/to/my-tools"]
 end
 
 remaining_args :commands do
@@ -73,24 +93,47 @@ def run
 end
 
 # Returns the CLI used to run the requested tools. Normally this is simply the
-# current CLI, but if gems were requested, we need a new CLI because sources
-# cannot be added to a CLI that has already started loading tools. The new CLI
-# copies the current sources and adds the gems on top of them. The gems are
-# added in reverse order so that the first gem on the command line ends up with
-# the highest priority.
+# current CLI, but if any sources were requested, we need a new CLI because
+# sources cannot be added to a CLI that has already started loading tools. The
+# new CLI copies the current sources and adds the requested ones on top of
+# them. The requested sources are added in reverse order so that the first flag
+# on the command line ends up with the highest priority.
 #
 # All the requests are parsed and checked up front, in command line order,
-# because adding a gem can have side effects such as installing it. That way a
-# malformed request is reported before any gem is activated, and is reported
-# against the first offending flag rather than the last.
+# because adding a source can have side effects such as installing a gem or
+# fetching a git repo. That way a malformed request is reported before any of
+# those happen, and is reported against the first offending flag rather than
+# the last.
 def build_cli
-  gem_requests = gems.map { |gem_request| parse_gem_request(gem_request) }
-  return cli if gem_requests.empty?
-  require "toys/utils/gems"
+  requests = sources.map { |kind, value| [kind, parse_source_request(kind, value)] }
+  return cli if requests.empty?
+  require "toys/utils/gems" if requests.any? { |kind, _spec| kind == :gem }
   cli.child(copy_sources: true) do |child_cli|
-    gem_requests.reverse_each do |gem_name, gem_version|
-      add_gem(child_cli, gem_name, gem_version)
+    requests.reverse_each do |kind, spec|
+      add_source(child_cli, kind, spec)
     end
+  end
+end
+
+# Parses and checks a single source request, without adding it to any CLI,
+# returning the information needed later to add it.
+def parse_source_request(kind, value)
+  case kind
+  when :gem
+    parse_gem_request(value)
+  when :path
+    parse_path_request(value)
+  end
+end
+
+# Adds a single parsed source request to the given CLI, at high priority so it
+# takes precedence over the sources copied from the current CLI.
+def add_source(child_cli, kind, spec)
+  case kind
+  when :gem
+    add_gem(child_cli, *spec)
+  when :path
+    add_path(child_cli, spec)
   end
 end
 
@@ -119,4 +162,29 @@ def add_gem(child_cli, gem_name, gem_version)
 rescue ::Toys::ToolDefinitionError => e
   logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
   exit(1)
+end
+
+# Checks a --path flag value, applying the same rule that adding the path will
+# apply, so that a bad path is reported before any other source is resolved.
+def parse_path_request(path_request)
+  path = path_request.strip
+  if path.empty?
+    logger.fatal("Invalid --path value: #{path_request.inspect}")
+    exit(1)
+  end
+  begin
+    ::Toys::SourceInfo.check_path(path, false)
+  rescue ::Toys::ToolDefinitionError => e
+    logger.fatal("Cannot load tools from path #{path.inspect}: #{e.message}")
+    exit(1)
+  end
+  path
+end
+
+# Adds a single path to the given CLI. Any failure here would already have been
+# caught by parse_path_request, which performs the same check. The path is
+# added without a context directory, like the gem and git sources, because it
+# is injected from the command line rather than found in a project.
+def add_path(child_cli, path)
+  child_cli.add_source_path(path, high_priority: true, context_directory: nil)
 end

@@ -213,6 +213,16 @@ describe "toys do --gem" do
     refute(Gem.loaded_specs.key?("fake-tools-two"))
   end
 
+  it "does not activate gems when a later path is invalid" do
+    missing_path = File.expand_path("../../test-data/source-cases/nonexistent", __dir__)
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-two", "--path=#{missing_path}",
+                                     "base-tool"]))
+    end
+    assert_match(/Cannot load tools from path/, err)
+    refute(Gem.loaded_specs.key?("fake-tools-two"))
+  end
+
   it "reuses the original cli when no gem is requested" do
     toys_load_tool(["do"]) do |context|
       assert_same(context.cli, context.build_cli)
@@ -221,6 +231,99 @@ describe "toys do --gem" do
 
   it "builds a new cli when a gem is requested" do
     toys_load_tool(["do", "--gem=fake-tools-one"]) do |context|
+      refute_same(context.cli, context.build_cli)
+    end
+  end
+end
+
+describe "toys do --path" do
+  include Toys::Testing
+
+  # The base source provides "base-tool" and "shared-tool", alongside the
+  # builtin tools.
+  toys_custom_paths([File.dirname(__dir__),
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
+  toys_include_builtins(false)
+
+  # The path-tools fixture directory provides "path-tool" and "shared-tool",
+  # and standalone.rb is a single file defining "standalone-tool", so that
+  # both forms accepted by --path can be exercised.
+  let(:path_tools_dir) {
+    File.expand_path("../../test-data/source-cases/path-tools", __dir__)
+  }
+  let(:standalone_file) {
+    File.expand_path("../../test-data/source-cases/standalone.rb", __dir__)
+  }
+  let(:not_ruby_file) {
+    File.expand_path("../../test-data/source-cases/not-ruby.txt", __dir__)
+  }
+  let(:missing_path) {
+    File.expand_path("../../test-data/source-cases/nonexistent", __dir__)
+  }
+
+  it "runs a tool from the given directory" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "path-tool"]))
+    end
+    assert_equal(["path-tools path-tool"], out.split("\n"))
+  end
+
+  it "runs a tool from a given ruby file" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{standalone_file}", "standalone-tool"]))
+    end
+    assert_equal(["standalone standalone-tool"], out.split("\n"))
+  end
+
+  it "still runs tools from the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "path-tool",
+                                     ",", "base-tool"]))
+    end
+    assert_equal(["path-tools path-tool", "base base-tool"], out.split("\n"))
+  end
+
+  it "gives the path priority over the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "shared-tool"]))
+    end
+    assert_equal(["path-tools shared-tool"], out.split("\n"))
+  end
+
+  it "rejects an empty path" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=", "base-tool"]))
+    end
+    assert_match(/Invalid --path value: ""/, err)
+  end
+
+  it "rejects a whitespace-only path" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=   ", "base-tool"]))
+    end
+    assert_match(/Invalid --path value/, err)
+  end
+
+  it "reports a nonexistent path without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=#{missing_path}", "base-tool"]))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from path "#{Regexp.escape(missing_path)}": Cannot read:/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "reports a file that is not a ruby file without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=#{not_ruby_file}", "base-tool"]))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from path .*: File is not a ruby file:/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "builds a new cli when a path is requested" do
+    toys_load_tool(["do", "--path=#{path_tools_dir}"]) do |context|
       refute_same(context.cli, context.build_cli)
     end
   end
