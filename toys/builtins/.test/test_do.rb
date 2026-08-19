@@ -46,11 +46,11 @@ describe "toys do --gem" do
   # The base source provides "base-tool" and "shared-tool", alongside the
   # builtin tools.
   toys_custom_paths([File.dirname(__dir__),
-                     File.expand_path("../../test-data/gem-source-cases/base", __dir__)])
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
   toys_include_builtins(false)
 
   # None of the gems available to these tests carry a toys directory, so we
-  # point rubygems at the fixtures under test-data/gem-source-cases/gem-home.
+  # point rubygems at the fixtures under test-data/source-cases/gem-home.
   # That directory is laid out the way rubygems expects a gem home to look, so
   # adding it to the gem path is enough for rubygems to discover the gemspecs
   # under "specifications" and resolve each gem directory under "gems", where
@@ -60,7 +60,7 @@ describe "toys do --gem" do
   # by observing which version gets selected. The "fake-no-tools" gem
   # deliberately has no toys directory at all.
   let(:gem_home_dir) {
-    File.expand_path("../../test-data/gem-source-cases/gem-home", __dir__)
+    File.expand_path("../../test-data/source-cases/gem-home", __dir__)
   }
   let(:fake_gem_names) {
     ["fake-tools-one", "fake-tools-two", "fake-no-tools"]
