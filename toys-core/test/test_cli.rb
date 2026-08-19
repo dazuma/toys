@@ -1117,6 +1117,59 @@ describe Toys::CLI do
       end
     end
 
+    # Returns true if the CLI has no tool by the given name. A lookup miss
+    # falls back to the nearest namespace, which here is always the root.
+    def refute_tool_defined(a_cli, name)
+      tool, _remaining = a_cli.loader.lookup([name])
+      assert_empty(tool.full_name, "expected no tool named #{name.inspect}")
+    end
+
+    it "copies a source list passed to the constructor" do
+      source_list = Toys::SourceList.new
+      source_list.add_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      list_cli = Toys::CLI.new(logger: logger, middleware_stack: [], source_list: source_list)
+
+      # The caller keeps its own list, so later additions there must not reach
+      # the CLI, which would otherwise route around the finalization guard.
+      source_list.add_block do
+        tool "bar" do
+          def run
+            exit(4)
+          end
+        end
+      end
+      assert_equal(3, list_cli.run("foo"))
+      refute_tool_defined(list_cli, "bar")
+    end
+
+    it "is not affected by a caller mutating its source list after finalization" do
+      source_list = Toys::SourceList.new
+      source_list.add_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      list_cli = Toys::CLI.new(logger: logger, middleware_stack: [], source_list: source_list)
+      list_cli.finalize_sources!
+      source_list.add_block do
+        tool "bar" do
+          def run
+            exit(4)
+          end
+        end
+      end
+      assert_equal(3, list_cli.run("foo"))
+      refute_tool_defined(list_cli, "bar")
+    end
+
     it "allows adding sources to a CLI that has a global logger" do
       logger_cli = Toys::CLI.new(logger: logger, middleware_stack: [])
       logger_cli.add_source_block do
@@ -1213,6 +1266,9 @@ describe Toys::CLI do
   end
 
   describe "child" do
+    # Stand-ins, only ever compared by identity.
+    let(:git_cache) { Object.new }
+    let(:gems_util) { Object.new }
     let(:logger2) {
       Logger.new(logger_io).tap do |lgr|
         lgr.level = Logger::DEBUG
@@ -1252,8 +1308,30 @@ describe Toys::CLI do
                    " otherwise CLI#child silently drops it")
     end
 
-    it "omits the source list unless sources are being copied" do
-      refute_includes(cli.send(:current_settings, false).keys, :sources)
+    # A SourceList has no value equality, so compare it by what a copy has to
+    # preserve: the same sources, in the same order, and the same resolvers.
+    def equivalent_setting?(parent_value, child_value)
+      return parent_value == child_value unless parent_value.is_a?(Toys::SourceList)
+      child_value.is_a?(Toys::SourceList) &&
+        parent_value.to_a == child_value.to_a &&
+        parent_value.git_cache == child_value.git_cache &&
+        parent_value.gems_util == child_value.gems_util
+    end
+
+    it "empties the source list, but keeps the resolvers, unless sources are copied" do
+      cli = Toys::CLI.new(logger: logger, middleware_stack: [],
+                          source_list: Toys::SourceList.new(git_cache: git_cache,
+                                                            gems_util: gems_util))
+      cli.add_source_block do
+        tool "foo" do
+          def run; end
+        end
+      end
+      source_list = cli.send(:current_settings, false)[:source_list]
+      assert_instance_of(Toys::SourceList, source_list)
+      assert_empty(source_list)
+      assert_same(git_cache, source_list.git_cache)
+      assert_same(gems_util, source_list.gems_util)
     end
 
     it "copies every setting so that it survives the copy" do
@@ -1264,10 +1342,21 @@ describe Toys::CLI do
       end
       parent_settings = cli.send(:current_settings, true)
       child_settings = cli.child(copy_sources: true).send(:current_settings, true)
-      mismatched = parent_settings.keys.reject { |key| parent_settings[key] == child_settings[key] }
+      mismatched = parent_settings.keys.reject do |key|
+        equivalent_setting?(parent_settings[key], child_settings[key])
+      end
       assert_empty(mismatched,
                    "Settings that did not survive CLI#child, likely because" \
                    " CLI#current_settings reports a derived value rather than the one passed in")
+    end
+
+    it "carries the resolvers into a child that copies no sources" do
+      cli = Toys::CLI.new(logger: logger, middleware_stack: [],
+                          source_list: Toys::SourceList.new(git_cache: git_cache,
+                                                            gems_util: gems_util))
+      child_list = cli.child.send(:current_settings, true)[:source_list]
+      assert_same(git_cache, child_list.git_cache)
+      assert_same(gems_util, child_list.gems_util)
     end
 
     it "overrides parameters" do

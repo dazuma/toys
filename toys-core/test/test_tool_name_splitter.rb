@@ -45,7 +45,7 @@ describe Toys::ToolNameSplitter do
     end
 
     it "is the splitter used by a loader that is given none" do
-      assert_same(Toys::ToolNameSplitter::DEFAULT, Toys::Loader.new([]).tool_name_splitter)
+      assert_same(Toys::ToolNameSplitter::DEFAULT, Toys::Loader.new(Toys::SourceList.new).tool_name_splitter)
     end
 
     it "is frozen" do

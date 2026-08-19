@@ -9,35 +9,29 @@ module Toys
     ##
     # Create a Loader
     #
-    # @param starting_sources [Array<Toys::SourceInfo>] An array of starting
-    #     point sources. Required. Generally this should come from a
-    #     {Toys::SourceListBuilder} which will construct the needed
-    #     SourceInfo objects and set priorities properly.
-    # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
-    #     middleware that will be used by default for all tools loaded by this
-    #     loader.
+    # @param source_list [Toys::SourceList] The list of sources to use. The
+    #     sources are snapshotted from the SourceList on construction, so if
+    #     the SourceList is modified later, those modifications are not
+    #     reflected in the constructed Loader.
     # @param tool_name_splitter [Toys::ToolNameSplitter] The splitter that
     #     interprets delimiters in tool names. Defaults to
     #     {Toys::ToolNameSplitter::DEFAULT}, which recognizes only whitespace.
+    # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
+    #     middleware that will be used by default for all tools loaded by this
+    #     loader.
     # @param mixin_lookup [Toys::ModuleLookup] A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
     # @param middleware_lookup [Toys::ModuleLookup] A lookup for
     #     well-known middleware classes. Defaults to an empty lookup.
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
-    # @param git_cache [Toys::Utils::GitCache] A custom GitCache instance to
-    #     use to resolve git sources. Optional.
-    # @param gems_util [Toys::Utils::Gems] A custom Gems utility instance to
-    #     use to resolve gem sources. Optional.
     #
-    def initialize(starting_sources,
-                   middleware_stack: [],
+    def initialize(source_list,
                    tool_name_splitter: nil,
+                   middleware_stack: [],
                    mixin_lookup: nil,
                    middleware_lookup: nil,
-                   template_lookup: nil,
-                   git_cache: nil,
-                   gems_util: nil)
+                   template_lookup: nil)
       require "monitor"
       # This mutex serializes all loading. It could be held for arbitrary
       # amounts of time because it surrounds the loading of tools files.
@@ -50,9 +44,16 @@ module Toys
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
-      @git_cache = git_cache
-      @gems_util = gems_util
-      populate_starting_sources(starting_sources)
+      @worklist = []
+      @roots_by_priority = {}
+      source_list.each do |source|
+        @worklist << [source, [], source.priority]
+        # SourceList enforces the invariant that each extant source priority
+        # has exactly one root
+        @roots_by_priority[source.priority] = source.root
+      end
+      @git_cache = source_list.git_cache
+      @gems_util = source_list.gems_util
       get_tool([], -999_999)
     end
 
@@ -438,24 +439,6 @@ module Toys
     end
 
     private
-
-    ##
-    # Populate the worklist and roots given a list of starting sources.
-    # Validates that source roots don't collide on the same priority.
-    #
-    def populate_starting_sources(starting_sources)
-      @worklist = []
-      @roots_by_priority = {}
-      starting_sources.each do |source|
-        @worklist << [source, [], source.priority]
-        root = source.root
-        if @roots_by_priority.key?(source.priority)
-          raise ::ArgumentError, "Source root collision" unless @roots_by_priority[source.priority].equal?(root)
-        else
-          @roots_by_priority[source.priority] = root
-        end
-      end
-    end
 
     ##
     # Determine the longest prefix of the given command line arguments that

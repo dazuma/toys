@@ -2,45 +2,91 @@
 
 module Toys
   ##
-  # A builder that collects a list of prioritized sources for the Loader.
+  # A list of prioritized sources for the Loader. Use this class to build a
+  # list of sources, and then pass it to the Loader constructor.
+  #
+  # Maintains an invariant important to the Loader: All sources in the list
+  # with the same priority, will always have the same root.
   #
   # Not thread-safe. Callers should ensure that access is single-threaded or
   # synchronized.
   #
-  class SourceListBuilder
+  class SourceList
     ##
-    # Create a source list builder.
+    # Create an empty source list.
+    #
+    # Custom resolvers for git and gem sources can optionally be provided. If
+    # given, they govern how git and gem sources are read for both the initial
+    # sources added to this list, and all child sources navigated to by a
+    # Loader constructed from this list.
     #
     # @param git_cache [Toys::Utils::GitCache,nil] A custom GitCache instance
     #     to use to resolve git sources. Optional. If nil or not specified,
-    #     constructs a default GitCache.
+    #     uses a default GitCache.
     # @param gems_util [Toys::Utils::Gems,nil] A custom Gems utility instance
     #     to use to resolve gem sources. Optional. If nil or not specified,
-    #     constructs a default Gems utility.
-    # @param sources [Array<SourceInfo>] An optional list of sources to
-    #     populate into the source list initially.
+    #     uses a default Gems utility.
     #
-    def initialize(git_cache: nil, gems_util: nil, sources: nil)
+    def initialize(git_cache: nil, gems_util: nil)
       @git_cache = git_cache
       @gems_util = gems_util
-      @sources = sources&.dup || []
-      # An empty starting list leaves both bounds at 0, the same as if no
-      # starting sources were provided at all.
-      priorities = @sources.map(&:priority)
-      @max_priority = priorities.max || 0
-      @min_priority = priorities.min || 0
+      @sources = []
+      @max_priority = @min_priority = 0
     end
 
     ##
-    # The sources collected so far by this list builder, in the order they
-    # were added. The result is a copy; modifying it does not affect this
-    # builder.
+    # Initialize a duplicate
+    # @private
     #
-    # @return [Array<Toys::SourceInfo>]
-    #
-    def sources
-      @sources.dup
+    def initialize_copy(original)
+      super
+      @sources = @sources.dup
     end
+
+    ##
+    # The custom GitCache instance, or nil to use a default.
+    #
+    # @return [Toys::Utils::GitCache,nil]
+    #
+    attr_reader :git_cache
+
+    ##
+    # The custom Gems utility instance, or nil to use a default.
+    #
+    # @return [Toys::Utils::Gems,nil]
+    #
+    attr_reader :gems_util
+
+    ##
+    # Determines whether the list is empty.
+    #
+    # @return [boolean]
+    #
+    def empty?
+      @sources.empty?
+    end
+
+    ##
+    # Returns the size of the list.
+    #
+    # @return [Integer]
+    #
+    def size
+      @sources.size
+    end
+
+    ##
+    # Iterate over the sources, in the order in which they were added.
+    #
+    # @yield [Toys::SourceInfo]
+    #
+    def each(&block)
+      return to_enum(:each) unless block
+      @sources.each(&block)
+      self
+    end
+
+    include ::Enumerable
 
     ##
     # Add a tool file or directory to the source list.
