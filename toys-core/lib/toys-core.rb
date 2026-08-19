@@ -43,7 +43,9 @@
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them. A loader is created
 #   from a fixed list of starting sources, which {Toys::SourceList}
-#   accumulates and assigns priorities to.
+#   accumulates and assigns priorities to. Note that {Toys::Loader} is the
+#   factory for Definition objects (described below) and thus holds onto
+#   several objects that are necessary for constructing tool definitions.
 # * **Definition** — models a tool. {Toys::ToolDefinition} is the central
 #   class, with {Toys::Flag}, {Toys::FlagGroup}, and {Toys::PositionalArg} as
 #   its components, along with the pluggable {Toys::Acceptor} and
