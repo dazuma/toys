@@ -4,12 +4,19 @@ require "helper"
 
 describe Toys::FlagGroup do
   def add_flags(group)
-    flag = Toys::Flag.create(:flag1, group: group)
-    group << flag
-    flag = Toys::Flag.create(:flag2, group: group)
-    group << flag
-    flag = Toys::Flag.create(:flag3, group: group)
-    group << flag
+    (1..3).map do |i|
+      flag = Toys::Flag.create(:"flag#{i}", group: group)
+      group << flag
+      flag
+    end
+  end
+
+  def add_same_key_flags(group)
+    ["--foo", "--bar"].map do |name|
+      flag = Toys::Flag.create(:flag, [name], group: group)
+      group << flag
+      flag
+    end
   end
 
   describe "create" do
@@ -117,23 +124,31 @@ describe Toys::FlagGroup do
   describe "Required" do
     it "validates with all flags set" do
       group = Toys::FlagGroup::Required.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag1, :flag2, :flag3]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[0], flags[1], flags[2]]))
     end
 
     it "fails to validate with a flag missing" do
       group = Toys::FlagGroup::Required.new(nil, nil, nil)
-      add_flags(group)
-      assert_includes(group.validation_errors([:flag1, :flag3]),
+      flags = add_flags(group)
+      assert_includes(group.validation_errors([flags[0], flags[2]]),
                       'Flag "--flag2" is required.')
+    end
+
+    it "distinguishes flags that share a context key" do
+      group = Toys::FlagGroup::Required.new(nil, nil, nil)
+      flags = add_same_key_flags(group)
+      assert_empty(group.validation_errors(flags))
+      assert_includes(group.validation_errors([flags[0]]),
+                      'Flag "--bar" is required.')
     end
   end
 
   describe "Optional" do
     it "validates with all flags set" do
       group = Toys::FlagGroup::Optional.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag1, :flag2, :flag3]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[0], flags[1], flags[2]]))
     end
 
     it "Validates with no flags set" do
@@ -146,8 +161,8 @@ describe Toys::FlagGroup do
   describe "ExactlyOne" do
     it "validates with one flag set" do
       group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag2]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[1]]))
     end
 
     it "fails to validate with no flags set" do
@@ -162,11 +177,22 @@ describe Toys::FlagGroup do
 
     it "fails to validate with two flags set" do
       group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
-      add_flags(group)
+      flags = add_flags(group)
       assert_includes(
-        group.validation_errors([:flag1, :flag3]),
+        group.validation_errors([flags[0], flags[2]]),
         'Exactly one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
           ' but 2 were provided: ["--flag1", "--flag3"].'
+      )
+    end
+
+    it "distinguishes flags that share a context key" do
+      group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
+      flags = add_same_key_flags(group)
+      assert_empty(group.validation_errors([flags[0]]))
+      assert_includes(
+        group.validation_errors(flags),
+        'Exactly one flag out of group ["--foo", "--bar"] is required,' \
+          ' but 2 were provided: ["--foo", "--bar"].'
       )
     end
   end
@@ -174,8 +200,8 @@ describe Toys::FlagGroup do
   describe "AtMostOne" do
     it "validates with one flag set" do
       group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag2]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[1]]))
     end
 
     it "validates with no flags set" do
@@ -186,11 +212,22 @@ describe Toys::FlagGroup do
 
     it "fails to validate with two flags set" do
       group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
-      add_flags(group)
+      flags = add_flags(group)
       assert_includes(
-        group.validation_errors([:flag1, :flag3]),
+        group.validation_errors([flags[0], flags[2]]),
         'At most one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
           ' but 2 were provided: ["--flag1", "--flag3"].'
+      )
+    end
+
+    it "distinguishes flags that share a context key" do
+      group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
+      flags = add_same_key_flags(group)
+      assert_empty(group.validation_errors([flags[0]]))
+      assert_includes(
+        group.validation_errors(flags),
+        'At most one flag out of group ["--foo", "--bar"] is required,' \
+          ' but 2 were provided: ["--foo", "--bar"].'
       )
     end
   end
@@ -198,8 +235,8 @@ describe Toys::FlagGroup do
   describe "AtLeastOne" do
     it "validates with one flag set" do
       group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag2]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[1]]))
     end
 
     it "fails to validate with no flags set" do
@@ -214,8 +251,19 @@ describe Toys::FlagGroup do
 
     it "validates with two flags set" do
       group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
-      add_flags(group)
-      assert_empty(group.validation_errors([:flag1, :flag3]))
+      flags = add_flags(group)
+      assert_empty(group.validation_errors([flags[0], flags[2]]))
+    end
+
+    it "distinguishes flags that share a context key" do
+      group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
+      flags = add_same_key_flags(group)
+      assert_empty(group.validation_errors([flags[0]]))
+      assert_includes(
+        group.validation_errors([]),
+        'At least one flag out of group ["--foo", "--bar"] is required,' \
+          " but none were provided."
+      )
     end
   end
 end

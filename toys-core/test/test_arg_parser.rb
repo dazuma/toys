@@ -933,6 +933,109 @@ describe Toys::ArgParser do
         assert_empty(arg_parser.errors)
       end
     end
+
+    describe "with flags sharing a context key" do
+      describe "of type required" do
+        before do
+          tool.add_flag_group(type: :required, name: :mygroup, desc: "My Group")
+          tool.add_flag(:a, ["--foo"], group: :mygroup)
+          tool.add_flag(:a, ["--bar"], group: :mygroup)
+        end
+
+        it "succeeds when both flags are provided" do
+          arg_parser.parse(["--foo", "--bar"])
+          arg_parser.finish
+          assert_data_includes({a: true}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "errors when only one flag is provided" do
+          arg_parser.parse(["--foo"])
+          arg_parser.finish
+          assert_errors_include('Flag "--bar" is required.', arg_parser.errors)
+        end
+      end
+
+      describe "of type exactly_one" do
+        before do
+          tool.add_flag_group(type: :exactly_one, name: :mygroup, desc: "My Group")
+          tool.add_flag(:a, ["--foo"], group: :mygroup)
+          tool.add_flag(:a, ["--bar"], group: :mygroup)
+        end
+
+        it "succeeds when one flag is provided" do
+          arg_parser.parse(["--foo"])
+          arg_parser.finish
+          assert_data_includes({a: true}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "errors when no flag is provided" do
+          arg_parser.parse([])
+          arg_parser.finish
+          assert_errors_include('Exactly one flag out of group "My Group" is required, but' \
+                                " none were provided.", arg_parser.errors)
+        end
+
+        it "errors when both flags are provided" do
+          arg_parser.parse(["--foo", "--bar"])
+          arg_parser.finish
+          assert_errors_include('Exactly one flag out of group "My Group" is required, but' \
+                                ' 2 were provided: ["--foo", "--bar"].', arg_parser.errors)
+        end
+
+        it "succeeds when the same flag is provided twice" do
+          arg_parser.parse(["--foo", "--foo"])
+          arg_parser.finish
+          assert_data_includes({a: true}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+      end
+
+      describe "of type at_most_one" do
+        before do
+          tool.add_flag_group(type: :at_most_one, name: :mygroup, desc: "My Group")
+          tool.add_flag(:a, ["--foo"], group: :mygroup)
+          tool.add_flag(:a, ["--bar"], group: :mygroup)
+        end
+
+        it "succeeds when one flag is provided" do
+          arg_parser.parse(["--bar"])
+          arg_parser.finish
+          assert_data_includes({a: true}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "errors when both flags are provided" do
+          arg_parser.parse(["--foo", "--bar"])
+          arg_parser.finish
+          assert_errors_include('At most one flag out of group "My Group" is required, but' \
+                                ' 2 were provided: ["--foo", "--bar"].', arg_parser.errors)
+        end
+      end
+
+      describe "of type at_least_one" do
+        before do
+          tool.add_flag_group(type: :at_least_one, name: :mygroup, desc: "My Group")
+          tool.add_flag(:a, ["--foo"], group: :mygroup)
+          tool.add_flag(:a, ["--bar"], group: :mygroup)
+        end
+
+        it "succeeds when one flag is provided" do
+          arg_parser.parse(["--bar"])
+          arg_parser.finish
+          assert_data_includes({a: true}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "errors when no flag is provided" do
+          arg_parser.parse([])
+          arg_parser.finish
+          assert_errors_include('At least one flag out of group "My Group" is required, but' \
+                                " none were provided.", arg_parser.errors)
+        end
+      end
+    end
   end
 
   describe "argument parsing" do

@@ -319,7 +319,7 @@ module Toys
       @data.merge!(common_data)
       @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
 
-      @seen_flag_keys = []
+      @seen_flags = []
       @active_flag_def = nil
       @active_flag_arg = nil
       @arg_defs = tool.positional_args
@@ -458,7 +458,7 @@ module Toys
       result = @active_flag_def.value_type == :required || !arg.start_with?("-")
       add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
                result ? arg : true, :flag, @active_flag_arg)
-      @seen_flag_keys << @active_flag_def.key
+      @seen_flags << @active_flag_def
       @active_flag_def = nil
       @active_flag_arg = nil
       result
@@ -532,7 +532,7 @@ module Toys
       flag_result = find_flag(name)
       flag_def = flag_result&.unique_flag
       return "" unless flag_def
-      @seen_flag_keys << flag_def.key
+      @seen_flags << flag_def
       if flag_def.flag_type == :boolean
         add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?, :flag, name)
       elsif following.empty?
@@ -553,7 +553,7 @@ module Toys
       flag_result = find_flag(name)
       flag_def = flag_result&.unique_flag
       return unless flag_def
-      @seen_flag_keys << flag_def.key
+      @seen_flags << flag_def
       if flag_def.flag_type == :value
         add_data(flag_def.key, flag_def.handler, flag_def.acceptor, value, :flag, name)
       else
@@ -638,7 +638,7 @@ module Toys
       end
       unless @unmatched_positional.empty?
         @errors <<
-          if @tool.runnable? || !@seen_flag_keys.empty?
+          if @tool.runnable? || !@seen_flags.empty?
             ExtraArgumentsError.new(arguments: @unmatched_positional)
           else
             dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
@@ -651,7 +651,7 @@ module Toys
 
     def finish_flag_groups
       @tool.flag_groups.each do |group|
-        messages = Array(group.validation_errors(@seen_flag_keys))
+        messages = Array(group.validation_errors(@seen_flags))
         @errors.concat(messages.map { |message| FlagGroupConstraintError.new(message) })
       end
     end
