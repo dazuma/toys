@@ -203,12 +203,6 @@ describe Toys::ToolDefinition do
         assert_equal(2, tool.default_data[:a])
       end
 
-      it "does not clear an existing default when no default is given" do
-        tool.add_flag(:a, ["-a"], default: 2)
-        tool.add_flag(:a, ["-b"])
-        assert_equal(2, tool.default_data[:a])
-      end
-
       it "does not clear a separately set value when no default is given" do
         tool.default_data[:a] = "from-set"
         tool.add_flag(:a, ["-a"])
@@ -522,6 +516,84 @@ describe Toys::ToolDefinition do
         resolution = tool.resolve_flag("--ab")
         assert_equal(true, resolution.found_exact?)
         assert_equal(tool.flags.last, resolution.unique_flag)
+      end
+    end
+
+    describe "shared context keys" do
+      it "creates a separate definition for each flag" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        tool.add_flag(:a, ["--bar=VALUE"])
+        assert_equal(2, tool.flags.size)
+        assert_equal([:a, :a], tool.flags.map(&:key))
+        assert_equal([["--foo"], ["--bar"]], tool.flags.map(&:effective_flags))
+        assert_equal([true, true], tool.flags.map(&:active?))
+      end
+
+      it "reserves the flag strings of every definition" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        tool.add_flag(:a, ["--bar=VALUE"])
+        assert_equal(["--foo", "--bar"], tool.used_flags)
+      end
+
+      it "reports a collision between two flags with the same key" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["--foo=VALUE"])
+        end
+      end
+
+      it "gives each flag its own acceptor, handler, and description" do
+        handler = proc { |val, _prev| val.upcase }
+        tool.add_flag(:a, ["--foo=VALUE"], accept: Integer, desc: "Set from foo")
+        tool.add_flag(:a, ["--bar=VALUE"], handler: handler, desc: "Set from bar")
+        foo, bar = tool.flags
+        assert_equal(Integer, foo.acceptor.well_known_spec)
+        assert_equal(Toys::Acceptor::DEFAULT, bar.acceptor)
+        assert_equal(Toys::Flag::DEFAULT_HANDLER, foo.handler)
+        assert_equal(handler, bar.handler)
+        assert_equal("Set from foo", foo.desc.to_s)
+        assert_equal("Set from bar", bar.desc.to_s)
+      end
+
+      it "resolves each flag to its own definition" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        tool.add_flag(:a, ["--bar=VALUE"])
+        foo, bar = tool.flags
+        assert_equal(foo, tool.resolve_flag("--foo").unique_flag)
+        assert_equal(bar, tool.resolve_flag("--bar").unique_flag)
+      end
+
+      it "reports an ambiguous prefix even though the flags share a key" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        tool.add_flag(:a, ["--fob=VALUE"])
+        resolution = tool.resolve_flag("--fo")
+        assert_equal(true, resolution.found_multiple?)
+        assert_equal(2, resolution.count)
+      end
+
+      it "uses the default of the last flag that specifies one" do
+        tool.add_flag(:a, ["--foo=VALUE"], default: 1)
+        tool.add_flag(:a, ["--bar=VALUE"], default: 2)
+        assert_equal(2, tool.default_data[:a])
+      end
+
+      it "keeps an earlier default when a later flag omits one" do
+        tool.add_flag(:a, ["--foo=VALUE"], default: 1)
+        tool.add_flag(:a, ["--bar=VALUE"])
+        assert_equal(1, tool.default_data[:a])
+      end
+
+      it "takes a later default when an earlier flag omits one" do
+        tool.add_flag(:a, ["--foo=VALUE"])
+        tool.add_flag(:a, ["--bar=VALUE"], default: 2)
+        assert_equal(2, tool.default_data[:a])
+      end
+
+      it "retains the per-flag default separately from the tool default" do
+        tool.add_flag(:a, ["--foo=VALUE"], default: 1)
+        tool.add_flag(:a, ["--bar=VALUE"], default: 2)
+        assert_equal([1, 2], tool.flags.map(&:default))
+        assert_equal(2, tool.default_data[:a])
       end
     end
   end

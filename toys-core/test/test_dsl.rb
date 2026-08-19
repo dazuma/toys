@@ -1101,6 +1101,92 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["bar"])
       refute(tool.exact_flag_match_required?)
     end
+
+    it "supports multiple flags sharing a context key" do
+      cli.add_source_block do
+        flag(:format, "--json", desc: "Output JSON")
+        flag(:format, "--yaml", desc: "Output YAML")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flags.size)
+      assert_equal([:format, :format], tool.flags.map(&:key))
+      assert_equal([["--json"], ["--yaml"]], tool.flags.map(&:effective_flags))
+      assert_equal(["Output JSON", "Output YAML"], tool.flags.map { |f| f.desc.to_s })
+    end
+
+    it "defines a single getter for flags sharing a context key" do
+      cli.add_source_block do
+        flag(:format, "--json")
+        flag(:format, "--yaml")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:format))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      context = tool.tool_class.new(format: :json)
+      assert_equal(:json, context.format)
+    end
+
+    it "sets the shared context key from whichever flag is used" do
+      cli.add_source_block do
+        tool "foo" do
+          flag(:format, "--json", handler: proc { |_val, _prev| :json })
+          flag(:format, "--yaml", handler: proc { |_val, _prev| :yaml })
+          flag(:format, "--format=FORMAT", handler: proc { |val, _prev| val.to_sym })
+          def run
+            exit({nil => 1, json: 2, yaml: 3}[self[:format]])
+          end
+        end
+      end
+      assert_equal(1, cli.run(["foo"]))
+      assert_equal(2, cli.run(["foo", "--json"]))
+      assert_equal(3, cli.run(["foo", "--yaml"]))
+      assert_equal(3, cli.run(["foo", "--format", "yaml"]))
+      assert_equal(3, cli.run(["foo", "--json", "--yaml"]))
+      assert_equal(2, cli.run(["foo", "--yaml", "--json"]))
+    end
+
+    it "reads a shared context key through the generated getter" do
+      cli.add_source_block do
+        tool "foo" do
+          flag(:format, "--json", handler: proc { |_val, _prev| :json })
+          flag(:format, "--yaml", handler: proc { |_val, _prev| :yaml })
+          def run
+            exit(format == self[:format] && format == :yaml ? 2 : 1)
+          end
+        end
+      end
+      assert_equal(2, cli.run(["foo", "--yaml"]))
+      assert_equal(1, cli.run(["foo", "--json"]))
+    end
+
+    it "applies the default of the last same-key flag that sets one" do
+      cli.add_source_block do
+        tool "foo" do
+          flag(:format, "--json", default: :from_json)
+          flag(:format, "--yaml", default: :from_yaml)
+          def run
+            exit(format == :from_yaml ? 2 : 1)
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:from_yaml, tool.default_data[:format])
+      assert_equal(2, cli.run(["foo"]))
+    end
+
+    it "applies each same-key flag's own acceptor" do
+      cli.add_source_block do
+        tool "foo" do
+          flag(:count, "--num=VALUE", accept: Integer)
+          flag(:count, "--str=VALUE")
+          def run
+            exit(self[:count] == 3 ? 2 : 1)
+          end
+        end
+      end
+      assert_equal(2, cli.run(["foo", "--num", "3"]))
+      assert_equal(1, cli.run(["foo", "--str", "3"]))
+    end
   end
 
   describe "flag_group directive" do
