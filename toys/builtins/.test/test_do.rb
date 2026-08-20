@@ -146,6 +146,18 @@ describe "toys do" do
     assert_equal("    toys do - Run multiple tools in order", output_lines[1])
   end
 
+  it "documents the source flags and their ordering rule in the help text" do
+    out, _err = capture_subprocess_io do
+      toys_run_tool(["do", "--help"])
+    end
+    # The help text is wrapped to the terminal width, so compare it unwrapped.
+    unwrapped = out.gsub(/\s+/, " ")
+    assert_match(/--gem=GEM/, unwrapped)
+    assert_match(/--git=SPEC/, unwrapped)
+    assert_match(/--path=PATH/, unwrapped)
+    assert_match(/the source added by the leftmost flag takes priority/, unwrapped)
+  end
+
   it "passes flags to the running tool" do
     out, _err = capture_subprocess_io do
       toys_run_tool(["do", "system", "version", "--help"])

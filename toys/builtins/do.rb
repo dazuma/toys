@@ -17,14 +17,16 @@ long_desc \
   "The --delim flag must appear first before the tools to run. Any flags that appear later in" \
     " the command line will be passed to the tools themselves.",
   "",
-  "You may also make the tools from a gem available to the tools you run, by passing the" \
-    " --gem flag. For example:",
-  ["    toys do --gem=my-tools deploy --migrate"],
-  "The tools from the gem take priority over the tools that would otherwise be found. You may" \
-    " also include version requirements for the gem. For example:",
-  ["    toys do --gem=\"my-tools, ~> 1.5, >= 1.5.2\" deploy --migrate"],
-  "Note that the commas separating the version requirements are part of the --gem flag value," \
-    " and are unrelated to the delimiter that separates the tools to run."
+  "You may also make additional tools available to the tools you run, by passing the --gem," \
+    " --git, and --path flags. Each adds a source of tools, which takes priority over the" \
+    " tools that would otherwise be found. The three flags may be repeated and interleaved," \
+    " and the source added by the leftmost flag takes priority over the sources added by the" \
+    " flags to its right. For example:",
+  ["    toys do --gem=my-tools --git=https://github.com/dazuma/example deploy --migrate"],
+  "Here, a tool defined by both sources is taken from the gem. See the descriptions of the" \
+    " individual flags below for the syntax of their values. Note that the commas within those" \
+    " values are part of the flag value, and are unrelated to the delimiter that separates the" \
+    " tools to run."
 
 flag :delim do
   flags "-d", "--delim=VALUE"
@@ -47,10 +49,7 @@ flag :sources do
   default []
   desc "Make the tools from the given gem available"
   long_desc \
-    "Adds the tools from the given gem, prompting to install the gem if it is not present." \
-      " These tools take priority over the tools that would otherwise be found. This flag" \
-      " may be provided multiple times to add multiple gems; if two gems define the same" \
-      " tool, the gem appearing earlier on the command line takes priority.",
+    "Adds the tools from the given gem, prompting to install the gem if it is not present.",
     "",
     "The value is the gem name, optionally followed by any number of version requirements," \
       " all separated by commas. Whitespace surrounding each element is ignored. The version" \
