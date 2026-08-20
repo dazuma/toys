@@ -1934,6 +1934,11 @@ load_git remote: "https://github.com/dazuma/example",
          update: 3600  # Pull the latest HEAD if the cache is an hour old
 ```
 
+The `update:` parameter has a counterpart in the `--git` flag of the built-in
+`do` tool, described in
+[Loading sources from the command line](#loading-sources-from-the-command-line)
+below.
+
 #### Loading from a Ruby gem
 
 Finally, you can define and distribute tools in a Ruby gem, and load them from
@@ -1995,32 +2000,67 @@ directive. This can be useful if a gem has multiple toys directories:
 load_gem "my-tools", toys_dir: "uncommon-tools"
 ```
 
-If you want to run a tool from a gem without referencing that gem from a toys
-file, you can pass the `--gem` flag to the built-in `do` tool. For example:
+#### Loading sources from the command line
+
+If you want to run a tool from an additional source without referencing that
+source from a toys file, you can pass a source flag to the built-in `do` tool.
+There is one flag for each of the three kinds of source described above:
+`--gem`, `--git`, and `--path`. For example:
 
 ```
 $ toys do --gem=my-tools greet
 ```
 
 This makes the tools from the gem available, in addition to the tools Toys
-would otherwise find, and gives them priority if there is a name conflict. You
-can pass the flag multiple times to make several gems available; if two gems
-define the same tool, the gem appearing earlier on the command line wins. As
+would otherwise find, and gives them priority if there is a name conflict. As
 with `load_gem`, Toys prompts you to confirm the install if the gem is not
 already present.
 
-You can also include version requirements, separated from the gem name and from
-one another by commas. They use the same syntax as Rubygems and Bundler, so the
-value reads much like a line from a Gemfile:
+The `--gem` value is the gem name, optionally followed by version requirements,
+separated from the gem name and from one another by commas. They use the same
+syntax as Rubygems and Bundler, so the value reads much like a line from a
+Gemfile:
 
 ```
 $ toys do --gem="my-tools, ~> 1.5, >= 1.5.2" greet
 ```
 
-Remember to quote the value, both because version requirements contain
-characters that are meaningful to the shell, and because the commas inside the
-value are part of the `--gem` flag and have nothing to do with the delimiter
-that separates the tools `do` runs.
+The `--path` value is a file system path, naming either a directory of tools or
+a single Ruby file defining tools:
+
+```
+$ toys do --path=/var/share/mytools greet
+```
+
+The `--git` value begins with the git remote, optionally followed by any number
+of `key=value` elements, again separated by commas. The recognized keys are
+`path`, `commit`, and `update`, and they correspond to the parameters of the
+`load_git` directive:
+
+```
+$ toys do --git="https://github.com/dazuma/example, path=greet.rb, update=3600" greet
+```
+
+The elements of a `--git` value are named, rather than positional as in a
+`--gem` value, because a git source has three independent optional fields, and
+a positional syntax could not express, for example, a path with no commit.
+Whitespace surrounding each element, and surrounding each equals sign, is
+ignored. There is no way to escape a comma appearing within a value.
+
+You can pass these flags multiple times, and interleave them, to make several
+sources available at once. If two sources define the same tool, the source
+whose flag appears earlier on the command line wins:
+
+```
+$ toys do --path=./tools --gem=my-tools --git=https://github.com/dazuma/example greet
+```
+
+Here, a `greet` tool defined by all three sources is taken from `./tools`.
+
+Remember to quote any value that includes commas or characters that are
+meaningful to the shell. The commas inside these values are part of the flag
+value, and have nothing to do with the delimiter that separates the tools `do`
+runs.
 
 #### Publishing a tools Ruby gem
 
