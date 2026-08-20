@@ -358,13 +358,14 @@ describe "toys do --gem" do
     refute(Gem.loaded_specs.key?("fake-tools-two"))
   end
 
-  it "does not activate gems when a later path is invalid" do
-    missing_path = File.expand_path("../../test-data/source-cases/nonexistent", __dir__)
+  # Only the flag values are checked before any source is resolved. Whether a
+  # path names tools is determined when it is added, which can happen after an
+  # earlier gem has been installed.
+  it "does not activate gems when a later path value is malformed" do
     _out, err = capture_subprocess_io do
-      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-two", "--path=#{missing_path}",
-                                     "base-tool"]))
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-two", "--path=  ", "base-tool"]))
     end
-    assert_match(/Cannot load tools from path/, err)
+    assert_match(/Invalid --path value/, err)
     refute(Gem.loaded_specs.key?("fake-tools-two"))
   end
 

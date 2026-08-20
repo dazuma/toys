@@ -125,11 +125,12 @@ end
 # them. The requested sources are added in reverse order so that the first flag
 # on the command line ends up with the highest priority.
 #
-# All the requests are parsed and checked up front, in command line order,
-# because adding a source can have side effects such as installing a gem or
-# fetching a git repo. That way a malformed request is reported before any of
-# those happen, and is reported against the first offending flag rather than
-# the last.
+# All the flag values are parsed up front, in command line order, because
+# adding a source can have side effects such as installing a gem or fetching
+# a git repo. That way a malformed value is reported before any of those
+# happen, and is reported against the first offending flag rather than the
+# last. Whether each source actually resolves is determined later, when it is
+# added.
 def build_cli
   requests = sources.map { |kind, value| [kind, parse_source_request(kind, value)] }
   return cli if requests.empty?
@@ -154,8 +155,8 @@ def parse_source_request(kind, value)
   end
 end
 
-# Adds a single parsed source request to the given CLI, at high priority so it
-# takes precedence over the sources copied from the current CLI.
+# Adds a single parsed source request to the given CLI, at high priority so
+# that it outranks the sources copied from the current CLI.
 def add_source(child_cli, kind, spec)
   case kind
   when :gem
@@ -263,27 +264,25 @@ rescue ::Toys::ToolDefinitionError => e
   exit(1)
 end
 
-# Checks a --path flag value, applying the same rule that adding the path will
-# apply, so that a bad path is reported before any other source is resolved.
+# Checks that a --path flag value is present. Whether the path actually names
+# tools is left to the CLI to determine when the path is added, so that this
+# tool does not have to duplicate that rule.
 def parse_path_request(path_request)
   path = path_request.strip
   if path.empty?
     logger.fatal("Invalid --path value: #{path_request.inspect}")
     exit(1)
   end
-  begin
-    ::Toys::SourceInfo.check_path(path, false)
-  rescue ::Toys::ToolDefinitionError => e
-    logger.fatal("Cannot load tools from path #{path.inspect}: #{e.message}")
-    exit(1)
-  end
   path
 end
 
-# Adds a single path to the given CLI. Any failure here would already have been
-# caught by parse_path_request, which performs the same check. The path is
-# added without a context directory, like the gem and git sources, because it
-# is injected from the command line rather than found in a project.
+# Adds a single path to the given CLI, reporting a path that does not name
+# tools as an error message rather than a stack trace. The path is added
+# without a context directory, like the gem and git sources, because it is
+# injected from the command line rather than found in a project.
 def add_path(child_cli, path)
   child_cli.add_source_path(path, high_priority: true, context_directory: nil)
+rescue ::Toys::ToolDefinitionError => e
+  logger.fatal("Cannot load tools from path #{path.inspect}: #{e.message}")
+  exit(1)
 end
