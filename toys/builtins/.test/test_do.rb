@@ -110,14 +110,14 @@ module DoGitFixture
   def cleanup_git_repo
     ENV["XDG_CACHE_HOME"] = @old_xdg_cache_home
     # Cached sources are made read-only, so restore write access before
-    # removing the temp directory. Removal also races with the maintenance
-    # process that git spawns detached after a fetch, in two ways. It can
-    # write new pack files into a directory that rm_rf has already emptied,
-    # which leaves the tree in place without raising anything. It can also
-    # delete an objects directory between the moment chmod_R lists it and
-    # the moment it descends into it, which raises out of the traversal
-    # because `force` covers only the chmod of each entry, not the walk. So
-    # swallow the walk errors, and retry until the tree is really gone.
+    # removing the temp directory. The retry loop guards against git auto
+    # maintenance, which spawns detached after a fetch and then writes into a
+    # tree that rm_rf has already walked, defeating the removal silently. The
+    # git cache stopped triggering that as of git_cache 0.1.2, which disables
+    # auto maintenance on its own invocations, but the fixture repo here is
+    # built with plain git commands that carry no such setting, so the loop
+    # stays. Errors from the chmod walk are swallowed as well, because `force`
+    # covers only the chmod of each entry, not the traversal that finds them.
     5.times do
       begin
         FileUtils.chmod_R("u+w", tmp_dir, force: true)
@@ -621,11 +621,10 @@ describe "toys do --git" do
     refute_match(/toys-core\/lib/, err)
   end
 
-  # A path naming a file that is not a ruby file stands in for the general
-  # case of a repo path that carries no tools. (A path that is not in the repo
-  # at all would be the more obvious case, but as of this writing it trips an
-  # unrelated bug in the vendored git cache library, which raises its own error
-  # class with too few arguments.)
+  # A path naming a file that is not a ruby file carries no tools, and fails
+  # the path check that every source gets rather than failing inside the git
+  # cache. The test after this one covers the other side: a path that the git
+  # cache cannot find in the repo at all.
   it "reports a repo path with no tools without a stack trace" do
     commit_file("notes.txt", "Not a ruby file")
     out, err = capture_subprocess_io do
@@ -633,6 +632,16 @@ describe "toys do --git" do
     end
     assert_equal("", out)
     assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "reports a repo path that does not exist without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, path=nonexistent.rb", "base-tool"))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
+    assert_match(/does not exist at SHA/, err)
     refute_match(/toys-core\/lib/, err)
   end
 
