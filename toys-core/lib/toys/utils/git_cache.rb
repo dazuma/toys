@@ -22,6 +22,7 @@ module Toys
         require "digest"
         require "fileutils"
         require "json"
+        require "securerandom"
         require "toys/utils/exec"
         @cache_dir = ::File.expand_path(cache_dir || default_cache_dir)
         @exec = ::Toys::Utils::Exec.new(out: :capture, err: :capture)
@@ -141,8 +142,7 @@ module Toys
         Array(remotes).map do |remote|
           dir = repo_base_dir_for(remote)
           if ::File.directory?(dir)
-            ::FileUtils.chmod_R("u+w", dir, force: true)
-            ::FileUtils.rm_rf(dir)
+            remove_dir(dir)
             remote
           end
         end.compact.sort
@@ -204,9 +204,7 @@ module Toys
           end
           results.map(&:sha).uniq.each do |sha|
             unless repo_lock.source_exists?(sha)
-              sha_dir = ::File.join(dir, sha)
-              ::FileUtils.chmod_R("u+w", sha_dir, force: true)
-              ::FileUtils.rm_rf(sha_dir)
+              remove_dir(::File.join(dir, sha))
             end
           end
         end
@@ -218,7 +216,19 @@ module Toys
       FORMAT_VERSION = "v1"
       REPO_DIR_NAME = "repo"
       LOCK_FILE_NAME = "repo.lock"
-      private_constant :REPO_DIR_NAME, :LOCK_FILE_NAME, :FORMAT_VERSION
+      TRASH_DIR_PREFIX = ".trash-"
+
+      # Config applied to every git invocation. Auto maintenance would otherwise
+      # spawn a detached `git maintenance run --auto` process after each fetch,
+      # which keeps writing into the cache repo after the fetch has returned, and
+      # thus races with our own traversals and removals of that directory. These
+      # are managed cache repos that we recreate at will, so background repacking
+      # buys them nothing. Requires git 2.30 or later; older gits ignore config
+      # keys they do not recognize.
+      GIT_CONFIG_ARGS = ["-c", "maintenance.auto=false"].freeze
+
+      private_constant :REPO_DIR_NAME, :LOCK_FILE_NAME, :FORMAT_VERSION,
+                       :TRASH_DIR_PREFIX, :GIT_CONFIG_ARGS
 
       def repo_base_dir_for(remote)
         ::File.join(@cache_dir, ::Toys::Utils::GitCache.remote_dir_name(remote))
@@ -230,11 +240,70 @@ module Toys
       end
 
       def git(dir, cmd, error_message: nil)
-        result = @exec.exec(["git"] + cmd, chdir: dir)
+        result = @exec.exec(["git"] + GIT_CONFIG_ARGS + cmd, chdir: dir)
         if !result.success? && error_message
           raise ::Toys::Utils::GitCache::Error.new(error_message, result)
         end
         result
+      end
+
+      # Removes a directory from the cache.
+      #
+      # The directory is first renamed out of the way, which is atomic and thus
+      # unaffected by any concurrent writes happening inside it, so the cache
+      # entry is gone as far as any client is concerned as soon as this returns.
+      # Only then is the renamed copy deleted, best effort. Anything left behind
+      # is invisible to clients and is swept up by later removals.
+      #
+      # Raises {Toys::Utils::GitCache::Error} if the directory could not be removed at all.
+      #
+      def remove_dir(dir)
+        return unless ::File.exist?(dir)
+        parent = ::File.dirname(dir)
+        begin
+          ::File.rename(dir, ::File.join(parent, "#{TRASH_DIR_PREFIX}#{::SecureRandom.hex(8)}"))
+        rescue ::SystemCallError
+          # Some filesystems (notably on Windows) refuse to rename a directory
+          # that has open handles under it. Fall back to deleting in place.
+          unless remove_dir_in_place(dir)
+            raise ::Toys::Utils::GitCache::Error, "Unable to remove directory: #{dir}"
+          end
+        end
+        sweep_trash(parent)
+      end
+
+      # Deletes a directory in place, retrying because a concurrent writer can
+      # defeat a single pass. Returns whether the directory is gone.
+      #
+      def remove_dir_in_place(dir, attempts: 3)
+        attempts.times do
+          chmod_recursive("u+w", dir)
+          ::FileUtils.rm_rf(dir)
+          return true unless ::File.exist?(dir)
+        end
+        false
+      end
+
+      # Recursive chmod that tolerates entries disappearing while it runs. The
+      # force: option of FileUtils.chmod_R covers only the chmod of each entry,
+      # not the traversal that finds them, so a concurrent writer removing a
+      # directory mid-walk raises out of chmod_R despite it.
+      #
+      def chmod_recursive(mode, dir)
+        ::FileUtils.chmod_R(mode, dir, force: true)
+      rescue ::SystemCallError
+        nil
+      end
+
+      # Deletes any leftover trash directories in the given directory. Failures
+      # are ignored; the leftovers are harmless and we can try again next time.
+      #
+      def sweep_trash(dir)
+        ::Dir.children(dir).each do |child|
+          remove_dir_in_place(::File.join(dir, child)) if child.start_with?(TRASH_DIR_PREFIX)
+        end
+      rescue ::SystemCallError
+        nil
       end
 
       def ensure_repo_base_dir(remote)
@@ -266,8 +335,7 @@ module Toys
         ::FileUtils.mkdir_p(repo_dir)
         result = git(repo_dir, ["remote", "get-url", "origin"])
         unless result.success? && result.captured_out.strip == remote
-          ::FileUtils.chmod_R("u+w", repo_dir, force: true)
-          ::FileUtils.rm_rf(repo_dir)
+          remove_dir(repo_dir)
           ::FileUtils.mkdir_p(repo_dir)
           git(repo_dir, ["init"],
               error_message: "Unable to initialize git repository")
@@ -305,11 +373,11 @@ module Toys
           if repo_lock.source_exists?(sha, path)
             ::Toys::Utils::GitCache.safe_join(source_path, path)
           else
-            ::FileUtils.chmod_R("u+w", source_path, force: true)
+            chmod_recursive("u+w", source_path)
             begin
               copy_from_repo(repo_path, source_path, sha, path)
             ensure
-              ::FileUtils.chmod_R("a-w", source_path, force: true) unless ::Toys::Utils::GitCache.sources_writable?
+              chmod_recursive("a-w", source_path) unless ::Toys::Utils::GitCache.sources_writable?
             end
           end
         repo_lock.access_source!(sha, path)
@@ -443,11 +511,11 @@ module Toys
         # Create a Toys::Utils::GitCache::Error.
         #
         # @param message [String] The error message
-        # @param result [::Toys::Utils::Exec::Result] The result of a git
-        #     command execution, or `nil` if this error was not due to a git
-        #     command error.
+        # @param result [::Toys::Utils::Exec::Result,nil] The result of a git
+        #     command execution. Omit or pass `nil` if this error was not due to
+        #     a git command error.
         #
-        def initialize(message, result)
+        def initialize(message, result = nil)
           super(message)
           @exec_result = result
         end
@@ -920,7 +988,7 @@ module Toys
       # Version of the git_cache gem
       # @return [String]
       #
-      VERSION = "0.1.1"
+      VERSION = "0.1.2"
     end
   end
 end
