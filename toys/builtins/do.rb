@@ -59,6 +59,33 @@ flag :sources do
 end
 
 flag :sources do
+  flags "--git=SPEC"
+  handler { |val, prev| prev + [[:git, val]] }
+  default []
+  desc "Make the tools from the given git repository available"
+  long_desc \
+    "Adds the tools from the given git repository, fetching the repository into a local cache" \
+      " if it is not already there.",
+    "",
+    "The value is the git remote (i.e. the repository URL or path), optionally followed by any" \
+      " number of \"key=value\" elements, all separated by commas. Whitespace surrounding each" \
+      " element, and surrounding each equals sign, is ignored. For example:",
+    ["    --git=\"https://github.com/dazuma/example, path=toys, commit=main\""],
+    "The recognized keys are:",
+    ["    path     The file or directory within the repository to load. By default, the"],
+    ["             entire repository is loaded."],
+    ["    commit   The SHA, tag, or branch to load. By default, the repository head is used."],
+    ["    update   Whether to refresh a previously cached repository. Pass \"true\" or \"false\","],
+    ["             or a number of seconds, to refresh only if the cache is at least that old."],
+    ["             The default is \"false\"."],
+    "Unlike --gem, which takes its elements positionally, the elements here are named, because" \
+      " a git source has three independent optional fields and a positional syntax could not" \
+      " express, for example, a path with no commit.",
+    "",
+    "There is no way to escape a comma appearing within the value."
+end
+
+flag :sources do
   flags "--path=PATH"
   handler { |val, prev| prev + [[:path, val]] }
   default []
@@ -121,6 +148,8 @@ def parse_source_request(kind, value)
   case kind
   when :gem
     parse_gem_request(value)
+  when :git
+    parse_git_request(value)
   when :path
     parse_path_request(value)
   end
@@ -132,6 +161,8 @@ def add_source(child_cli, kind, spec)
   case kind
   when :gem
     add_gem(child_cli, *spec)
+  when :git
+    add_git(child_cli, *spec)
   when :path
     add_path(child_cli, spec)
   end
@@ -161,6 +192,75 @@ def add_gem(child_cli, gem_name, gem_version)
   child_cli.add_source_gem(gem_name, gem_version: gem_version, high_priority: true)
 rescue ::Toys::ToolDefinitionError => e
   logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
+  exit(1)
+end
+
+# Splits a --git flag value into the git remote and the options that follow it,
+# and checks that all of them are valid. Unrecognized and duplicate keys are
+# errors rather than being ignored or resolved as last-wins, because a mistyped
+# key would otherwise silently load something other than what was asked for.
+def parse_git_request(git_request)
+  git_remote, *elements = git_request.split(",", -1).map(&:strip)
+  git_error(git_request, "the git remote is required") if git_remote.nil? || git_remote.empty?
+  opts = { git_path: nil, git_commit: nil, update: false }
+  seen_keys = []
+  elements.each do |element|
+    key, value = parse_git_element(git_request, element, seen_keys)
+    case key
+    when "path"
+      opts[:git_path] = value
+    when "commit"
+      opts[:git_commit] = value
+    when "update"
+      opts[:update] = parse_git_update(git_request, value)
+    else
+      git_error(git_request, "unrecognized key #{key.inspect}")
+    end
+  end
+  [git_remote, opts]
+end
+
+# Splits one element following the git remote into its key and value, and
+# checks that it is well-formed and does not repeat an earlier key.
+def parse_git_element(git_request, element, seen_keys)
+  key, value = element.split("=", 2).map(&:strip)
+  if value.nil? || key.empty?
+    git_error(git_request, "expected \"key=value\" but got #{element.inspect}")
+  end
+  git_error(git_request, "empty value for key #{key.inspect}") if value.empty?
+  git_error(git_request, "duplicate key #{key.inspect}") if seen_keys.include?(key)
+  seen_keys << key
+  [key, value]
+end
+
+# Interprets the value of the "update" key in a --git flag value, which is
+# either a boolean or a number of seconds.
+def parse_git_update(git_request, value)
+  case value
+  when "true"
+    true
+  when "false"
+    false
+  when /\A\d+\z/
+    value.to_i
+  else
+    git_error(git_request, "invalid update value #{value.inspect}")
+  end
+end
+
+# Reports a malformed --git flag value, naming the part of the value that was
+# not understood.
+def git_error(git_request, message)
+  logger.fatal("Invalid --git value: #{git_request.inspect}: #{message}")
+  exit(1)
+end
+
+# Adds a single git repository to the given CLI, reporting a failure to fetch
+# the repo or to find its tools as an error message rather than a stack trace.
+def add_git(child_cli, git_remote, opts)
+  child_cli.add_source_git(git_remote, high_priority: true, **opts)
+rescue ::Toys::ToolDefinitionError => e
+  logger.fatal("Cannot load tools from git remote #{git_remote.inspect}: #{e.message}")
   exit(1)
 end
 
