@@ -19,7 +19,7 @@ tool "test" do
     ::Dir.chdir(context_directory)
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
     cmd = ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"] + verbosity_flags + files
-    exit(cli.run(cmd))
+    exit(runner.run(cmd))
   end
 end
 

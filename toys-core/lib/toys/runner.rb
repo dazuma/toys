@@ -23,11 +23,20 @@ module Toys
   #
   # The Runner that is running a tool is available to that tool as
   # {Toys::Context#runner}, so a tool can use it to run a sibling tool in the
-  # same process.
+  # same process. For example:
   #
-  # Most applications should not create a Runner directly, but should call
-  # {Toys::CLI#run} or {Toys::CLI#load_tool}, which run tools using a properly
-  # configured Runner.
+  #     # My .toys.rb
+  #     tool "foo" do
+  #       def run
+  #         puts "in foo"
+  #       end
+  #     end
+  #     tool "bar" do
+  #       def run
+  #         puts "in bar"
+  #         runner.run(["foo"])
+  #       end
+  #     end
   #
   class Runner
     ##

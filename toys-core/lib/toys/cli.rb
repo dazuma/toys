@@ -30,21 +30,24 @@ module Toys
   #     end
   #     exit(cli.run(*ARGV))
   #
-  # The currently running CLI is also available at runtime, and can be used by
-  # tools that want to invoke other tools. For example:
+  # The currently running CLI is also available at runtime, as
+  # {Toys::Context#cli}. Use it when a tool needs the CLI configuration
+  # itself, most often to build a modified copy with {#child}. For example:
   #
   #     # My .toys.rb
-  #     tool "foo" do
-  #       def run
-  #         puts "in foo"
-  #       end
-  #     end
   #     tool "bar" do
   #       def run
-  #         puts "in bar"
-  #         cli.run "foo"
+  #         # Run "some-tool" with the tools from the "my-tools" gem also
+  #         # available.
+  #         child = cli.child(copy_sources: true) do |c|
+  #           c.add_source_gem("my-tools", high_priority: true)
+  #         end
+  #         child.run("some-tool")
   #       end
   #     end
+  #
+  # A tool that simply wants to invoke another tool should instead use the
+  # runner, as described in {Toys::Runner}.
   #
   class CLI
     ##
