@@ -21,6 +21,16 @@ describe Toys::Utils::GitCache do
     assert(defined?(::Toys::Utils::GitCache::RepoLock))
   end
 
+  # The vendored library is generated from the git_cache gem, so a constructor
+  # signature that drifts between the gem and the vendored copy would surface
+  # only when a caller happened to hit it. The library raises this error with a
+  # message and no exec result in several places, so pin that arity here.
+  it "creates an error with no exec result" do
+    error = Toys::Utils::GitCache::Error.new("whoops")
+    assert_equal("whoops", error.message)
+    assert_nil(error.exec_result)
+  end
+
   it "uses the default cache dir" do
     sample_remote = "https://github.com/dazuma/toys.git"
     git_cache = Toys::Utils::GitCache.new
@@ -65,14 +75,14 @@ describe Toys::Utils::GitCache do
 
     after do
       # Cached sources are made read-only, so restore write access before
-      # removing the temp directory. Removal also races with the maintenance
-      # process that git spawns detached after a fetch, in two ways. It can
-      # write new pack files into a directory that rm_rf has already emptied,
-      # which leaves the tree in place without raising anything. It can also
-      # delete an objects directory between the moment chmod_R lists it and
-      # the moment it descends into it, which raises out of the traversal
-      # because `force` covers only the chmod of each entry, not the walk. So
-      # swallow the walk errors, and retry until the tree is really gone.
+      # removing the temp directory. The retry loop guards against git auto
+      # maintenance, which spawns detached after a fetch and then writes into a
+      # tree that rm_rf has already walked, defeating the removal silently. The
+      # library stopped triggering that as of git_cache 0.1.2, which disables
+      # auto maintenance on its own invocations, but the fixture repo here is
+      # built with plain git commands that carry no such setting, so the loop
+      # stays. Errors from the chmod walk are swallowed as well, because `force`
+      # covers only the chmod of each entry, not the traversal that finds them.
       5.times do
         begin
           FileUtils.chmod_R("u+w", tmp_dir, force: true)

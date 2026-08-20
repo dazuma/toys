@@ -47,14 +47,14 @@ describe Toys::StandardCLI do
     after do
       ENV["XDG_CACHE_HOME"] = @old_xdg_cache_home
       # Cached sources are made read-only, so restore write access before
-      # removing the temp directory. Removal also races with the maintenance
-      # process that git spawns detached after a fetch, in two ways. It can
-      # write new pack files into a directory that rm_rf has already emptied,
-      # which leaves the tree in place without raising anything. It can also
-      # delete an objects directory between the moment chmod_R lists it and
-      # the moment it descends into it, which raises out of the traversal
-      # because `force` covers only the chmod of each entry, not the walk. So
-      # swallow the walk errors, and retry until the tree is really gone.
+      # removing the temp directory. The retry loop guards against git auto
+      # maintenance, which spawns detached after a fetch and then writes into a
+      # tree that rm_rf has already walked, defeating the removal silently. The
+      # git cache stopped triggering that as of git_cache 0.1.2, which disables
+      # auto maintenance on its own invocations, but the fixture repo here is
+      # built with plain git commands that carry no such setting, so the loop
+      # stays. Errors from the chmod walk are swallowed as well, because `force`
+      # covers only the chmod of each entry, not the traversal that finds them.
       5.times do
         begin
           FileUtils.chmod_R("u+w", tmp_dir, force: true)
