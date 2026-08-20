@@ -17,14 +17,16 @@ long_desc \
   "The --delim flag must appear first before the tools to run. Any flags that appear later in" \
     " the command line will be passed to the tools themselves.",
   "",
-  "You may also make the tools from a gem available to the tools you run, by passing the" \
-    " --gem flag. For example:",
-  ["    toys do --gem=my-tools deploy --migrate"],
-  "The tools from the gem take priority over the tools that would otherwise be found. You may" \
-    " also include version requirements for the gem. For example:",
-  ["    toys do --gem=\"my-tools, ~> 1.5, >= 1.5.2\" deploy --migrate"],
-  "Note that the commas separating the version requirements are part of the --gem flag value," \
-    " and are unrelated to the delimiter that separates the tools to run."
+  "You may also make additional tools available to the tools you run, by passing the --gem," \
+    " --git, and --path flags. Each adds a source of tools, which takes priority over the" \
+    " tools that would otherwise be found. The three flags may be repeated and interleaved," \
+    " and the source added by the leftmost flag takes priority over the sources added by the" \
+    " flags to its right. For example:",
+  ["    toys do --gem=my-tools --git=https://github.com/dazuma/example deploy --migrate"],
+  "Here, a tool defined by both sources is taken from the gem. See the descriptions of the" \
+    " individual flags below for the syntax of their values. Note that the commas within those" \
+    " values are part of the flag value, and are unrelated to the delimiter that separates the" \
+    " tools to run."
 
 flag :delim do
   flags "-d", "--delim=VALUE"
@@ -33,21 +35,65 @@ flag :delim do
   long_desc "Sets the delimiter that separates tool invocations. The default value is \",\"."
 end
 
-flag :gems do
+# The source flags all share the :sources key, and their handlers append to
+# the same array, tagging each value with the kind of source requested. That
+# way the array records the order in which the flags appeared on the command
+# line, across all of the flags, which is the order that determines priority.
+# The handlers store the raw value; parsing happens later, in build_cli,
+# because an error raised from a handler would come out of the argument parser
+# as a stack trace rather than as a simple message.
+
+flag :sources do
   flags "--gem=GEM"
-  handler :push
+  handler { |val, prev| prev + [[:gem, val]] }
   default []
   desc "Make the tools from the given gem available"
   long_desc \
-    "Adds the tools from the given gem, prompting to install the gem if it is not present." \
-      " These tools take priority over the tools that would otherwise be found. This flag" \
-      " may be provided multiple times to add multiple gems; if two gems define the same" \
-      " tool, the gem appearing earlier on the command line takes priority.",
+    "Adds the tools from the given gem, prompting to install the gem if it is not present.",
     "",
     "The value is the gem name, optionally followed by any number of version requirements," \
       " all separated by commas. Whitespace surrounding each element is ignored. The version" \
       " requirements use the same syntax as Rubygems and Bundler. For example:",
     ["    --gem=\"my-tools, ~> 1.5, >= 1.5.2\""]
+end
+
+flag :sources do
+  flags "--git=SPEC"
+  handler { |val, prev| prev + [[:git, val]] }
+  default []
+  desc "Make the tools from the given git repository available"
+  long_desc \
+    "Adds the tools from the given git repository, fetching the repository into a local cache" \
+      " if it is not already there.",
+    "",
+    "The value is the git remote (i.e. the repository URL or path), optionally followed by any" \
+      " number of \"key=value\" elements, all separated by commas. Whitespace surrounding each" \
+      " element, and surrounding each equals sign, is ignored. For example:",
+    ["    --git=\"https://github.com/dazuma/example, path=toys, commit=main\""],
+    "The recognized keys are:",
+    ["    path     The file or directory within the repository to load. By default, the"],
+    ["             entire repository is loaded."],
+    ["    commit   The SHA, tag, or branch to load. By default, the repository head is used."],
+    ["    update   Whether to refresh a previously cached repository. Pass \"true\" or \"false\","],
+    ["             or a number of seconds, to refresh only if the cache is at least that old."],
+    ["             The default is \"false\"."],
+    "Unlike --gem, which takes its elements positionally, the elements here are named, because" \
+      " a git source has three independent optional fields and a positional syntax could not" \
+      " express, for example, a path with no commit.",
+    "",
+    "There is no way to escape a comma appearing within the value."
+end
+
+flag :sources do
+  flags "--path=PATH"
+  handler { |val, prev| prev + [[:path, val]] }
+  default []
+  complete_values :file_system
+  desc "Make the tools from the given path available"
+  long_desc \
+    "Adds the tools from the given file system path. The path must name either a directory" \
+      " of tools, or a single Ruby file defining tools. For example:",
+    ["    --path=/path/to/my-tools"]
 end
 
 remaining_args :commands do
@@ -73,24 +119,52 @@ def run
 end
 
 # Returns the CLI used to run the requested tools. Normally this is simply the
-# current CLI, but if gems were requested, we need a new CLI because sources
-# cannot be added to a CLI that has already started loading tools. The new CLI
-# copies the current sources and adds the gems on top of them. The gems are
-# added in reverse order so that the first gem on the command line ends up with
-# the highest priority.
+# current CLI, but if any sources were requested, we need a new CLI because
+# sources cannot be added to a CLI that has already started loading tools. The
+# new CLI copies the current sources and adds the requested ones on top of
+# them. The requested sources are added in reverse order so that the first flag
+# on the command line ends up with the highest priority.
 #
-# All the requests are parsed and checked up front, in command line order,
-# because adding a gem can have side effects such as installing it. That way a
-# malformed request is reported before any gem is activated, and is reported
-# against the first offending flag rather than the last.
+# All the flag values are parsed up front, in command line order, because
+# adding a source can have side effects such as installing a gem or fetching
+# a git repo. That way a malformed value is reported before any of those
+# happen, and is reported against the first offending flag rather than the
+# last. Whether each source actually resolves is determined later, when it is
+# added.
 def build_cli
-  gem_requests = gems.map { |gem_request| parse_gem_request(gem_request) }
-  return cli if gem_requests.empty?
-  require "toys/utils/gems"
+  requests = sources.map { |kind, value| [kind, parse_source_request(kind, value)] }
+  return cli if requests.empty?
+  require "toys/utils/gems" if requests.any? { |kind, _spec| kind == :gem }
   cli.child(copy_sources: true) do |child_cli|
-    gem_requests.reverse_each do |gem_name, gem_version|
-      add_gem(child_cli, gem_name, gem_version)
+    requests.reverse_each do |kind, spec|
+      add_source(child_cli, kind, spec)
     end
+  end
+end
+
+# Parses and checks a single source request, without adding it to any CLI,
+# returning the information needed later to add it.
+def parse_source_request(kind, value)
+  case kind
+  when :gem
+    parse_gem_request(value)
+  when :git
+    parse_git_request(value)
+  when :path
+    parse_path_request(value)
+  end
+end
+
+# Adds a single parsed source request to the given CLI, at high priority so
+# that it outranks the sources copied from the current CLI.
+def add_source(child_cli, kind, spec)
+  case kind
+  when :gem
+    add_gem(child_cli, *spec)
+  when :git
+    add_git(child_cli, *spec)
+  when :path
+    add_path(child_cli, spec)
   end
 end
 
@@ -118,5 +192,97 @@ def add_gem(child_cli, gem_name, gem_version)
   child_cli.add_source_gem(gem_name, gem_version: gem_version, high_priority: true)
 rescue ::Toys::ToolDefinitionError => e
   logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
+  exit(1)
+end
+
+# Splits a --git flag value into the git remote and the options that follow it,
+# and checks that all of them are valid. Unrecognized and duplicate keys are
+# errors rather than being ignored or resolved as last-wins, because a mistyped
+# key would otherwise silently load something other than what was asked for.
+def parse_git_request(git_request)
+  git_remote, *elements = git_request.split(",", -1).map(&:strip)
+  git_error(git_request, "the git remote is required") if git_remote.nil? || git_remote.empty?
+  opts = { git_path: nil, git_commit: nil, update: false }
+  seen_keys = []
+  elements.each do |element|
+    key, value = parse_git_element(git_request, element, seen_keys)
+    case key
+    when "path"
+      opts[:git_path] = value
+    when "commit"
+      opts[:git_commit] = value
+    when "update"
+      opts[:update] = parse_git_update(git_request, value)
+    else
+      git_error(git_request, "unrecognized key #{key.inspect}")
+    end
+  end
+  [git_remote, opts]
+end
+
+# Splits one element following the git remote into its key and value, and
+# checks that it is well-formed and does not repeat an earlier key.
+def parse_git_element(git_request, element, seen_keys)
+  key, value = element.split("=", 2).map(&:strip)
+  if value.nil? || key.empty?
+    git_error(git_request, "expected \"key=value\" but got #{element.inspect}")
+  end
+  git_error(git_request, "empty value for key #{key.inspect}") if value.empty?
+  git_error(git_request, "duplicate key #{key.inspect}") if seen_keys.include?(key)
+  seen_keys << key
+  [key, value]
+end
+
+# Interprets the value of the "update" key in a --git flag value, which is
+# either a boolean or a number of seconds.
+def parse_git_update(git_request, value)
+  case value
+  when "true"
+    true
+  when "false"
+    false
+  when /\A\d+\z/
+    value.to_i
+  else
+    git_error(git_request, "invalid update value #{value.inspect}")
+  end
+end
+
+# Reports a malformed --git flag value, naming the part of the value that was
+# not understood.
+def git_error(git_request, message)
+  logger.fatal("Invalid --git value: #{git_request.inspect}: #{message}")
+  exit(1)
+end
+
+# Adds a single git repository to the given CLI, reporting a failure to fetch
+# the repo or to find its tools as an error message rather than a stack trace.
+def add_git(child_cli, git_remote, opts)
+  child_cli.add_source_git(git_remote, high_priority: true, **opts)
+rescue ::Toys::ToolDefinitionError => e
+  logger.fatal("Cannot load tools from git remote #{git_remote.inspect}: #{e.message}")
+  exit(1)
+end
+
+# Checks that a --path flag value is present. Whether the path actually names
+# tools is left to the CLI to determine when the path is added, so that this
+# tool does not have to duplicate that rule.
+def parse_path_request(path_request)
+  path = path_request.strip
+  if path.empty?
+    logger.fatal("Invalid --path value: #{path_request.inspect}")
+    exit(1)
+  end
+  path
+end
+
+# Adds a single path to the given CLI, reporting a path that does not name
+# tools as an error message rather than a stack trace. The path is added
+# without a context directory, like the gem and git sources, because it is
+# injected from the command line rather than found in a project.
+def add_path(child_cli, path)
+  child_cli.add_source_path(path, high_priority: true, context_directory: nil)
+rescue ::Toys::ToolDefinitionError => e
+  logger.fatal("Cannot load tools from path #{path.inspect}: #{e.message}")
   exit(1)
 end

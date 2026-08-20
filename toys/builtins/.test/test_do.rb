@@ -1,3 +1,136 @@
+# frozen_string_literal: true
+
+require "toys/utils/exec"
+require "toys/utils/git_cache"
+require "fileutils"
+require "tmpdir"
+
+# The git source tests build a git repository at runtime, and run against a
+# CLI carrying a git cache rooted in the same temp directory, so that they
+# never touch the user's real git cache. This module holds that fixture so
+# that more than one describe block can use it.
+module DoGitFixture
+  def exec_tool
+    @exec_tool ||= Toys::Utils::Exec.new
+  end
+
+  # Each test gets its own temp directory, so no test can see cache or repo
+  # state left behind by another, whether in this suite or elsewhere.
+  def tmp_dir
+    @tmp_dir ||= Dir.mktmpdir("toys_do_git_test")
+  end
+
+  def git_repo_dir
+    File.join(tmp_dir, "repo")
+  end
+
+  def local_remote
+    File.join(git_repo_dir, ".git")
+  end
+
+  def cache_dir
+    File.join(tmp_dir, "cache")
+  end
+
+  def base_dir
+    File.expand_path("../../test-data/source-cases/base", __dir__)
+  end
+
+  def path_tools_dir
+    File.expand_path("../../test-data/source-cases/path-tools", __dir__)
+  end
+
+  # A CLI carrying a git cache rooted in this test's temp directory. The
+  # child CLI that "do" builds inherits the cache along with the source list,
+  # so no git source resolved during a test reaches the user's real cache.
+  def custom_cli
+    @custom_cli ||= begin
+      git_cache = Toys::Utils::GitCache.new(cache_dir: cache_dir)
+      source_list = Toys::SourceList.new(git_cache: git_cache)
+      Toys::StandardCLI.new(custom_paths: [File.dirname(__dir__), base_dir],
+                            include_builtins: false,
+                            source_list: source_list)
+    end
+  end
+
+  def run_do(*args)
+    toys_run_tool(["do"] + args, cli: custom_cli)
+  end
+
+  def exec_git(*args)
+    result = exec_tool.exec(["git"] + args, out: :capture, err: :null)
+    assert(result.success?, "Git failed: #{args}")
+    result.captured_out
+  end
+
+  def commit_file(name, content)
+    Dir.chdir(git_repo_dir) do
+      dir = File.dirname(name)
+      FileUtils.mkdir_p(dir) unless dir == "."
+      File.open(name, "w") { |file| file.puts(content) }
+      exec_git("add", name)
+      exec_git("commit", "-m", "Write file #{name}")
+    end
+  end
+
+  def tool_file(text)
+    "# frozen_string_literal: true\n\ndef run\n  puts \"#{text}\"\nend\n"
+  end
+
+  # Builds a repo with a tool unique to it, a "shared-tool" for priority
+  # assertions, a subdirectory and a single file for path assertions, and a
+  # "version-tool" whose output identifies the commit it came from. The first
+  # commit is tagged, and its sha and branch are recorded, so that all three
+  # forms of commit reference can be exercised.
+  def setup_git_repo
+    FileUtils.mkdir_p(git_repo_dir)
+    Dir.chdir(git_repo_dir) do
+      exec_git("init")
+    end
+    commit_file("git-tool.rb", tool_file("git git-tool"))
+    commit_file("shared-tool.rb", tool_file("git shared-tool"))
+    commit_file("subdir/sub-tool.rb", tool_file("git sub-tool"))
+    commit_file("standalone.rb",
+                "# frozen_string_literal: true\n\n" \
+                "tool \"git-standalone-tool\" do\n" \
+                "  def run\n    puts \"git standalone-tool\"\n  end\nend\n")
+    commit_file("version-tool.rb", tool_file("git version 1"))
+    Dir.chdir(git_repo_dir) do
+      exec_git("tag", "vone")
+      @first_sha = exec_git("rev-parse", "HEAD").strip
+      @branch = exec_git("rev-parse", "--abbrev-ref", "HEAD").strip
+    end
+    commit_file("version-tool.rb", tool_file("git version 2"))
+    # Belt and braces: if a source were ever resolved without the custom
+    # cache, the default cache would land here rather than in the user's home.
+    @old_xdg_cache_home = ENV["XDG_CACHE_HOME"]
+    ENV["XDG_CACHE_HOME"] = File.join(tmp_dir, "xdg-cache")
+  end
+
+  def cleanup_git_repo
+    ENV["XDG_CACHE_HOME"] = @old_xdg_cache_home
+    # Cached sources are made read-only, so restore write access before
+    # removing the temp directory. The retry loop guards against git auto
+    # maintenance, which spawns detached after a fetch and then writes into a
+    # tree that rm_rf has already walked, defeating the removal silently. The
+    # git cache stopped triggering that as of git_cache 0.1.2, which disables
+    # auto maintenance on its own invocations, but the fixture repo here is
+    # built with plain git commands that carry no such setting, so the loop
+    # stays. Errors from the chmod walk are swallowed as well, because `force`
+    # covers only the chmod of each entry, not the traversal that finds them.
+    5.times do
+      begin
+        FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      rescue SystemCallError
+        # Fall through to the removal attempt, then try again.
+      end
+      FileUtils.rm_rf(tmp_dir)
+      break unless File.exist?(tmp_dir)
+      sleep(0.1)
+    end
+  end
+end
+
 describe "toys do" do
   include Toys::Testing
 
@@ -11,6 +144,18 @@ describe "toys do" do
     output_lines = out.split("\n")
     assert_equal("NAME", output_lines[0])
     assert_equal("    toys do - Run multiple tools in order", output_lines[1])
+  end
+
+  it "documents the source flags and their ordering rule in the help text" do
+    out, _err = capture_subprocess_io do
+      toys_run_tool(["do", "--help"])
+    end
+    # The help text is wrapped to the terminal width, so compare it unwrapped.
+    unwrapped = out.gsub(/\s+/, " ")
+    assert_match(/--gem=GEM/, unwrapped)
+    assert_match(/--git=SPEC/, unwrapped)
+    assert_match(/--path=PATH/, unwrapped)
+    assert_match(/the source added by the leftmost flag takes priority/, unwrapped)
   end
 
   it "passes flags to the running tool" do
@@ -46,11 +191,11 @@ describe "toys do --gem" do
   # The base source provides "base-tool" and "shared-tool", alongside the
   # builtin tools.
   toys_custom_paths([File.dirname(__dir__),
-                     File.expand_path("../../test-data/gem-source-cases/base", __dir__)])
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
   toys_include_builtins(false)
 
   # None of the gems available to these tests carry a toys directory, so we
-  # point rubygems at the fixtures under test-data/gem-source-cases/gem-home.
+  # point rubygems at the fixtures under test-data/source-cases/gem-home.
   # That directory is laid out the way rubygems expects a gem home to look, so
   # adding it to the gem path is enough for rubygems to discover the gemspecs
   # under "specifications" and resolve each gem directory under "gems", where
@@ -60,7 +205,7 @@ describe "toys do --gem" do
   # by observing which version gets selected. The "fake-no-tools" gem
   # deliberately has no toys directory at all.
   let(:gem_home_dir) {
-    File.expand_path("../../test-data/gem-source-cases/gem-home", __dir__)
+    File.expand_path("../../test-data/source-cases/gem-home", __dir__)
   }
   let(:fake_gem_names) {
     ["fake-tools-one", "fake-tools-two", "fake-no-tools"]
@@ -213,6 +358,17 @@ describe "toys do --gem" do
     refute(Gem.loaded_specs.key?("fake-tools-two"))
   end
 
+  # Only the flag values are checked before any source is resolved. Whether a
+  # path names tools is determined when it is added, which can happen after an
+  # earlier gem has been installed.
+  it "does not activate gems when a later path value is malformed" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-two", "--path=  ", "base-tool"]))
+    end
+    assert_match(/Invalid --path value/, err)
+    refute(Gem.loaded_specs.key?("fake-tools-two"))
+  end
+
   it "reuses the original cli when no gem is requested" do
     toys_load_tool(["do"]) do |context|
       assert_same(context.cli, context.build_cli)
@@ -223,5 +379,427 @@ describe "toys do --gem" do
     toys_load_tool(["do", "--gem=fake-tools-one"]) do |context|
       refute_same(context.cli, context.build_cli)
     end
+  end
+end
+
+describe "toys do --path" do
+  include Toys::Testing
+
+  # The base source provides "base-tool" and "shared-tool", alongside the
+  # builtin tools.
+  toys_custom_paths([File.dirname(__dir__),
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
+  toys_include_builtins(false)
+
+  # The path-tools fixture directory provides "path-tool" and "shared-tool",
+  # and standalone.rb is a single file defining "standalone-tool", so that
+  # both forms accepted by --path can be exercised.
+  let(:path_tools_dir) {
+    File.expand_path("../../test-data/source-cases/path-tools", __dir__)
+  }
+  let(:standalone_file) {
+    File.expand_path("../../test-data/source-cases/standalone.rb", __dir__)
+  }
+  let(:not_ruby_file) {
+    File.expand_path("../../test-data/source-cases/not-ruby.txt", __dir__)
+  }
+  let(:missing_path) {
+    File.expand_path("../../test-data/source-cases/nonexistent", __dir__)
+  }
+
+  it "runs a tool from the given directory" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "path-tool"]))
+    end
+    assert_equal(["path-tools path-tool"], out.split("\n"))
+  end
+
+  it "runs a tool from a given ruby file" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{standalone_file}", "standalone-tool"]))
+    end
+    assert_equal(["standalone standalone-tool"], out.split("\n"))
+  end
+
+  it "still runs tools from the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "path-tool",
+                                     ",", "base-tool"]))
+    end
+    assert_equal(["path-tools path-tool", "base base-tool"], out.split("\n"))
+  end
+
+  it "gives the path priority over the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(["do", "--path=#{path_tools_dir}", "shared-tool"]))
+    end
+    assert_equal(["path-tools shared-tool"], out.split("\n"))
+  end
+
+  it "rejects an empty path" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=", "base-tool"]))
+    end
+    assert_match(/Invalid --path value: ""/, err)
+  end
+
+  it "rejects a whitespace-only path" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=   ", "base-tool"]))
+    end
+    assert_match(/Invalid --path value/, err)
+  end
+
+  it "reports a nonexistent path without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=#{missing_path}", "base-tool"]))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from path "#{Regexp.escape(missing_path)}": Cannot read:/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "reports a file that is not a ruby file without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--path=#{not_ruby_file}", "base-tool"]))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from path .*: File is not a ruby file:/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "builds a new cli when a path is requested" do
+    toys_load_tool(["do", "--path=#{path_tools_dir}"]) do |context|
+      refute_same(context.cli, context.build_cli)
+    end
+  end
+end
+
+describe "toys do --git" do
+  include Toys::Testing
+
+  # The base source provides "base-tool" and "shared-tool", alongside the
+  # builtin tools. Every test in this block passes its own CLI explicitly, so
+  # these paths matter only as a fallback.
+  toys_custom_paths([File.dirname(__dir__),
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
+  toys_include_builtins(false)
+
+  include DoGitFixture
+
+  before do
+    setup_git_repo
+  end
+
+  after do
+    cleanup_git_repo
+  end
+
+  it "runs a tool from the given git remote" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}", "git-tool"))
+    end
+    assert_equal(["git git-tool"], out.split("\n"))
+  end
+
+  it "still runs tools from the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}", "git-tool", ",", "base-tool"))
+    end
+    assert_equal(["git git-tool", "base base-tool"], out.split("\n"))
+  end
+
+  it "gives the git remote priority over the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}", "shared-tool"))
+    end
+    assert_equal(["git shared-tool"], out.split("\n"))
+  end
+
+  it "loads a subdirectory of the repo" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, path=subdir", "sub-tool"))
+    end
+    assert_equal(["git sub-tool"], out.split("\n"))
+  end
+
+  it "loads a single file of the repo" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, path=standalone.rb", "git-standalone-tool"))
+    end
+    assert_equal(["git standalone-tool"], out.split("\n"))
+  end
+
+  it "ignores whitespace around the elements and the equals signs" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=  #{local_remote} ,  path =  subdir  ", "sub-tool"))
+    end
+    assert_equal(["git sub-tool"], out.split("\n"))
+  end
+
+  it "selects a commit by tag" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=vone", "version-tool"))
+    end
+    assert_equal(["git version 1"], out.split("\n"))
+  end
+
+  it "selects a commit by sha" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@first_sha}", "version-tool"))
+    end
+    assert_equal(["git version 1"], out.split("\n"))
+  end
+
+  it "selects a commit by branch" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+    end
+    assert_equal(["git version 2"], out.split("\n"))
+  end
+
+  it "defaults to the head of the repo" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}", "version-tool"))
+    end
+    assert_equal(["git version 2"], out.split("\n"))
+  end
+
+  it "serves the cached commit when no update is requested" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+      commit_file("version-tool.rb", tool_file("git version 3"))
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+    end
+    assert_equal(["git version 2", "git version 2"], out.split("\n"))
+  end
+
+  it "refetches when update is true" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+      commit_file("version-tool.rb", tool_file("git version 3"))
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}, update=true",
+                             "version-tool"))
+    end
+    assert_equal(["git version 2", "git version 3"], out.split("\n"))
+  end
+
+  it "serves the cached commit when update is false" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+      commit_file("version-tool.rb", tool_file("git version 3"))
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}, update=false",
+                             "version-tool"))
+    end
+    assert_equal(["git version 2", "git version 2"], out.split("\n"))
+  end
+
+  it "refetches when update is zero seconds" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+      commit_file("version-tool.rb", tool_file("git version 3"))
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}, update=0", "version-tool"))
+    end
+    assert_equal(["git version 2", "git version 3"], out.split("\n"))
+  end
+
+  it "does not refetch when update is a long interval" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}", "version-tool"))
+      commit_file("version-tool.rb", tool_file("git version 3"))
+      assert_equal(0, run_do("--git=#{local_remote}, commit=#{@branch}, update=1000000",
+                             "version-tool"))
+    end
+    assert_equal(["git version 2", "git version 2"], out.split("\n"))
+  end
+
+  it "reports an unreachable git remote without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{File.join(tmp_dir, 'nonexistent')}", "base-tool"))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from git remote /, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  # A path naming a file that is not a ruby file carries no tools, and fails
+  # the path check that every source gets rather than failing inside the git
+  # cache. The test after this one covers the other side: a path that the git
+  # cache cannot find in the repo at all.
+  it "reports a repo path with no tools without a stack trace" do
+    commit_file("notes.txt", "Not a ruby file")
+    out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, path=notes.txt", "base-tool"))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "reports a repo path that does not exist without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, path=nonexistent.rb", "base-tool"))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
+    assert_match(/does not exist at SHA/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "rejects an empty git value" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=", "base-tool"))
+    end
+    assert_match(/Invalid --git value: ""/, err)
+  end
+
+  it "rejects an element that is not a key-value pair" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, subdir", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    assert_match(/"subdir"/, err)
+  end
+
+  it "rejects an unrecognized key" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, ref=vone", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    assert_match(/"ref"/, err)
+  end
+
+  it "rejects a duplicate key" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, path=subdir, path=subdir", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    assert_match(/"path"/, err)
+  end
+
+  it "rejects an empty value for a key" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, path=", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    assert_match(/"path"/, err)
+  end
+
+  it "rejects an update value that is not a boolean or a number" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, update=sometimes", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    assert_match(/"sometimes"/, err)
+  end
+
+  it "rejects a negative update value" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, update=-1", "base-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+  end
+
+  it "builds a new cli when a git source is requested" do
+    toys_load_tool(["do", "--git=#{local_remote}"], cli: custom_cli) do |context|
+      refute_same(context.cli, context.build_cli)
+    end
+  end
+end
+
+describe "toys do source ordering" do
+  include Toys::Testing
+  include DoGitFixture
+
+  # The base source provides "base-tool" and "shared-tool", alongside the
+  # builtin tools. Every test in this block passes its own CLI explicitly, so
+  # these paths matter only as a fallback.
+  toys_custom_paths([File.dirname(__dir__),
+                     File.expand_path("../../test-data/source-cases/base", __dir__)])
+  toys_include_builtins(false)
+
+  # "shared-tool" is defined by the base source and by every fixture source, so
+  # the definition that runs identifies which source won.
+  let(:gem_home_dir) {
+    File.expand_path("../../test-data/source-cases/gem-home", __dir__)
+  }
+  let(:fake_gem_names) {
+    ["fake-tools-one", "fake-tools-two", "fake-no-tools"]
+  }
+
+  before do
+    setup_git_repo
+    @original_gem_home = Gem.dir
+    @original_gem_path = Gem.path.dup
+    Gem.use_paths(@original_gem_home, @original_gem_path + [gem_home_dir])
+  end
+
+  after do
+    Gem.use_paths(@original_gem_home, @original_gem_path)
+    fake_gem_names.each { |gem_name| Gem.loaded_specs.delete(gem_name) }
+    cleanup_git_repo
+  end
+
+  it "gives every kind of flag-supplied source priority over the original sources" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("shared-tool"))
+      assert_equal(0, run_do("--path=#{path_tools_dir}", "shared-tool"))
+      assert_equal(0, run_do("--git=#{local_remote}", "shared-tool"))
+    end
+    assert_equal(["base shared-tool", "path-tools shared-tool", "git shared-tool"],
+                 out.split("\n"))
+  end
+
+  it "orders sources of all three kinds by their position on the command line" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--gem=fake-tools-one", "--git=#{local_remote}",
+                             "--path=#{path_tools_dir}", "shared-tool"))
+      assert_equal(0, run_do("--git=#{local_remote}", "--path=#{path_tools_dir}",
+                             "--gem=fake-tools-one", "shared-tool"))
+      assert_equal(0, run_do("--path=#{path_tools_dir}", "--gem=fake-tools-one",
+                             "--git=#{local_remote}", "shared-tool"))
+    end
+    assert_equal(["fake-tools-one shared-tool", "git shared-tool", "path-tools shared-tool"],
+                 out.split("\n"))
+  end
+
+  it "orders interleaved gem and git sources by their position on the command line" do
+    # Dropping the winning flag from each run in turn exposes the whole
+    # ordering, rather than only its first element.
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--gem=fake-tools-one", "--git=#{local_remote}",
+                             "--gem=fake-tools-two", "shared-tool"))
+      assert_equal(0, run_do("--git=#{local_remote}", "--gem=fake-tools-two", "shared-tool"))
+      assert_equal(0, run_do("--gem=fake-tools-two", "shared-tool"))
+    end
+    assert_equal(["fake-tools-one shared-tool", "git shared-tool", "fake-tools-two shared-tool"],
+                 out.split("\n"))
+  end
+
+  it "runs tools from a path source and a git source in one command line" do
+    out, _err = capture_subprocess_io do
+      assert_equal(0, run_do("--path=#{path_tools_dir}", "--git=#{local_remote}",
+                             "path-tool", ",", "git-tool", ",", "base-tool"))
+    end
+    assert_equal(["path-tools path-tool", "git git-tool", "base base-tool"], out.split("\n"))
+  end
+
+  it "reports the first offending flag when more than one is malformed" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--git=#{local_remote}, bogus", "--gem=fake-tools-one,nonsense",
+                             "shared-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    refute_match(/Invalid version requirement/, err)
+  end
+
+  it "does not resolve any source when a later flag is malformed" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--gem=fake-tools-two", "--git=#{local_remote}, bogus",
+                             "shared-tool"))
+    end
+    assert_match(/Invalid --git value/, err)
+    refute(Gem.loaded_specs.key?("fake-tools-two"))
+    refute(File.exist?(cache_dir))
   end
 end
