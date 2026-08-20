@@ -1453,22 +1453,23 @@ line based control of the output verbosity.
 ### Running tools from tools
 
 A common operation a tool might want to do is "call" another tool. This can be
-done via the CLI object, which you can retrieve using the `CLI` key or
-{Toys::Context#cli}. These return the current instance of {Toys::CLI}, which is
-the "main" interface to Toys. In particular, it provides the {Toys::CLI#run}
-method, which can be used to call another tool:
+done via the runner object, which you can retrieve using the `RUNNER` key or
+{Toys::Context#runner}. This returns the current instance of {Toys::Runner},
+the object that runs tools in this process. In particular, it provides the
+{Toys::Runner#run} method, which can be used to call another tool:
 
 ```ruby
 def run
-  status = cli.run("greet", "rubyists", "-v")
+  status = runner.run(["greet", "rubyists", "-v"])
   exit(status) unless status.zero?
 end
 ```
 
-Pass the tool name and arguments as arguments to the run method. It will
-execute, and return a process status code (i.e. 0 for success, and nonzero for
-error). Make sure you handle the exit status. For example, in most cases, you
-should probably exit if the tool you are calling returns a nonzero code.
+Pass the tool name and arguments together as an array to the run method. It
+will execute, and return a process status code (i.e. 0 for success, and nonzero
+for error). By default, the standard Toys error handler is invoked to handle
+any exceptions or signals. To disable this error handling and have exceptions
+and signals propagate out, pass `handle_errors: false` to {Toys::Runner#run}.
 
 You can also use the `exec` mixin [described below](#executing-subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to

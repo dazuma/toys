@@ -32,7 +32,7 @@ tool "test-builtins" do
     ::Dir.chdir(context_directory)
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
     cmd = ["system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg"] + verbosity_flags + files
-    exit(cli.run(cmd))
+    exit(runner.run(cmd))
   end
 end
 
@@ -51,7 +51,7 @@ tool "yardoc" do
   to_run :run_with_copy_core_docs
 
   def run_with_copy_core_docs
-    cli.run("copy-core-docs", optimize ? "--optimize" : "--no-optimize")
+    runner.run(["copy-core-docs", optimize ? "--optimize" : "--no-optimize"])
     run
   end
 end
@@ -90,7 +90,7 @@ tool "build" do
   to_run :run_with_copy_core_docs
 
   def run_with_copy_core_docs
-    cli.run("copy-core-docs")
+    runner.run(["copy-core-docs"])
     run
   end
 end
@@ -101,7 +101,7 @@ tool "release" do
   to_run :run_with_copy_core_docs
 
   def run_with_copy_core_docs
-    cli.run("copy-core-docs")
+    runner.run(["copy-core-docs"])
     run
   end
 end
@@ -112,7 +112,7 @@ tool "install" do
   to_run :run_with_copy_core_docs
 
   def run_with_copy_core_docs
-    cli.run("copy-core-docs")
+    runner.run(["copy-core-docs"])
     run
   end
 end
