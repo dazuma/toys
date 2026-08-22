@@ -19,7 +19,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "causes a tool to respond to help flags" do
     cli = make_cli(help_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         # Empty tool
       end
@@ -30,7 +30,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "causes a tool to respond to usage flags" do
     cli = make_cli(usage_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         # Empty tool
       end
@@ -41,7 +41,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "causes a tool to respond to list flags" do
     cli = make_cli(list_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         # Empty tool
       end
@@ -52,7 +52,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "implements fallback execution" do
     cli = make_cli(fallback_execution: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         # Empty tool
       end
@@ -63,7 +63,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "supports root args" do
     cli = make_cli(help_flags: true, allow_root_args: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         tool "bar" do
           # Empty tool
@@ -76,7 +76,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "supports search flag" do
     cli = make_cli(fallback_execution: true, search_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         def run; end
@@ -93,7 +93,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "reports bad search syntax" do
     cli = make_cli(fallback_execution: true, search_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         def run; end
@@ -110,7 +110,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "does not show hidden tools by default" do
     cli = make_cli(fallback_execution: true, show_all_subtools_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "_bar" do
         desc "was met"
         def run; end
@@ -122,7 +122,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "Shows hidden tools when requested" do
     cli = make_cli(fallback_execution: true, show_all_subtools_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "_bar" do
         desc "was met"
         def run; end
@@ -134,7 +134,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "does not recurse by default" do
     cli = make_cli(fallback_execution: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         tool "bar" do
@@ -149,7 +149,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "supports default recursive listing" do
     cli = make_cli(fallback_execution: true, default_recursive: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         tool "bar" do
@@ -164,7 +164,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "supports set-recursive flag" do
     cli = make_cli(fallback_execution: true, recursive_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         tool "bar" do
@@ -179,7 +179,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
   it "supports clear-recursive flag" do
     cli = make_cli(fallback_execution: true, default_recursive: true, recursive_flags: true)
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
         tool "bar" do
@@ -195,7 +195,7 @@ describe Toys::StandardMiddleware::ShowHelp do
   describe "proc-valued flag specs" do
     it "uses default help flags when the proc returns true" do
       cli = make_cli(help_flags: proc { |_tool| true })
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           # Empty tool
         end
@@ -206,7 +206,7 @@ describe Toys::StandardMiddleware::ShowHelp do
 
     it "uses custom help flags when the proc returns an array" do
       cli = make_cli(help_flags: proc { |_tool| ["-H", "--info"] })
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           # Empty tool
         end
@@ -220,7 +220,7 @@ describe Toys::StandardMiddleware::ShowHelp do
         help_flags: proc { |tool| tool.full_name == ["foo"] },
         fallback_execution: true
       )
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           # Empty non-runnable tool
         end
@@ -244,7 +244,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     }
 
     before do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "the foo tool"
           tool "bar" do
@@ -278,7 +278,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     }
 
     it "omits subtool filter flags" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "beyond all recognition"
           def run; end
@@ -299,7 +299,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
 
     it "still supports usage" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "beyond all recognition"
           def run; end
@@ -314,7 +314,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
 
     it "still supports list tools" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "beyond all recognition"
           def run; end
@@ -329,7 +329,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
 
     it "allows the tool to override usage flag" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "beyond all recognition"
           flag :usage
@@ -350,7 +350,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
 
     it "allows the tool to override list tools flag" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           desc "beyond all recognition"
           flag :tools

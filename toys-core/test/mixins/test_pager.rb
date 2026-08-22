@@ -15,7 +15,7 @@ describe Toys::StandardMixins::Pager do
   }
 
   it "accesses a pager" do
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         include :pager
         def run
@@ -30,7 +30,7 @@ describe Toys::StandardMixins::Pager do
   end
 
   it "runs a pager" do
-    cli.add_source_block do
+    cli.add_config_block do
       tool "foo" do
         include :pager
         def run

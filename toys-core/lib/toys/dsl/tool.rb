@@ -422,7 +422,8 @@ module Toys
           end
           return self
         end
-        @__loader.load_path(source_info, path, @__words, @__remaining_words, @__priority)
+        @__loader.load_source(source_info, SourceSpec.path(path),
+                              @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -454,12 +455,8 @@ module Toys
           end
           return self
         end
-        remote ||= source_info.git_remote
-        raise ToolDefinitionError, "Git remote not specified" unless remote
-        path ||= ""
-        commit ||= source_info.git_commit || "HEAD"
-        @__loader.load_git(source_info, remote, path, commit, update,
-                           @__words, @__remaining_words, @__priority)
+        spec = SourceSpec.git(remote, path: path, commit: commit, update: update)
+        @__loader.load_source(source_info, spec, @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -489,9 +486,8 @@ module Toys
           end
           return self
         end
-        path ||= ""
-        @__loader.load_gem(source_info, name, version, toys_dir, path,
-                           @__words, @__remaining_words, @__priority)
+        spec = SourceSpec.gem(name, version: version, path: path, toys_dir: toys_dir)
+        @__loader.load_source(source_info, spec, @__words, @__remaining_words, @__priority)
         self
       end
 

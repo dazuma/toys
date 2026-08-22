@@ -81,17 +81,18 @@ module Toys
     # @param include_builtins [boolean] Add the builtin tools. Default is true.
     # @param cur_dir [String,nil] Starting search directory for sources.
     #     Defaults to the current working directory.
-    # @param source_list [Toys::SourceList,nil] An optional source list, used
-    #     to configure the resolvers (such as the git cache and the gems
-    #     utility) employed when sources are added. It is not intended for
-    #     seeding sources, because this class adds the standard paths after
-    #     the list is installed, meaning any sources already in the list would
-    #     take priority over the standard paths.
+    # @param git_cache [Toys::Utils::GitCache,nil] A custom GitCache instance
+    #     to use when resolving git sources. Optional. If nil or not
+    #     specified, uses a process-wide default GitCache.
+    # @param gems_util [Toys::Utils::Gems,nil] A custom Gems utility instance
+    #     to use when resolving gem sources. Optional. If nil or not
+    #     specified, uses a process-wide default Gems utility.
     #
     def initialize(custom_paths: nil,
                    include_builtins: true,
                    cur_dir: nil,
-                   source_list: nil)
+                   git_cache: nil,
+                   gems_util: nil)
       require "toys/utils/standard_ui"
       ui = Toys::Utils::StandardUI.new
       super(
@@ -101,11 +102,12 @@ module Toys
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup,
-        source_list: source_list,
+        git_cache: git_cache,
+        gems_util: gems_util,
         **ui.cli_args
       )
       if custom_paths
-        Array(custom_paths).each { |path| add_source_path(path) }
+        Array(custom_paths).each { |path| add_config_path(path) }
       else
         add_current_directory_paths(cur_dir)
       end
@@ -119,7 +121,7 @@ module Toys
     #
     def add_builtins
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
-      add_source_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
+      add_config_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
       self
     end
 

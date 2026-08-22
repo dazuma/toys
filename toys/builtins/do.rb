@@ -125,25 +125,21 @@ end
 # them. The requested sources are added in reverse order so that the first flag
 # on the command line ends up with the highest priority.
 #
-# All the flag values are parsed up front, in command line order, because
-# adding a source can have side effects such as installing a gem or fetching
-# a git repo. That way a malformed value is reported before any of those
-# happen, and is reported against the first offending flag rather than the
-# last. Whether each source actually resolves is determined later, when it is
-# added.
+# All the flag values are parsed up front, in command line order, so that a
+# malformed value is reported before any source is added, and is reported
+# against the first offending flag rather than the last. Whether each source
+# actually resolves is determined later still, by the loader.
 def build_cli
-  requests = sources.map { |kind, value| [kind, parse_source_request(kind, value)] }
-  return cli if requests.empty?
-  require "toys/utils/gems" if requests.any? { |kind, _spec| kind == :gem }
+  specs = sources.map { |kind, value| parse_source_request(kind, value) }
+  return cli if specs.empty?
+  require "toys/utils/gems" if specs.any? { |spec| spec.is_a?(::Toys::SourceSpec::Gem) }
   cli.child(copy_sources: true) do |child_cli|
-    requests.reverse_each do |kind, spec|
-      add_source(child_cli, kind, spec)
-    end
+    specs.reverse_each { |spec| child_cli.add_source(spec, high_priority: true) }
   end
 end
 
-# Parses and checks a single source request, without adding it to any CLI,
-# returning the information needed later to add it.
+# Parses and checks a single source request, returning the source spec to add
+# to the CLI later.
 def parse_source_request(kind, value)
   case kind
   when :gem
@@ -152,19 +148,6 @@ def parse_source_request(kind, value)
     parse_git_request(value)
   when :path
     parse_path_request(value)
-  end
-end
-
-# Adds a single parsed source request to the given CLI, at high priority so
-# that it outranks the sources copied from the current CLI.
-def add_source(child_cli, kind, spec)
-  case kind
-  when :gem
-    add_gem(child_cli, *spec)
-  when :git
-    add_git(child_cli, *spec)
-  when :path
-    add_path(child_cli, spec)
   end
 end
 
@@ -183,16 +166,7 @@ def parse_gem_request(gem_request)
     logger.fatal("Invalid version requirement for gem #{gem_name.inspect}: #{e.message}")
     exit(1)
   end
-  [gem_name, gem_version]
-end
-
-# Adds a single gem to the given CLI, reporting a failure to activate the gem
-# or to find its tools as an error message rather than a stack trace.
-def add_gem(child_cli, gem_name, gem_version)
-  child_cli.add_source_gem(gem_name, gem_version: gem_version, high_priority: true)
-rescue ::Toys::ToolDefinitionError => e
-  logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
-  exit(1)
+  ::Toys::SourceSpec.gem(gem_name, version: gem_version)
 end
 
 # Splits a --git flag value into the git remote and the options that follow it,
@@ -202,22 +176,22 @@ end
 def parse_git_request(git_request)
   git_remote, *elements = git_request.split(",", -1).map(&:strip)
   git_error(git_request, "the git remote is required") if git_remote.nil? || git_remote.empty?
-  opts = { git_path: nil, git_commit: nil, update: false }
+  opts = { path: nil, commit: nil, update: false }
   seen_keys = []
   elements.each do |element|
     key, value = parse_git_element(git_request, element, seen_keys)
     case key
     when "path"
-      opts[:git_path] = value
+      opts[:path] = value
     when "commit"
-      opts[:git_commit] = value
+      opts[:commit] = value
     when "update"
       opts[:update] = parse_git_update(git_request, value)
     else
       git_error(git_request, "unrecognized key #{key.inspect}")
     end
   end
-  [git_remote, opts]
+  ::Toys::SourceSpec.git(git_remote, **opts)
 end
 
 # Splits one element following the git remote into its key and value, and
@@ -255,34 +229,16 @@ def git_error(git_request, message)
   exit(1)
 end
 
-# Adds a single git repository to the given CLI, reporting a failure to fetch
-# the repo or to find its tools as an error message rather than a stack trace.
-def add_git(child_cli, git_remote, opts)
-  child_cli.add_source_git(git_remote, high_priority: true, **opts)
-rescue ::Toys::ToolDefinitionError => e
-  logger.fatal("Cannot load tools from git remote #{git_remote.inspect}: #{e.message}")
-  exit(1)
-end
-
 # Checks that a --path flag value is present. Whether the path actually names
-# tools is left to the CLI to determine when the path is added, so that this
-# tool does not have to duplicate that rule.
+# tools is left to the loader to determine, so that this tool does not have to
+# duplicate that rule. The spec carries no context directory, like the gem and
+# git sources, because it is injected from the command line rather than found
+# in a project.
 def parse_path_request(path_request)
   path = path_request.strip
   if path.empty?
     logger.fatal("Invalid --path value: #{path_request.inspect}")
     exit(1)
   end
-  path
-end
-
-# Adds a single path to the given CLI, reporting a path that does not name
-# tools as an error message rather than a stack trace. The path is added
-# without a context directory, like the gem and git sources, because it is
-# injected from the command line rather than found in a project.
-def add_path(child_cli, path)
-  child_cli.add_source_path(path, high_priority: true, context_directory: nil)
-rescue ::Toys::ToolDefinitionError => e
-  logger.fatal("Cannot load tools from path #{path.inspect}: #{e.message}")
-  exit(1)
+  ::Toys::SourceSpec.path(path, context_directory: nil)
 end

@@ -108,7 +108,7 @@ describe "gem_build template" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
 
     it "builds toys into tmp directory" do
-      cli.add_source_block do
+      cli.add_config_block do
         expand :gem_build, output: "tmp/toys.gem"
       end
       Dir.chdir(toys_dir) do
@@ -124,7 +124,7 @@ describe "gem_build template" do
     end
 
     it "supports default output flags" do
-      cli.add_source_block do
+      cli.add_config_block do
         expand :gem_build, output_flags: true
       end
       Dir.chdir(toys_dir) do
@@ -140,7 +140,7 @@ describe "gem_build template" do
     end
 
     it "supports custom output flags" do
-      cli.add_source_block do
+      cli.add_config_block do
         expand :gem_build, output_flags: ["--outfile"]
       end
       Dir.chdir(toys_dir) do
@@ -157,7 +157,7 @@ describe "gem_build template" do
 
     it "honors context_directory argument" do
       dir = toys_dir
-      cli.add_source_block do
+      cli.add_config_block do
         expand :gem_build, output: "tmp/toys.gem", context_directory: dir
       end
       Dir.chdir(toys_dir) do

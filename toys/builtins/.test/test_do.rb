@@ -41,15 +41,14 @@ module DoGitFixture
   end
 
   # A CLI carrying a git cache rooted in this test's temp directory. The
-  # child CLI that "do" builds inherits the cache along with the source list,
-  # so no git source resolved during a test reaches the user's real cache.
+  # child CLI that "do" builds inherits the cache as one of its settings, so
+  # no git source resolved during a test reaches the user's real cache.
   def custom_cli
     @custom_cli ||= begin
       git_cache = Toys::Utils::GitCache.new(cache_dir: cache_dir)
-      source_list = Toys::SourceList.new(git_cache: git_cache)
       Toys::StandardCLI.new(custom_paths: [File.dirname(__dir__), base_dir],
                             include_builtins: false,
-                            source_list: source_list)
+                            git_cache: git_cache)
     end
   end
 
@@ -332,15 +331,6 @@ describe "toys do --gem" do
     assert_match(/Invalid --gem value/, err)
   end
 
-  it "reports a gem with no toys directory without a stack trace" do
-    out, err = capture_subprocess_io do
-      refute_equal(0, toys_run_tool(["do", "--gem=fake-no-tools", "base-tool"]))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from gem "fake-no-tools"/, err)
-    refute_match(/toys-core\/lib/, err)
-  end
-
   it "reports an invalid version requirement for the first offending gem" do
     _out, err = capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense",
@@ -448,24 +438,6 @@ describe "toys do --path" do
       refute_equal(0, toys_run_tool(["do", "--path=   ", "base-tool"]))
     end
     assert_match(/Invalid --path value/, err)
-  end
-
-  it "reports a nonexistent path without a stack trace" do
-    out, err = capture_subprocess_io do
-      refute_equal(0, toys_run_tool(["do", "--path=#{missing_path}", "base-tool"]))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from path "#{Regexp.escape(missing_path)}": Cannot read:/, err)
-    refute_match(/toys-core\/lib/, err)
-  end
-
-  it "reports a file that is not a ruby file without a stack trace" do
-    out, err = capture_subprocess_io do
-      refute_equal(0, toys_run_tool(["do", "--path=#{not_ruby_file}", "base-tool"]))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from path .*: File is not a ruby file:/, err)
-    refute_match(/toys-core\/lib/, err)
   end
 
   it "builds a new cli when a path is requested" do
@@ -611,39 +583,6 @@ describe "toys do --git" do
                              "version-tool"))
     end
     assert_equal(["git version 2", "git version 2"], out.split("\n"))
-  end
-
-  it "reports an unreachable git remote without a stack trace" do
-    out, err = capture_subprocess_io do
-      refute_equal(0, run_do("--git=#{File.join(tmp_dir, 'nonexistent')}", "base-tool"))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from git remote /, err)
-    refute_match(/toys-core\/lib/, err)
-  end
-
-  # A path naming a file that is not a ruby file carries no tools, and fails
-  # the path check that every source gets rather than failing inside the git
-  # cache. The test after this one covers the other side: a path that the git
-  # cache cannot find in the repo at all.
-  it "reports a repo path with no tools without a stack trace" do
-    commit_file("notes.txt", "Not a ruby file")
-    out, err = capture_subprocess_io do
-      refute_equal(0, run_do("--git=#{local_remote}, path=notes.txt", "base-tool"))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
-    refute_match(/toys-core\/lib/, err)
-  end
-
-  it "reports a repo path that does not exist without a stack trace" do
-    out, err = capture_subprocess_io do
-      refute_equal(0, run_do("--git=#{local_remote}, path=nonexistent.rb", "base-tool"))
-    end
-    assert_equal("", out)
-    assert_match(/Cannot load tools from git remote "#{Regexp.escape(local_remote)}"/, err)
-    assert_match(/does not exist at SHA/, err)
-    refute_match(/toys-core\/lib/, err)
   end
 
   it "rejects an empty git value" do

@@ -23,7 +23,7 @@ describe Toys::Utils::CompletionEngine do
     tester = self
     cli = Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [],
                         extra_delimiters: ".:")
-    cli.add_source_block do
+    cli.add_config_block do
       tool "one" do
         flag :hello
         flag :world, "--world VALUE", "-wVALUE", complete_values: ["building", "news"]

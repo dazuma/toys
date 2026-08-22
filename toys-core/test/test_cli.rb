@@ -55,7 +55,7 @@ describe Toys::CLI do
 
   describe "execution" do
     it "returns the exit value" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -66,7 +66,7 @@ describe Toys::CLI do
     end
 
     it "handles no script defined" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           # Empty tool
         end
@@ -79,7 +79,7 @@ describe Toys::CLI do
 
     it "can disable argument parsing" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           disable_argument_parsing
           to_run do
@@ -93,7 +93,7 @@ describe Toys::CLI do
 
     it "runs initializer at the beginning" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           t = Toys::DSL::Internal.current_tool(self, true)
           t.add_initializer(proc { |a| set(:a, a) }, 123)
@@ -108,7 +108,7 @@ describe Toys::CLI do
     it "passes the verbosity setting through the default middleware stack" do
       test = self
       verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
-      verbose_cli.add_source_block do
+      verbose_cli.add_config_block do
         tool "foo" do
           to_run do
             test.assert_equal(2, verbosity)
@@ -122,7 +122,7 @@ describe Toys::CLI do
     it "combines the verbosity setting with verbosity flags" do
       test = self
       verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
-      verbose_cli.add_source_block do
+      verbose_cli.add_config_block do
         tool "foo" do
           to_run do
             test.assert_equal(1, verbosity)
@@ -134,7 +134,7 @@ describe Toys::CLI do
 
     it "makes context fields available via convenience methods" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           optional_arg(:arg1)
           optional_arg(:arg2)
@@ -154,7 +154,7 @@ describe Toys::CLI do
 
     it "makes context fields available via get" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           optional_arg(:arg1)
           optional_arg(:arg2)
@@ -174,7 +174,7 @@ describe Toys::CLI do
 
     it "makes options available via get" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           optional_arg(:arg1)
           optional_arg(:arg2)
@@ -191,7 +191,7 @@ describe Toys::CLI do
 
     it "supports sub-runs" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           optional_arg :arg1
           to_run do
@@ -211,13 +211,13 @@ describe Toys::CLI do
     end
 
     it "accesses data from run" do
-      cli.add_source_path(File.join(lookup_cases_dir, "data-finder"))
+      cli.add_config_path(File.join(lookup_cases_dir, "data-finder"))
       assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
     end
 
     it "accesses lib directory" do
       skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-      cli.add_source_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("foo")
       end
@@ -227,7 +227,7 @@ describe Toys::CLI do
 
     it "accesses lib directory with overrides" do
       skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-      cli.add_source_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("ns", "bar")
       end
@@ -236,7 +236,7 @@ describe Toys::CLI do
     end
 
     it "does not add a lib directory that is already on the load path" do
-      cli.add_source_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
       lib_path = File.join(lookup_cases_dir, "lib-dirs", ".lib")
       orig_load_path = $LOAD_PATH.dup
       begin
@@ -249,7 +249,7 @@ describe Toys::CLI do
     end
 
     it "recognizes delimiters" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           tool "bar" do
             def run
@@ -264,7 +264,7 @@ describe Toys::CLI do
 
   describe "delegation" do
     it "executes the delegate" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           tool "bar" do
             def run
@@ -279,7 +279,7 @@ describe Toys::CLI do
 
     it "passes arguments to the delegate" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           tool "bar" do
             flag :foo, "--foo=VAL"
@@ -302,7 +302,7 @@ describe Toys::CLI do
           Toys::Context.exit(code)
         end
       end
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           tool "bar" do
             def run
@@ -317,7 +317,7 @@ describe Toys::CLI do
     end
 
     it "delegates to a namespace" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           tool "bar" do
             def run
@@ -333,7 +333,7 @@ describe Toys::CLI do
     end
 
     it "detects dangling references" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           delegate_to ["boo"]
         end
@@ -345,7 +345,7 @@ describe Toys::CLI do
     end
 
     it "detects circular references" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           delegate_to ["boo"]
         end
@@ -361,7 +361,7 @@ describe Toys::CLI do
     end
 
     it "attributes a delegate error to both the delegate and the delegating tool" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           to_run do
             raise "kaboom"
@@ -380,7 +380,7 @@ describe Toys::CLI do
     end
 
     it "reraises a signal raised by a delegate" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           def run
             raise SignalException, 4
@@ -397,7 +397,7 @@ describe Toys::CLI do
     end
 
     it "lets the delegating tool handle an interrupt raised by the delegate" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           def run
             raise ::Interrupt
@@ -415,7 +415,7 @@ describe Toys::CLI do
 
     it "lets the delegating tool handle a signal raised by the delegate" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           def run
             raise SignalException, 15
@@ -434,7 +434,7 @@ describe Toys::CLI do
 
     it "offers the signal to each tool outward when the delegate reraises" do
       order = []
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           on_interrupt do |ex|
             order << :target
@@ -459,7 +459,7 @@ describe Toys::CLI do
 
     it "gives the delegate the first chance to handle a signal" do
       order = []
-      cli.add_source_block do
+      cli.add_config_block do
         tool "target" do
           on_interrupt do
             order << :target
@@ -490,7 +490,7 @@ describe Toys::CLI do
         11
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_block do
+      my_cli.add_config_block do
         tool "target" do
           to_run do
             raise "kaboom"
@@ -506,7 +506,7 @@ describe Toys::CLI do
 
   describe "error handling" do
     it "raises the error by default" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise "whoops"
@@ -520,7 +520,7 @@ describe Toys::CLI do
     end
 
     it "preserves the full cause chain when reraising a non-signal error" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::ArgumentError, "root"
@@ -546,7 +546,7 @@ describe Toys::CLI do
         9
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_path(File.join(lookup_cases_dir, "errors"))
+      my_cli.add_config_path(File.join(lookup_cases_dir, "errors"))
       assert_equal(9, my_cli.run("definition"))
     end
 
@@ -558,7 +558,7 @@ describe Toys::CLI do
         10
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_path(File.join(lookup_cases_dir, "errors"))
+      my_cli.add_config_path(File.join(lookup_cases_dir, "errors"))
       assert_equal(10, my_cli.run("runtime", "hello"))
     end
 
@@ -569,7 +569,7 @@ describe Toys::CLI do
         13
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_block do
+      my_cli.add_config_block do
         tool "foo" do
           flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
           def run
@@ -589,7 +589,7 @@ describe Toys::CLI do
         12
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_block do
+      my_cli.add_config_block do
         tool "foo" do
           def run
             raise SignalException, 4
@@ -605,7 +605,7 @@ describe Toys::CLI do
         14
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_source_block do
+      my_cli.add_config_block do
         tool "target" do
           def run
             raise ::Interrupt
@@ -621,7 +621,7 @@ describe Toys::CLI do
 
   describe "signal_handling" do
     it "raises the signal by default" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise SignalException, 4
@@ -635,7 +635,7 @@ describe Toys::CLI do
     end
 
     it "executes a signal handler block that matches the signal" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise SignalException, 15
@@ -650,7 +650,7 @@ describe Toys::CLI do
     end
 
     it "bypasses a signal handler block that doesn't match the signal" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise SignalException, 15
@@ -668,7 +668,7 @@ describe Toys::CLI do
     end
 
     it "supports an interrupt block with no argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -683,7 +683,7 @@ describe Toys::CLI do
     end
 
     it "supports propagating an interrupt" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -701,7 +701,7 @@ describe Toys::CLI do
 
     it "supports an interrupt block with an argument" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -718,7 +718,7 @@ describe Toys::CLI do
 
     it "supports nested interrupts" do
       counter = 0
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -735,7 +735,7 @@ describe Toys::CLI do
     end
 
     it "supports an interrupt method with no argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -752,7 +752,7 @@ describe Toys::CLI do
     end
 
     it "supports an interrupt method with an argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             raise ::Interrupt
@@ -771,7 +771,7 @@ describe Toys::CLI do
 
   describe "usage error handling" do
     it "passes the exception out by default" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run; end
         end
@@ -784,7 +784,7 @@ describe Toys::CLI do
     end
 
     it "supports setting the handler back to the default" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error :run
           on_usage_error nil
@@ -800,7 +800,7 @@ describe Toys::CLI do
     end
 
     it "supports redirecting back to run" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error :run
 
@@ -813,7 +813,7 @@ describe Toys::CLI do
     end
 
     it "supports invoking a method with no argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error :usage_handler
 
@@ -830,7 +830,7 @@ describe Toys::CLI do
     end
 
     it "supports invoking a method with an argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error :usage_handler
 
@@ -847,7 +847,7 @@ describe Toys::CLI do
     end
 
     it "supports invoking a block with no argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error do
             exit usage_errors.size
@@ -862,7 +862,7 @@ describe Toys::CLI do
     end
 
     it "supports invoking a block with no argument" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           on_usage_error do |errs|
             exit errs.size
@@ -879,7 +879,7 @@ describe Toys::CLI do
 
   describe "directive alterations" do
     it "allows partial flag match" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           flag :abcde
           def run
@@ -891,7 +891,7 @@ describe Toys::CLI do
     end
 
     it "requires exact flag match" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           flag :abcde
           require_exact_flag_match
@@ -909,7 +909,7 @@ describe Toys::CLI do
 
   describe "load_tool" do
     it "runs a block" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             puts(message)
@@ -927,7 +927,7 @@ describe Toys::CLI do
     end
 
     it "handles usage errors" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             puts(message)
@@ -946,7 +946,7 @@ describe Toys::CLI do
     end
 
     it "does not wrap an error raised by the block" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             # Never reached
@@ -962,7 +962,7 @@ describe Toys::CLI do
     end
 
     it "does not wrap an error raised during argument parsing" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
           def run
@@ -980,7 +980,7 @@ describe Toys::CLI do
 
     it "honors the verbosity setting" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             # Never reached
@@ -993,11 +993,11 @@ describe Toys::CLI do
     end
   end
 
-  describe "add_source_gem" do
+  describe "add_source with a gem spec" do
     let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
 
     it "adds tools from a gem" do
-      cli.add_source_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir)
+      cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb", toys_dir: gem_toys_dir))
       tool, remaining = cli.loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
@@ -1006,65 +1006,64 @@ describe Toys::CLI do
     end
 
     it "defaults to the entire toys directory" do
-      cli.add_source_gem("toys-core", gem_toys_dir: "#{gem_toys_dir}/.toys")
+      cli.add_source(Toys::SourceSpec.gem("toys-core", toys_dir: "#{gem_toys_dir}/.toys"))
       tool, _remaining = cli.loader.lookup(["tool-2"])
       assert_equal("directory tool-2 short description", tool.desc.to_s)
     end
 
     it "honors high_priority" do
-      cli.add_source_path(File.join(lookup_cases_dir, "normal-file-hierarchy"))
-      cli.add_source_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir,
-                         high_priority: true)
+      cli.add_config_path(File.join(lookup_cases_dir, "normal-file-hierarchy"))
+      cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb", toys_dir: gem_toys_dir),
+                     high_priority: true)
       tool, _remaining = cli.loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
     end
 
     it "returns self" do
-      result = cli.add_source_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir)
+      result = cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb",
+                                                   toys_dir: gem_toys_dir))
       assert_same(cli, result)
     end
   end
 
-  describe "add_source_git" do
+  describe "add_source with a git spec" do
     let(:git_remote) { "https://github.com/dazuma/toys.git" }
+    let(:git_path) { "toys-core/test-data/lookup-cases/config-items/.toys.rb" }
 
     before do
       skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
     end
 
     it "adds tools from a git source" do
-      cli.add_source_git(git_remote,
-                         git_path: "toys-core/test-data/lookup-cases/config-items/.toys.rb",
-                         git_commit: "main")
+      cli.add_source(Toys::SourceSpec.git(git_remote, path: git_path, commit: "main"))
       tool, remaining = cli.loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "returns self" do
-      result = cli.add_source_git(git_remote,
-                                  git_path: "toys-core/test-data/lookup-cases/config-items/.toys.rb",
-                                  git_commit: "main")
+      result = cli.add_source(Toys::SourceSpec.git(git_remote, path: git_path, commit: "main"))
       assert_same(cli, result)
     end
   end
 
-  describe "compatibility aliases" do
-    # These older names are permanent, because the rename is one that existing
-    # toys-core users will commonly run into.
-    {
-      add_config_path: :add_source_path,
-      add_config_block: :add_source_block,
-      add_config_gem: :add_source_gem,
-      add_config_git: :add_source_git,
-    }.each do |old_name, new_name|
-      it "aliases #{old_name} to #{new_name}" do
-        assert(Toys::CLI.method_defined?(old_name), "#{old_name} is not defined")
-        assert_equal(new_name, Toys::CLI.instance_method(old_name).original_name)
+  describe "permanent source-adding names" do
+    # These names are permanent, because they are what existing toys-core
+    # users call. They were once aliases for add_source_* names, and are now
+    # methods in their own right.
+    #
+    # There is deliberately no entry here for add_config_gem or
+    # add_config_git. Those two were aliases for add_source_gem and
+    # add_source_git, all four of which are deleted: they were added after
+    # toys-core v0.22.0 and so never shipped. Their replacement is
+    # add_source with a gem or git spec.
+    [:add_config_path, :add_config_block, :add_search_path, :add_search_path_hierarchy].each do |name|
+      it "defines #{name}" do
+        assert(Toys::CLI.method_defined?(name), "#{name} is not defined")
       end
     end
 
-    it "adds a source through the old name" do
+    it "adds a source through a permanent name" do
       cli.add_config_block do
         tool "foo" do
           def run
@@ -1080,19 +1079,19 @@ describe Toys::CLI do
     it "raises when adding a source after the loader is built" do
       cli.loader
       assert_raises(Toys::SourceListFinalizedError) do
-        cli.add_source_block { tool("foo") { def run; end } }
+        cli.add_config_block { tool("foo") { def run; end } }
       end
     end
 
     it "raises when adding a source after the runner is built" do
       cli.runner
       assert_raises(Toys::SourceListFinalizedError) do
-        cli.add_source_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
+        cli.add_config_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
       end
     end
 
     it "raises when adding a source after a tool has been run" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run; end
         end
@@ -1106,10 +1105,10 @@ describe Toys::CLI do
     it "raises from every source-adding method" do
       cli.loader
       [
-        -> { cli.add_source_path(lookup_cases_dir) },
-        -> { cli.add_source_block { nil } },
-        -> { cli.add_source_gem("toys-core") },
-        -> { cli.add_source_git("https://example.com/repo.git") },
+        -> { cli.add_config_path(lookup_cases_dir) },
+        -> { cli.add_config_block { nil } },
+        -> { cli.add_source(Toys::SourceSpec.gem("toys-core")) },
+        -> { cli.add_source(Toys::SourceSpec.git("https://example.com/repo.git")) },
         -> { cli.add_search_path(lookup_cases_dir) },
         -> { cli.add_search_path_hierarchy(start: lookup_cases_dir) },
       ].each do |adder|
@@ -1126,53 +1125,57 @@ describe Toys::CLI do
 
     it "copies a source list passed to the constructor" do
       source_list = Toys::SourceList.new
-      source_list.add_block do
+      spec = Toys::SourceSpec.block do
         tool "foo" do
           def run
             exit(3)
           end
         end
       end
+      source_list.add(spec)
       list_cli = Toys::CLI.new(logger: logger, middleware_stack: [], source_list: source_list)
 
       # The caller keeps its own list, so later additions there must not reach
       # the CLI, which would otherwise route around the finalization guard.
-      source_list.add_block do
+      spec = Toys::SourceSpec.block do
         tool "bar" do
           def run
             exit(4)
           end
         end
       end
+      source_list.add(spec)
       assert_equal(3, list_cli.run("foo"))
       refute_tool_defined(list_cli, "bar")
     end
 
     it "is not affected by a caller mutating its source list after finalization" do
       source_list = Toys::SourceList.new
-      source_list.add_block do
+      spec = Toys::SourceSpec.block do
         tool "foo" do
           def run
             exit(3)
           end
         end
       end
+      source_list.add(spec)
       list_cli = Toys::CLI.new(logger: logger, middleware_stack: [], source_list: source_list)
       list_cli.finalize_sources!
-      source_list.add_block do
+      spec = Toys::SourceSpec.block do
         tool "bar" do
           def run
             exit(4)
           end
         end
       end
+      source_list.add(spec)
       assert_equal(3, list_cli.run("foo"))
       refute_tool_defined(list_cli, "bar")
     end
 
     it "allows adding sources to a CLI that has a global logger" do
       logger_cli = Toys::CLI.new(logger: logger, middleware_stack: [])
-      logger_cli.add_source_block do
+      logger_cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1191,12 +1194,12 @@ describe Toys::CLI do
     it "raises when adding a source afterward" do
       cli.finalize_sources!
       assert_raises(Toys::SourceListFinalizedError) do
-        cli.add_source_block { tool("foo") { def run; end } }
+        cli.add_config_block { tool("foo") { def run; end } }
       end
     end
 
     it "builds a working loader and runner" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1222,7 +1225,7 @@ describe Toys::CLI do
       cli.loader
       cli.finalize_sources!
       assert_raises(Toys::SourceListFinalizedError) do
-        cli.add_source_block { tool("foo") { def run; end } }
+        cli.add_config_block { tool("foo") { def run; end } }
       end
     end
   end
@@ -1231,7 +1234,7 @@ describe Toys::CLI do
     it "is the runner that runs the CLI's tools" do
       test = self
       cli_runner = nil
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           to_run do
             test.assert_same(cli_runner, self[Toys::Context::Key::RUNNER])
@@ -1248,7 +1251,7 @@ describe Toys::CLI do
 
     it "runs a tool with the CLI's configuration" do
       test = self
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           to_run do
             test.assert_same(test.cli, self[Toys::Context::Key::CLI])
@@ -1276,7 +1279,7 @@ describe Toys::CLI do
     }
 
     it "resets tool blocks" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1284,7 +1287,7 @@ describe Toys::CLI do
         end
       end
       child = cli.child
-      child.add_source_block do
+      child.add_config_block do
         tool "foo" do
           def run
             exit(4)
@@ -1309,20 +1312,15 @@ describe Toys::CLI do
     end
 
     # A SourceList has no value equality, so compare it by what a copy has to
-    # preserve: the same sources, in the same order, and the same resolvers.
+    # preserve: the same specs, in the same order, with the same priorities.
     def equivalent_setting?(parent_value, child_value)
       return parent_value == child_value unless parent_value.is_a?(Toys::SourceList)
       child_value.is_a?(Toys::SourceList) &&
-        parent_value.to_a == child_value.to_a &&
-        parent_value.git_cache == child_value.git_cache &&
-        parent_value.gems_util == child_value.gems_util
+        parent_value.each_with_priority.to_a == child_value.each_with_priority.to_a
     end
 
-    it "empties the source list, but keeps the resolvers, unless sources are copied" do
-      cli = Toys::CLI.new(logger: logger, middleware_stack: [],
-                          source_list: Toys::SourceList.new(git_cache: git_cache,
-                                                            gems_util: gems_util))
-      cli.add_source_block do
+    it "empties the source list unless sources are copied" do
+      cli.add_config_block do
         tool "foo" do
           def run; end
         end
@@ -1330,12 +1328,34 @@ describe Toys::CLI do
       source_list = cli.send(:current_settings, false)[:source_list]
       assert_instance_of(Toys::SourceList, source_list)
       assert_empty(source_list)
-      assert_same(git_cache, source_list.git_cache)
-      assert_same(gems_util, source_list.gems_util)
+    end
+
+    # Resolution is per-Loader, and a child gets its own, so a copied source
+    # spec is resolved again rather than carried over already resolved.
+    it "re-resolves copied sources in the child's own loader" do
+      activations = []
+      util = Object.new
+      util.define_singleton_method(:activate) { |name, *_versions| activations << name }
+      gem_cli = Toys::CLI.new(logger: logger, middleware_stack: [], gems_util: util)
+      gem_cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb",
+                                              toys_dir: "test-data/lookup-cases/config-items"))
+      gem_cli.loader.lookup(["tool-1"])
+      assert_equal(["toys-core"], activations)
+
+      gem_cli.child(copy_sources: true).loader.lookup(["tool-1"])
+      assert_equal(["toys-core", "toys-core"], activations)
+    end
+
+    it "carries the resolvers into a child that copies no sources" do
+      cli = Toys::CLI.new(logger: logger, middleware_stack: [],
+                          git_cache: git_cache, gems_util: gems_util)
+      settings = cli.child.send(:current_settings, true)
+      assert_same(git_cache, settings[:git_cache])
+      assert_same(gems_util, settings[:gems_util])
     end
 
     it "copies every setting so that it survives the copy" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run; end
         end
@@ -1348,15 +1368,6 @@ describe Toys::CLI do
       assert_empty(mismatched,
                    "Settings that did not survive CLI#child, likely because" \
                    " CLI#current_settings reports a derived value rather than the one passed in")
-    end
-
-    it "carries the resolvers into a child that copies no sources" do
-      cli = Toys::CLI.new(logger: logger, middleware_stack: [],
-                          source_list: Toys::SourceList.new(git_cache: git_cache,
-                                                            gems_util: gems_util))
-      child_list = cli.child.send(:current_settings, true)[:source_list]
-      assert_same(git_cache, child_list.git_cache)
-      assert_same(gems_util, child_list.gems_util)
     end
 
     it "overrides parameters" do
@@ -1374,7 +1385,7 @@ describe Toys::CLI do
     end
 
     it "does not copy loader sources by default" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1388,7 +1399,7 @@ describe Toys::CLI do
     end
 
     it "copies loader sources when requested" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1400,14 +1411,14 @@ describe Toys::CLI do
     end
 
     it "copies loader sources added from paths" do
-      cli.add_source_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
+      cli.add_config_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
       child = cli.child(copy_sources: true)
       tool, _remaining = child.loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
     end
 
     it "lets sources added in the child block take priority over copied sources" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1415,7 +1426,7 @@ describe Toys::CLI do
         end
       end
       child = cli.child(copy_sources: true) do |c|
-        c.add_source_block(high_priority: true) do
+        c.add_config_block(high_priority: true) do
           tool "foo" do
             def run
               exit(4)
@@ -1427,7 +1438,7 @@ describe Toys::CLI do
     end
 
     it "does not affect the original cli when the child adds sources" do
-      cli.add_source_block do
+      cli.add_config_block do
         tool "foo" do
           def run
             exit(3)
@@ -1435,7 +1446,7 @@ describe Toys::CLI do
         end
       end
       child = cli.child(copy_sources: true)
-      child.add_source_block(high_priority: true) do
+      child.add_config_block(high_priority: true) do
         tool "foo" do
           def run
             exit(4)

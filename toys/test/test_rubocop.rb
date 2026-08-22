@@ -102,7 +102,7 @@ describe "rubocop template" do
 
     it "runs passing tests" do
       cases_dir = rubocop_cases_dir
-      cli.add_source_block do
+      cli.add_config_block do
         set_context_directory File.join(cases_dir, "passing")
         expand :rubocop, options: ["--config", "config.yml"]
       end
@@ -114,7 +114,7 @@ describe "rubocop template" do
 
     it "runs failing tests" do
       cases_dir = rubocop_cases_dir
-      cli.add_source_block do
+      cli.add_config_block do
         set_context_directory File.join(cases_dir, "failing")
         expand :rubocop, options: ["--config", "config.yml"]
       end
@@ -132,7 +132,7 @@ describe "rubocop template" do
         FileUtils.cp_r(File.join(cases_dir, "failing"), src_dir)
         broken = File.read(File.join(src_dir, "foo.rb"))
         refute_includes(broken, "\nend")
-        cli.add_source_block do
+        cli.add_config_block do
           set_context_directory src_dir
           expand :rubocop, options: ["--config", "config.yml"]
         end
@@ -149,7 +149,7 @@ describe "rubocop template" do
 
     it "honors context_directory setting" do
       dir = File.join(rubocop_cases_dir, "passing")
-      cli.add_source_block do
+      cli.add_config_block do
         expand :rubocop, options: ["--config", "config.yml"], context_directory: dir
       end
       out, _err = capture_subprocess_io do

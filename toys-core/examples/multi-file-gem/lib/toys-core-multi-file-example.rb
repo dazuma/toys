@@ -6,7 +6,7 @@ require "toys-core"
 class ToysCoreExample
   def initialize
     @cli = ::Toys::CLI.new
-    @cli.add_source_path(::File.join(::File.dirname(__dir__), "tools"))
+    @cli.add_config_path(::File.join(::File.dirname(__dir__), "tools"))
   end
 
   def run

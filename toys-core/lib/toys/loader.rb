@@ -14,9 +14,10 @@ module Toys
     # the factory for these objects.
     #
     # @param source_list [Toys::SourceList] The list of sources to use. The
-    #     sources are snapshotted from the SourceList on construction, so if
-    #     the SourceList is modified later, those modifications are not
-    #     reflected in the constructed Loader.
+    #     source specs are snapshotted from the SourceList on construction, so
+    #     if the SourceList is modified later, those modifications are not
+    #     reflected in the constructed Loader. The specs themselves are not
+    #     resolved until the Loader first looks up a tool.
     # @param tool_name_splitter [Toys::ToolNameSplitter] The splitter that
     #     interprets delimiters in tool names. Defaults to
     #     {Toys::ToolNameSplitter::DEFAULT}, which recognizes only whitespace.
@@ -29,13 +30,21 @@ module Toys
     #     well-known middleware classes. Defaults to an empty lookup.
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
+    # @param git_cache [Toys::Utils::GitCache,nil] A custom GitCache instance
+    #     to use when resolving git sources. Optional. If nil or not specified,
+    #     uses a process-wide default GitCache.
+    # @param gems_util [Toys::Utils::Gems,nil] A custom Gems utility instance
+    #     to use when resolving gem sources. Optional. If nil or not specified,
+    #     uses a process-wide default Gems utility.
     #
     def initialize(source_list,
                    tool_name_splitter: nil,
                    middleware_stack: [],
                    mixin_lookup: nil,
                    middleware_lookup: nil,
-                   template_lookup: nil)
+                   template_lookup: nil,
+                   git_cache: nil,
+                   gems_util: nil)
       require "monitor"
       # This mutex serializes all loading. It could be held for arbitrary
       # amounts of time because it surrounds the loading of tools files.
@@ -48,16 +57,17 @@ module Toys
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
+      @git_cache = git_cache
+      @gems_util = gems_util
+      # Worklist entries are [source_or_spec, words, priority] triples. The
+      # entries seeded here hold unresolved source specs; the entries pushed
+      # back during a directory walk hold resolved SourceInfo objects.
       @worklist = []
+      # Populated as each priority level is resolved.
       @roots_by_priority = {}
-      source_list.each do |source|
-        @worklist << [source, [], source.priority]
-        # SourceList enforces the invariant that each extant source priority
-        # has exactly one root
-        @roots_by_priority[source.priority] = source.root
+      source_list.each_with_priority do |spec, priority|
+        @worklist << [spec, [], priority]
       end
-      @git_cache = source_list.git_cache
-      @gems_util = source_list.gems_util
       get_tool([], -999_999)
     end
 
@@ -245,7 +255,9 @@ module Toys
         cur_worklist.each do |source, words, priority|
           next if priority < @stop_priority
           remaining_words = calc_remaining_words(prefix, words)
-          if source.source_proc
+          if source.is_a?(SourceSpec::Base)
+            load_root_spec(source, words, remaining_words, priority)
+          elsif source.source_proc
             load_proc(source, words, remaining_words, priority)
           elsif source.source_path
             load_validated_path(source, words, remaining_words, priority)
@@ -274,52 +286,15 @@ module Toys
     end
 
     ##
-    # Load tools from the given path. This is called from the `load` directive
-    # in the DSL.
+    # Load tools from the source described by the given spec, resolved as a
+    # child of the given parent source. This is called from the `load`,
+    # `load_git`, and `load_gem` directives in the DSL.
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def load_path(parent_source, path, words, remaining_words, priority)
-      if parent_source.git_remote
-        raise ToolDefinitionError, "Git source #{parent_source.source_name} tried to load from the local file system"
-      end
-      source = parent_source.absolute_child(path)
-      @mutex.synchronize do
-        load_validated_path(source, words, remaining_words, priority)
-      end
-    end
-
-    ##
-    # Load tools from the given git remote. This is called from the `load_git`
-    # directive in the DSL.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def load_git(parent_source, git_remote, git_path, git_commit, update,
-                 words, remaining_words, priority)
-      source = parent_source.git_child(git_remote,
-                                       child_git_path: git_path,
-                                       child_git_commit: git_commit,
-                                       git_cache: @git_cache,
-                                       update: update)
-      @mutex.synchronize do
-        load_validated_path(source, words, remaining_words, priority)
-      end
-    end
-
-    ##
-    # Load tools from the given gem. This is called from the `load_gem`
-    # directive in the DSL.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def load_gem(parent_source, gem_name, gem_version, gem_toys_dir, gem_path,
-                 words, remaining_words, priority)
-      source = parent_source.gem_child(gem_name,
-                                       child_gem_version: gem_version,
-                                       child_gem_path: gem_path,
-                                       gem_toys_dir: gem_toys_dir,
-                                       gems_util: @gems_util)
+    def load_source(parent_source, spec, words, remaining_words, priority)
+      source = SourceInfo.resolve(spec, parent: parent_source,
+                                  git_cache: @git_cache, gems_util: @gems_util)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
@@ -502,6 +477,43 @@ module Toys
         next if name.length < len || name.slice(0, len) != words
         tool.finish_definition(self)
       end
+    end
+
+    ##
+    # Resolve a root source spec from the source list, and load the resulting
+    # source or sources.
+    # Caller must own the mutex.
+    #
+    def load_root_spec(spec, words, remaining_words, priority)
+      root = SourceInfo.resolve(spec, priority: priority,
+                                git_cache: @git_cache, gems_util: @gems_util)
+      # Recorded before anything is loaded, because build_tool passes it to
+      # each ToolDefinition as the source root.
+      @roots_by_priority[priority] = root
+      expand_root_spec(spec, root).each do |source|
+        if source.source_proc
+          load_proc(source, words, remaining_words, priority)
+        else
+          load_validated_path(source, words, remaining_words, priority)
+        end
+      end
+    end
+
+    ##
+    # Return the sources to load for a resolved root. This is the root itself,
+    # unless the spec named a set of paths relative to it, in which case it is
+    # those paths. Every member is resolved before any is returned, so a
+    # failure partway through a set does not leave a half-loaded priority
+    # level.
+    # Caller must own the mutex.
+    #
+    def expand_root_spec(spec, root)
+      relative_paths = spec.relative_paths if spec.is_a?(SourceSpec::Path)
+      return [root] if relative_paths.nil?
+      unless root.source_type == :directory
+        raise SourceResolutionError, "Root of a source path set is not a directory: #{root.source_path}"
+      end
+      relative_paths.map { |path| root.relative_child(path, lenient: false) }
     end
 
     ##
