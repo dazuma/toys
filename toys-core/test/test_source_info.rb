@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "helper"
+require "toys/utils/gems"
+require "toys/utils/git_cache"
 
 describe Toys::SourceInfo do
   let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
@@ -674,6 +676,66 @@ describe Toys::SourceInfo do
       si = Toys::SourceInfo.create_path_root(File.join(preloads_path, "ns-1"), priority)
                            .relative_child("ns-1a")
       refute_includes(si.find_preload_files, File.join(preloads_path, "ns-1", ".preload.rb"))
+    end
+  end
+
+  describe "resolution errors" do
+    let(:non_ruby_file) { File.join(lookup_cases_dir, "normal-file-hierarchy", "hello.txt") }
+
+    it "raises SourceResolutionError for an unreadable path" do
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.check_path(bad_path, false)
+      end
+      assert_equal("Cannot read: #{bad_path}", error.message)
+    end
+
+    it "raises SourceResolutionError for a non-ruby file" do
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.check_path(non_ruby_file, false)
+      end
+      assert_equal("File is not a ruby file: #{non_ruby_file}", error.message)
+    end
+
+    it "raises SourceResolutionError for a path that is neither a file nor a directory" do
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.check_path(File::NULL, false)
+      end
+      assert_equal("Not a ruby file or directory: #{File::NULL}", error.message)
+    end
+
+    it "raises SourceResolutionError when a gem cannot be activated" do
+      failing_gems_util = Object.new
+      failing_gems_util.define_singleton_method(:activate) do |*_args|
+        raise Toys::Utils::Gems::ActivationFailedError, "activation went wrong"
+      end
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.resolve_gem_info(failing_gems_util, gem_name, nil, nil, nil)
+      end
+      assert_equal("activation went wrong", error.message)
+    end
+
+    it "raises SourceResolutionError when an activated gem cannot be found" do
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.resolve_gem_info(gems_util, "nonexistent-gem", nil, nil, nil)
+      end
+      assert_equal("Unable to find gem nonexistent-gem", error.message)
+    end
+
+    it "raises SourceResolutionError when a git repo cannot be accessed" do
+      failing_git_cache = Object.new
+      failing_git_cache.define_singleton_method(:get) do |*_args, **_opts|
+        raise Toys::Utils::GitCache::Error, "repo went wrong"
+      end
+      error = assert_raises(Toys::SourceResolutionError) do
+        Toys::SourceInfo.resolve_git_info(failing_git_cache, git_remote, nil, nil, false)
+      end
+      assert_equal("Unable to access git repo #{git_remote}: repo went wrong", error.message)
+    end
+
+    it "raises an error that existing rescues of ToolDefinitionError still catch" do
+      assert_raises(Toys::ToolDefinitionError) do
+        Toys::SourceInfo.check_path(bad_path, false)
+      end
     end
   end
 end

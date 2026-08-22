@@ -472,19 +472,19 @@ module Toys
       def check_path(path, lenient)
         path = ::File.expand_path(path)
         unless ::File.readable?(path)
-          raise ToolDefinitionError, "Cannot read: #{path}" unless lenient
+          raise SourceResolutionError, "Cannot read: #{path}" unless lenient
           return [nil, nil]
         end
         if ::File.file?(path)
           unless ::File.extname(path) == ".rb"
-            raise ToolDefinitionError, "File is not a ruby file: #{path}" unless lenient
+            raise SourceResolutionError, "File is not a ruby file: #{path}" unless lenient
             return [nil, nil]
           end
           [path, :file]
         elsif ::File.directory?(path)
           [path, :directory]
         else
-          raise ToolDefinitionError, "Not a ruby file or directory: #{path}" unless lenient
+          raise SourceResolutionError, "Not a ruby file or directory: #{path}" unless lenient
           [nil, nil]
         end
       end
@@ -500,10 +500,10 @@ module Toys
           gem_versions = Array(gem_version)
           (gems_util || default_gems_util).activate(gem_name, *gem_versions)
         rescue ::Toys::Utils::Gems::ActivationFailedError => e
-          raise ToolDefinitionError, e.message
+          raise SourceResolutionError, e.message
         end
         gem_spec = ::Gem.loaded_specs[gem_name]
-        raise ToolDefinitionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
+        raise SourceResolutionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
         gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
         gem_path = gem_path.to_s.empty? ? gem_toys_dir : ::File.join(gem_toys_dir, gem_path)
         source_path = ::File.join(gem_spec.gem_dir, gem_path)
@@ -523,7 +523,7 @@ module Toys
         source_path = begin
           git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
         rescue ::Toys::Utils::GitCache::Error => e
-          raise ToolDefinitionError, "Unable to access git repo #{git_remote}: #{e.message}"
+          raise SourceResolutionError, "Unable to access git repo #{git_remote}: #{e.message}"
         end
         [git_commit, git_path, source_path]
       end
