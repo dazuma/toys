@@ -993,6 +993,43 @@ describe Toys::CLI do
     end
   end
 
+  describe "add_source argument checking" do
+    it "rejects a call with neither a spec nor a block" do
+      error = assert_raises(ArgumentError) { cli.add_source }
+      assert_equal("No source spec, path, or block given", error.message)
+    end
+
+    it "rejects both a spec and a block" do
+      spec = Toys::SourceSpec.block { nil }
+      error = assert_raises(ArgumentError) { cli.add_source(spec) { nil } }
+      assert_equal("Ambiguous source: both spec and block passed", error.message)
+    end
+
+    it "rejects an argument that is neither a spec nor a legal path" do
+      error = assert_raises(ArgumentError) { cli.add_source(12_345) }
+      assert_equal("Illegal path: 12345", error.message)
+    end
+
+    it "leaves the source list untouched when an argument is rejected" do
+      assert_raises(ArgumentError) { cli.add_source(12_345) }
+      refute_tool_defined(cli, "foo")
+    end
+
+    it "accepts a path-convertible object as a path" do
+      require "pathname"
+      cli.add_source(Pathname.new(File.join(lookup_cases_dir, "config-items", ".toys.rb")))
+      tool, _remaining = cli.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
+    # Returns true if the CLI has no tool by the given name. A lookup miss
+    # falls back to the nearest namespace, which here is always the root.
+    def refute_tool_defined(a_cli, name)
+      tool, _remaining = a_cli.loader.lookup([name])
+      assert_empty(tool.full_name, "expected no tool named #{name.inspect}")
+    end
+  end
+
   describe "add_source with a gem spec" do
     let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
 

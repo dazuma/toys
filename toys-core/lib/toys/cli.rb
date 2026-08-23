@@ -306,7 +306,8 @@ module Toys
     # The source can be specified in one of three ways:
     #
     # * A source spec built using one of the {Toys::SourceSpec} module methods.
-    # * A string interpreted as a file system path, which will be passed to
+    # * A string (or other object convertible to a path, such as a `Pathname`)
+    #   interpreted as a file system path, which will be passed to
     #   {Toys::SourceSpec.path} to get the source spec.
     # * A block, which will be passed to {Toys::SourceSpec.block} to get the
     #   source spec. (Do not include an argument if passing a block.)
@@ -320,6 +321,8 @@ module Toys
     #     list rather than the tail.
     #
     # @return [self]
+    # @raise [ArgumentError] if no source is given, or if the given source is
+    #     neither a source spec nor a legal path.
     # @raise [Toys::SourceListFinalizedError] if the source list has already
     #     been finalized.
     #
@@ -327,7 +330,10 @@ module Toys
       if block
         raise ::ArgumentError, "Ambiguous source: both spec and block passed" if spec
         spec = SourceSpec.block(&block)
-      elsif spec.is_a?(::String)
+      elsif !spec.is_a?(SourceSpec::Base)
+        raise ::ArgumentError, "No source spec, path, or block given" if spec.nil?
+        # Anything else is taken as a path. SourceSpec.path raises if it is
+        # not one, so a bad argument is reported here rather than at load time.
         spec = SourceSpec.path(spec)
       end
       ensure_source_list_open do

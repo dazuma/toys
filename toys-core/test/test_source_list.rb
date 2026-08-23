@@ -147,6 +147,21 @@ describe Toys::SourceList do
                    specs_of(list).map(&:class))
     end
 
+    it "rejects an object that is not a source spec" do
+      error = assert_raises(ArgumentError) { list.add("not a spec") }
+      assert_equal("Illegal source spec: \"not a spec\"", error.message)
+    end
+
+    it "rejects nil" do
+      assert_raises(ArgumentError) { list.add(nil) }
+    end
+
+    it "consumes no priority when a spec is rejected" do
+      assert_raises(ArgumentError) { list.add(:nonsense) }
+      list.add(Toys::SourceSpec.path(toys_file))
+      assert_equal([-1], priorities_of(list))
+    end
+
     it "returns self" do
       assert_same(list, list.add(Toys::SourceSpec.path(toys_file)))
     end

@@ -75,8 +75,10 @@ module Toys
     #     at the bottom of the priority list.
     #
     # @return [self]
+    # @raise [ArgumentError] if the given object is not a source spec.
     #
     def add(spec, high_priority: false)
+      raise ::ArgumentError, "Illegal source spec: #{spec.inspect}" unless spec.is_a?(SourceSpec::Base)
       priority = high_priority ? @max_priority + 1 : @min_priority - 1
       @sources << [spec, priority]
       @max_priority = priority if priority > @max_priority

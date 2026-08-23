@@ -12,8 +12,10 @@ module Toys
   #
   # A source spec says only what to load; it performs no filesystem access, no
   # git fetch, and no gem activation. Those happen later, when a loader
-  # resolves the spec into a {Toys::SourceInfo}. Create specs using the
-  # factory methods {Toys::SourceSpec.path}, {Toys::SourceSpec.git},
+  # resolves the spec into a {Toys::SourceInfo}. A spec does, however, check
+  # the types of its arguments when it is created, so a malformed description
+  # is reported at that point rather than at resolution time. Create specs
+  # using the factory methods {Toys::SourceSpec.path}, {Toys::SourceSpec.git},
   # {Toys::SourceSpec.gem}, and {Toys::SourceSpec.block}, each of which
   # returns an instance of the corresponding subclass of
   # {Toys::SourceSpec::Base}.
@@ -27,7 +29,9 @@ module Toys
       ##
       # Create a spec for a file system path.
       #
-      # @param path [String] Path to a tool file or directory.
+      # @param path [String] Path to a tool file or directory. An object
+      #     convertible to a path, such as a `Pathname`, is also accepted, and
+      #     is converted to a string.
       # @param relative_paths [String,Array<String>,nil] If provided, the given
       #     path is treated as a root directory, and these paths, relative to
       #     it, are the sources actually loaded. Pass `nil` (the default) to
@@ -138,7 +142,7 @@ module Toys
       def initialize(context_directory, source_name)
         validate_context_directory(context_directory)
         @context_directory = context_directory
-        @source_name = source_name
+        @source_name = check_optional_string(source_name, "source_name")
         freeze
       end
 
@@ -201,6 +205,31 @@ module Toys
         return if context_directory.nil? || context_directory.is_a?(::String)
         raise ::ArgumentError, "Illegal context_directory: #{context_directory.inspect}"
       end
+
+      ##
+      # Return the given value if it is a string, otherwise raise. The name is
+      # used only to describe the offending field in the error message.
+      #
+      def check_string(value, name)
+        return value if value.is_a?(::String)
+        raise ::ArgumentError, "Illegal #{name}: #{value.inspect}"
+      end
+
+      ##
+      # Same as {#check_string} but also allows nil.
+      #
+      def check_optional_string(value, name)
+        value.nil? ? nil : check_string(value, name)
+      end
+
+      ##
+      # Same as {#check_string} but also accepts an object convertible to a
+      # path, such as a `Pathname`, and converts it to a string.
+      #
+      def check_path_string(value, name)
+        value = value.to_path if !value.is_a?(::String) && value.respond_to?(:to_path)
+        check_string(value, name)
+      end
     end
 
     ##
@@ -215,8 +244,11 @@ module Toys
       # @private
       #
       def initialize(path, relative_paths, context_directory, source_name)
-        @path = path
-        @relative_paths = relative_paths.nil? ? nil : Array(relative_paths).dup.freeze
+        @path = check_path_string(path, "path")
+        @relative_paths =
+          unless relative_paths.nil?
+            Array(relative_paths).map { |rp| check_path_string(rp, "relative path") }.freeze
+          end
         super(context_directory, source_name)
       end
 
@@ -265,10 +297,10 @@ module Toys
       # @private
       #
       def initialize(remote, path, commit, update, context_directory, source_name)
-        @remote = remote
-        @path = path
-        @commit = commit
-        @update = update
+        @remote = check_optional_string(remote, "remote")
+        @path = check_optional_string(path, "path")
+        @commit = check_optional_string(commit, "commit")
+        @update = check_update(update)
         super(context_directory, source_name)
       end
 
@@ -310,6 +342,17 @@ module Toys
       def equality_fields
         super + [@remote, @path, @commit, @update]
       end
+
+      private
+
+      ##
+      # Return the given update setting if it is a boolean or an integer
+      # number of seconds, otherwise raise.
+      #
+      def check_update(update)
+        return update if update.is_a?(::Integer) || update.equal?(true) || update.equal?(false)
+        raise ::ArgumentError, "Illegal update: #{update.inspect}"
+      end
     end
 
     ##
@@ -328,10 +371,10 @@ module Toys
       # @private
       #
       def initialize(name, version, path, toys_dir, context_directory, source_name)
-        @name = name
-        @version = Array(version).dup.freeze
-        @path = path
-        @toys_dir = toys_dir
+        @name = check_string(name, "name")
+        @version = Array(version).map { |v| check_string(v, "version requirement") }.freeze
+        @path = check_optional_string(path, "path")
+        @toys_dir = check_optional_string(toys_dir, "toys_dir")
         super(context_directory, source_name)
       end
 
@@ -387,6 +430,7 @@ module Toys
       # @private
       #
       def initialize(block, context_directory, source_name)
+        raise ::ArgumentError, "Illegal source block: #{block.inspect}" unless block.is_a?(::Proc)
         @block = block
         super(context_directory, source_name)
       end

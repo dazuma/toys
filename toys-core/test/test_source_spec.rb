@@ -212,6 +212,88 @@ describe Toys::SourceSpec do
     end
   end
 
+  describe "argument checking" do
+    it "requires a path to be a string" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.path(nil) }
+      assert_equal("Illegal path: nil", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.path(12_345) }
+      assert_raises(ArgumentError) { Toys::SourceSpec.path(:sym) }
+    end
+
+    it "accepts a path-convertible object as a path, converting it to a string" do
+      require "pathname"
+      spec = Toys::SourceSpec.path(Pathname.new("/path/to/source"))
+      assert_equal("/path/to/source", spec.path)
+      assert_instance_of(::String, spec.path)
+    end
+
+    it "requires each relative path to be a string" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", relative_paths: [".toys", 5]) }
+      assert_equal("Illegal relative path: 5", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", relative_paths: :toys) }
+    end
+
+    it "accepts path-convertible objects as relative paths" do
+      require "pathname"
+      spec = Toys::SourceSpec.path("/p", relative_paths: [Pathname.new(".toys")])
+      assert_equal([".toys"], spec.relative_paths)
+    end
+
+    it "requires a source name to be a string if given" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", source_name: :sym) }
+      assert_equal("Illegal source_name: :sym", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.block(source_name: 12_345) { nil } }
+    end
+
+    it "requires a context directory to be a string if given" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.git("r", context_directory: 12_345) }
+      assert_equal("Illegal context_directory: 12345", error.message)
+    end
+
+    it "requires a git remote to be a string if given" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.git(12_345) }
+      assert_equal("Illegal remote: 12345", error.message)
+    end
+
+    it "requires the other git fields to be strings if given" do
+      assert_raises(ArgumentError) { Toys::SourceSpec.git("r", path: 12_345) }
+      assert_raises(ArgumentError) { Toys::SourceSpec.git("r", commit: :main) }
+    end
+
+    it "requires a git update to be a boolean or an integer" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.git("r", update: "yes") }
+      assert_equal("Illegal update: \"yes\"", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.git("r", update: nil) }
+    end
+
+    it "accepts a boolean or an integer git update" do
+      assert_equal(true, Toys::SourceSpec.git("r", update: true).update)
+      assert_equal(false, Toys::SourceSpec.git("r", update: false).update)
+      assert_equal(3600, Toys::SourceSpec.git("r", update: 3600).update)
+    end
+
+    it "requires a gem name to be a string" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.gem(nil) }
+      assert_equal("Illegal name: nil", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.gem(:mygem) }
+    end
+
+    it "requires each gem version requirement to be a string" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.gem("g", version: ["~> 1.0", 2]) }
+      assert_equal("Illegal version requirement: 2", error.message)
+    end
+
+    it "requires the other gem fields to be strings if given" do
+      assert_raises(ArgumentError) { Toys::SourceSpec.gem("g", path: 12_345) }
+      assert_raises(ArgumentError) { Toys::SourceSpec.gem("g", toys_dir: 12_345) }
+    end
+
+    it "requires a block" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.block }
+      assert_equal("Illegal source block: nil", error.message)
+    end
+  end
+
   describe "equality" do
     it "treats path specs with the same fields as equal" do
       spec1 = Toys::SourceSpec.path("/p", relative_paths: [".toys"], source_name: "n")
