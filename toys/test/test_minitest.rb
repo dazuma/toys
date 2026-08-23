@@ -208,7 +208,7 @@ describe "minitest template" do
 
     it "runs passing tests" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "passing/*.rb"
       end
@@ -221,7 +221,7 @@ describe "minitest template" do
 
     it "runs failing tests" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "failing/*.rb"
       end
@@ -233,7 +233,7 @@ describe "minitest template" do
 
     it "finds default files" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest
       end
@@ -249,7 +249,7 @@ describe "minitest template" do
 
     it "warns if default globs did not match anything" do
       dir = File.join(cases_dir, "test")
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest
       end
@@ -263,7 +263,7 @@ describe "minitest template" do
 
     it "chooses files" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -276,7 +276,7 @@ describe "minitest template" do
 
     it "expands globs when choosing files with --globs" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -289,7 +289,7 @@ describe "minitest template" do
 
     it "warns if a glob doesn't match anything" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -303,7 +303,7 @@ describe "minitest template" do
 
     it "does not expand globs by default when choosing files" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -315,7 +315,7 @@ describe "minitest template" do
 
     it "honors context_directory argument" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         expand :minitest, files: "failing/*.rb", context_directory: dir
       end
       out, _err = capture_subprocess_io do
@@ -326,7 +326,7 @@ describe "minitest template" do
 
     it "passes MT_COMPAT" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "mt-compat/*.rb"
       end
@@ -340,7 +340,7 @@ describe "minitest template" do
 
     it "sets MT_COMPAT" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "mt-compat/*.rb", mt_compat: true
       end
@@ -359,7 +359,7 @@ describe "minitest template" do
 
     it "clears MT_COMPAT" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "mt-compat/*.rb", mt_compat: false
       end
@@ -518,7 +518,7 @@ describe "minitest template" do
 
     it "recognizes the --include flag" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -531,7 +531,7 @@ describe "minitest template" do
 
     it "recognizes the --exclude flag" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "multiple/*.rb"
       end
@@ -544,7 +544,7 @@ describe "minitest template" do
 
     it "recognizes the --verbose flag" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "passing/*.rb"
       end
@@ -558,7 +558,7 @@ describe "minitest template" do
 
     it "runs preload code" do
       dir = cases_dir
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :minitest, files: "passing/*.rb"
       end

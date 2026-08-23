@@ -17,7 +17,7 @@ describe Toys::CI::Mixin do
 
   describe "job types" do
     it "runs a succeeding tool job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -29,7 +29,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -39,7 +39,7 @@ describe Toys::CI::Mixin do
     end
 
     it "runs a failing tool job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -51,7 +51,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -61,7 +61,7 @@ describe Toys::CI::Mixin do
     end
 
     it "runs a succeeding cmd job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -73,7 +73,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -83,7 +83,7 @@ describe Toys::CI::Mixin do
     end
 
     it "runs a failing cmd job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -95,7 +95,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -104,7 +104,7 @@ describe Toys::CI::Mixin do
     end
 
     it "runs a succeeding block job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -119,7 +119,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -129,7 +129,7 @@ describe Toys::CI::Mixin do
     end
 
     it "runs a failing block job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -144,7 +144,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -156,7 +156,7 @@ describe Toys::CI::Mixin do
 
   describe "final results" do
     it "succeeds when all jobs succeed" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -172,7 +172,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -188,7 +188,7 @@ describe Toys::CI::Mixin do
     end
 
     it "fails when at least one of many jobs fails" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -204,7 +204,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -220,7 +220,7 @@ describe Toys::CI::Mixin do
     end
 
     it "fails if no jobs are run" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -232,7 +232,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci"))
@@ -244,7 +244,7 @@ describe Toys::CI::Mixin do
     end
 
     it "returns 0 on success when exit: false is passed" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -258,7 +258,7 @@ describe Toys::CI::Mixin do
             puts "Result: #{result}"
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -268,7 +268,7 @@ describe Toys::CI::Mixin do
     end
 
     it "returns 1 on failure when exit: false is passed" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -282,7 +282,7 @@ describe Toys::CI::Mixin do
             puts "Result: #{result}"
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -292,7 +292,7 @@ describe Toys::CI::Mixin do
     end
 
     it "returns 2 when no jobs are run and exit: false is passed" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -302,7 +302,7 @@ describe Toys::CI::Mixin do
             puts "Result: #{result}"
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -312,7 +312,7 @@ describe Toys::CI::Mixin do
     end
 
     it "handles fail-fast" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -325,7 +325,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -337,7 +337,7 @@ describe Toys::CI::Mixin do
     end
 
     it "handles jobs with no trigger path" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -351,7 +351,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -360,7 +360,7 @@ describe Toys::CI::Mixin do
     end
 
     it "filters jobs based on matching trigger directory" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -376,7 +376,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -388,7 +388,7 @@ describe Toys::CI::Mixin do
     end
 
     it "filters jobs based on matching trigger file" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -404,7 +404,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -416,7 +416,7 @@ describe Toys::CI::Mixin do
     end
 
     it "skips all jobs" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -432,7 +432,7 @@ describe Toys::CI::Mixin do
             toys_ci_report_results
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -465,7 +465,7 @@ describe Toys::CI::Mixin do
     it "loads a push event" do
       test_case = self
 
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -477,7 +477,7 @@ describe Toys::CI::Mixin do
             puts toys_ci_github_event_base_sha.inspect
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -488,7 +488,7 @@ describe Toys::CI::Mixin do
     it "loads a pull request event" do
       test_case = self
 
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -500,7 +500,7 @@ describe Toys::CI::Mixin do
             puts toys_ci_github_event_base_sha.inspect
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -511,7 +511,7 @@ describe Toys::CI::Mixin do
     it "catches wrong event type" do
       test_case = self
 
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -523,7 +523,7 @@ describe Toys::CI::Mixin do
             puts toys_ci_github_event_base_sha.inspect
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -534,7 +534,7 @@ describe Toys::CI::Mixin do
     it "catches no such file" do
       test_case = self
 
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           include Toys::CI::Mixin
 
@@ -546,7 +546,7 @@ describe Toys::CI::Mixin do
             puts toys_ci_github_event_base_sha.inspect
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))

@@ -163,7 +163,7 @@ describe "rdoc template" do
       input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory input_dir
         expand :rdoc, output_dir: output_dir
       end
@@ -177,7 +177,7 @@ describe "rdoc template" do
       input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
-      cli.add_config_block do
+      cli.add_source do
         expand :rdoc, output_dir: output_dir, context_directory: input_dir
       end
       capture_subprocess_io do

@@ -87,7 +87,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 #### Insert the following block ...
-cli.add_config_block do
+cli.add_source do
   desc "My first executable!"
   flag :whom, default: "world"
   def run
@@ -130,7 +130,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 #### Change the source block as follows ...
-cli.add_config_block do
+cli.add_source do
   # Things outside any tool block still apply to the root
   desc "My first executable with several tools"
 
@@ -191,7 +191,7 @@ cli = Toys::CLI.new(
 )
 
 #### Change the source block as follows ...
-cli.add_config_block do
+cli.add_source do
   tool "example" do
     tool "greet" do
       def run
@@ -240,7 +240,7 @@ middlewares = [
 cli = Toys::CLI.new middleware_stack: middlewares
 
 #### Use this source block ...
-cli.add_config_block do
+cli.add_source do
   tool "greet" do
     def run
       puts "Hello, world!"

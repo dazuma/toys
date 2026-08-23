@@ -23,7 +23,7 @@ module Toys
   #     #!/usr/bin/env ruby
   #     require "toys-core"
   #     cli = Toys::CLI.new
-  #     cli.add_config_block do
+  #     cli.add_source do
   #       def run
   #         puts "Hello, world!"
   #       end
@@ -297,13 +297,19 @@ module Toys
     ##
     # Add a source to the source list, described by the given source spec.
     #
+    # This is generally used to load a static or "built-in" set of tools,
+    # either for a standalone command line executable based on Toys, or to
+    # provide a "default" set of tools for a dynamic executable. For example,
+    # the main Toys executable uses this to load the builtin tools from its
+    # "builtins" directory.
+    #
     # The spec is not resolved here. The loader resolves it, at most once, the
     # first time it looks up a tool, so a source that cannot be read, fetched,
     # or activated fails then rather than now.
     #
-    # @param spec [Toys::SourceSpec::Base] The source spec to add. Build one
-    #     with {Toys::SourceSpec.path}, {Toys::SourceSpec.git},
-    #     {Toys::SourceSpec.gem}, or {Toys::SourceSpec.block}.
+    # @param spec [Toys::SourceSpec::Base] The source spec to add. You can also
+    #     omit the spec and provide a block instead, which will be converted
+    #     to a block spec.
     # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
     #
@@ -311,8 +317,12 @@ module Toys
     # @raise [Toys::SourceListFinalizedError] if the source list has already
     #     been finalized.
     #
-    def add_source(spec, high_priority: false)
-      ensure_open_source_list do
+    def add_source(spec = nil, high_priority: false, &block)
+      if block
+        raise ::ArgumentError, "Ambiguous source: both spec and block passed" if spec
+        spec = SourceSpec.block(&block)
+      end
+      ensure_source_list_open do
         @source_list.add(spec, high_priority: high_priority)
       end
       self
@@ -321,11 +331,7 @@ module Toys
     ##
     # Add a specific tool file or directory to the source list.
     #
-    # This is generally used to load a static or "built-in" set of tools,
-    # either for a standalone command line executable based on Toys, or to
-    # provide a "default" set of tools for a dynamic executable. For example,
-    # the main Toys executable uses this to load the builtin tools from its
-    # "builtins" directory.
+    # @deprecated Prefer {#add_source}.
     #
     # @param path [String] A path to add. May reference a single tool file or a
     #     tool directory.
@@ -353,8 +359,7 @@ module Toys
     ##
     # Add a block to the source list.
     #
-    # This is used to create tools "inline", and is useful for simple command
-    # line executables based on Toys.
+    # @deprecated Prefer {#add_source}.
     #
     # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
@@ -402,7 +407,7 @@ module Toys
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
-      ensure_open_source_list do
+      ensure_source_list_open do
         paths = []
         if @toplevel_tool_file_name
           file_path = ::File.join(search_path, @toplevel_tool_file_name)
@@ -441,7 +446,7 @@ module Toys
     def add_search_path_hierarchy(start: nil,
                                   terminate: [],
                                   high_priority: false)
-      ensure_open_source_list do
+      ensure_source_list_open do
         path = start || ::Dir.pwd
         paths = []
         loop do
@@ -638,7 +643,7 @@ module Toys
     #
     # @raise [Toys::SourceListFinalizedError] if the source list is finalized.
     #
-    def ensure_open_source_list
+    def ensure_source_list_open
       @source_definition_mutex.synchronize do
         if @loader
           raise SourceListFinalizedError,

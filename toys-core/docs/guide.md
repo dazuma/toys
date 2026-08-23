@@ -87,7 +87,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 # Define the functionality
-cli.add_config_block do
+cli.add_source do
   desc "My first executable!"
   flag :whom, default: "world"
   def run
@@ -146,14 +146,14 @@ a tool named `foo bar` might live in the file `foo/bar.rb`. The loader will
 open that file, if it exists, only when the `foo bar` tool is requested. If
 instead `foo qux` is requested, the `foo/bar.rb` file is never even opened.
 
-Perhaps more subtly, if you call {Toys::CLI#add_config_block} to define tools,
+Perhaps more subtly, if you call {Toys::CLI#add_source} to define tools,
 the block is stored in the source list _but not called immediately_. Only
 when a tool is requested does the block actually execute. Furthermore, if you
 have `tool` blocks inside the block, the loader will execute only those that
 are relevant to a tool it wants. Hence:
 
 ```ruby
-cli.add_config_block do
+cli.add_source do
   tool "foo" do
     def run
       puts "foo called"
@@ -315,7 +315,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 # Define the functionality by passing a block to the CLI
-cli.add_config_block do
+cli.add_source do
   desc "My first executable!"
   flag :whom, default: "world"
   def run
@@ -332,14 +332,29 @@ The block simply contains Toys DSL syntax. The above example configures the
 tool name on the command line. You can also include "tool" blocks to define
 named tools and subtools, just as you would in a normal Toys file.
 
-The reference documentation for {Toys::CLI#add_config_block} lists several
-options that can be passed in. `:context_directory` lets you select a context
-directory for tools defined in the block. Normally, this is the directory
-containing the Toys files in which the tool is defined, but when tools are
-defined in a block, it must be set explicitly. (Otherwise, calling the
-`context_directory` from within the tool will return `nil`.) Similarly, the
-`:source_name`, normally the path to the Toys file that appears in error
-messages and documentation, can also be set explicitly.
+Passing a block directly to {Toys::CLI#add_source} is shorthand for a common
+case. In general, `add_source` takes a *source spec*, an unresolved description
+of where tools come from, and {Toys::SourceSpec.block} builds one from a block.
+Constructing the spec yourself lets you pass additional options:
+
+```ruby
+cli.add_source(Toys::SourceSpec.block(context_directory: my_dir) do
+  tool "hello" do
+    def run
+      puts "Hello from #{context_directory}!"
+    end
+  end
+end)
+```
+
+The `:context_directory` option selects a context directory for tools defined
+in the block. Normally, this is the directory containing the Toys files in
+which the tool is defined, but when tools are defined in a block, it must be
+set explicitly. (Otherwise, calling the `context_directory` from within the
+tool will return `nil`.) Similarly, the `:source_name`, normally the path to
+the Toys file that appears in error messages and documentation, can also be
+set explicitly. See {Toys::SourceSpec} for the full set of source specs and
+their options.
 
 ### Writing tool files
 
@@ -397,7 +412,7 @@ from multiple sources, it combines them. However, if multiple sources define a
 tool of the same name, only one definition will "win", the one from the source
 with the highest priority.
 
-Each time a tool source is added to a CLI using {Toys::CLI#add_config_block},
+Each time a tool source is added to a CLI using {Toys::CLI#add_source},
 {Toys::CLI#add_config_path}, or similar, that new source is added to a
 prioritized list. By default it is added to the end of the list, at a lower
 priority level than previously added sources. Thus, any tools defined in the
@@ -412,7 +427,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 # Add a block defining a tool called "hello"
-cli.add_config_block do
+cli.add_source do
   tool "hello" do
     def run
       puts "Hello from the first source block!"
@@ -421,7 +436,7 @@ cli.add_config_block do
 end
 
 # Add a lower-priority block defining a tool with the same name
-cli.add_config_block do
+cli.add_source do
   tool "hello" do
     def run
       puts "Hello from the second source block!"
@@ -439,7 +454,7 @@ source at the *front* of the priority list by passing an argument:
 
 ```ruby
 # Add tools with the highest priority
-cli.add_config_block high_priority: true do
+cli.add_source high_priority: true do
   tool "hello" do
     def run
       puts "Hello from the second source block!"
@@ -505,7 +520,7 @@ require "toys-core"
 my_mixin_lookup = Toys::ModuleLookup.new.add_path("my_tools/mixins")
 cli = Toys::CLI.new(mixin_lookup: my_mixin_lookup)
 
-cli.add_config_block do
+cli.add_source do
   def run
     include :foo_mixin
     foo
@@ -558,7 +573,7 @@ require "toys-core"
 
 cli = Toys::CLI.new
 
-cli.add_config_block do
+cli.add_source do
   tool "hello" do
     def run
       logger.info "This log entry is displayed in verbose mode."
@@ -987,7 +1002,7 @@ examples of executables packaged in gems. Let's take a look at these.
 
 The [`simple-gem` example](https://github.com/dazuma/toys/tree/main/toys-core/examples/simple-gem)
 illustrates packaging a simple executable that can be implemented in a single
-file using {Toys::CLI#add_config_block}. It demonstrates the gem
+file using {Toys::CLI#add_source}. It demonstrates the gem
 `toys-core-simple-example` that provides an executable also called
 `toys-core-simple-example`.
 
@@ -1016,7 +1031,7 @@ require "toys-core"
 
 cli = ::Toys::CLI.new
 
-cli.add_config_block do
+cli.add_source do
   desc "Display a simple greeting"
   flag :whom, default: "world"
   def run

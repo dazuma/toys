@@ -17,13 +17,13 @@ describe Toys::CI::Template do
 
   describe "job types" do
     it "runs a succeeding tool job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -33,13 +33,13 @@ describe Toys::CI::Template do
     end
 
     it "runs a failing tool job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Bar", ["bar"])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -49,13 +49,13 @@ describe Toys::CI::Template do
     end
 
     it "runs a succeeding cmd job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.cmd_job("Echo", ["echo", "CMD SUCCEEDED"])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -65,13 +65,13 @@ describe Toys::CI::Template do
     end
 
     it "runs a failing cmd job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.cmd_job("Hoho", ["hohohohohohoho"])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -80,7 +80,7 @@ describe Toys::CI::Template do
     end
 
     it "runs a succeeding block job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.job("Good Block") do
@@ -89,7 +89,7 @@ describe Toys::CI::Template do
             end
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci"))
@@ -99,7 +99,7 @@ describe Toys::CI::Template do
     end
 
     it "runs a failing block job" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.job("Bad Block") do
@@ -108,7 +108,7 @@ describe Toys::CI::Template do
             end
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -120,7 +120,7 @@ describe Toys::CI::Template do
 
   describe "with an --all flag" do
     it "runs no jobs by default" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
@@ -128,7 +128,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci"))
@@ -139,7 +139,7 @@ describe Toys::CI::Template do
     end
 
     it "runs all jobs if the --all flag is given" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
@@ -147,7 +147,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci", "--all"))
@@ -157,7 +157,7 @@ describe Toys::CI::Template do
     end
 
     it "runs individual tools given their flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -165,7 +165,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--foo"))
@@ -175,7 +175,7 @@ describe Toys::CI::Template do
     end
 
     it "runs individual tools given their override flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo, override_flags: "foo-override")
@@ -183,7 +183,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--foo-override"))
@@ -193,7 +193,7 @@ describe Toys::CI::Template do
     end
 
     it "omits individual tools given --all and their negative flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -201,7 +201,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--all", "--no-bar"))
@@ -211,7 +211,7 @@ describe Toys::CI::Template do
     end
 
     it "omits individual tools given --all and their negative override flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -219,7 +219,7 @@ describe Toys::CI::Template do
             ci.all_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--all", "--no-bar-override"))
@@ -231,7 +231,7 @@ describe Toys::CI::Template do
 
   describe "with an --only flag" do
     it "runs all jobs by default" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
@@ -239,7 +239,7 @@ describe Toys::CI::Template do
             ci.only_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -249,7 +249,7 @@ describe Toys::CI::Template do
     end
 
     it "runs no jobs if the --only flag is given by itself" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
@@ -257,7 +257,7 @@ describe Toys::CI::Template do
             ci.only_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci", "--only"))
@@ -268,7 +268,7 @@ describe Toys::CI::Template do
     end
 
     it "omits individual tools given their negative flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -276,7 +276,7 @@ describe Toys::CI::Template do
             ci.only_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--no-bar"))
@@ -286,7 +286,7 @@ describe Toys::CI::Template do
     end
 
     it "runs individual tools given --only and their flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -294,7 +294,7 @@ describe Toys::CI::Template do
             ci.only_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--only", "--foo"))
@@ -306,7 +306,7 @@ describe Toys::CI::Template do
 
   describe "with jobs_disabled_by_default" do
     it "runs no jobs by default" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"])
@@ -314,7 +314,7 @@ describe Toys::CI::Template do
             ci.jobs_disabled_by_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci"))
@@ -325,7 +325,7 @@ describe Toys::CI::Template do
     end
 
     it "runs individual tools given their flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -333,7 +333,7 @@ describe Toys::CI::Template do
             ci.jobs_disabled_by_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--foo"))
@@ -345,7 +345,7 @@ describe Toys::CI::Template do
 
   describe "with a collection" do
     it "activates the entire collection" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -354,7 +354,7 @@ describe Toys::CI::Template do
             ci.jobs_disabled_by_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci", "--foobar"))
@@ -364,7 +364,7 @@ describe Toys::CI::Template do
     end
 
     it "activates the entire collection via override flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -373,7 +373,7 @@ describe Toys::CI::Template do
             ci.jobs_disabled_by_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci", "--foo-bar"))
@@ -383,7 +383,7 @@ describe Toys::CI::Template do
     end
 
     it "overrides collection activation with individual deactivation" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -392,7 +392,7 @@ describe Toys::CI::Template do
             ci.jobs_disabled_by_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--foobar", "--no-bar"))
@@ -402,7 +402,7 @@ describe Toys::CI::Template do
     end
 
     it "deactivates the entire collection" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -410,7 +410,7 @@ describe Toys::CI::Template do
             ci.collection("All Foobar", :foobar, [:foo, :bar])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci", "--no-foobar"))
@@ -421,7 +421,7 @@ describe Toys::CI::Template do
     end
 
     it "deactivates the entire collection via override flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -429,7 +429,7 @@ describe Toys::CI::Template do
             ci.collection("All Foobar", :foobar, [:foo, :bar], override_flags: "foo-bar")
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(2, cli.run("ci", "--no-foo-bar"))
@@ -440,7 +440,7 @@ describe Toys::CI::Template do
     end
 
     it "overrides collection deactivation with individual activation" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -448,7 +448,7 @@ describe Toys::CI::Template do
             ci.collection("All Foobar", :foobar, [:foo, :bar])
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--no-foobar", "--foo"))
@@ -459,7 +459,7 @@ describe Toys::CI::Template do
   end
 
   it "executes a before_run block" do
-    cli.add_config_block(context_directory: basic_tools_dir) do
+    cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
       tool "ci" do
         expand Toys::CI::Template do |ci|
           ci.tool_job("Foo", ["foo"], flag: :foo)
@@ -469,7 +469,7 @@ describe Toys::CI::Template do
           end
         end
       end
-    end
+    end)
 
     out, _err = capture_subprocess_io do
       assert_equal(0, cli.run("ci", "--foo", "--bar"))
@@ -480,7 +480,7 @@ describe Toys::CI::Template do
 
   describe "fail-fast" do
     it "handles fail_fast_default set to true" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Bar", ["bar"], flag: :bar)
@@ -488,7 +488,7 @@ describe Toys::CI::Template do
             ci.fail_fast_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -499,7 +499,7 @@ describe Toys::CI::Template do
     end
 
     it "enables fail fast with the flag" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Bar", ["bar"], flag: :bar)
@@ -507,7 +507,7 @@ describe Toys::CI::Template do
             ci.fail_fast_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci", "--fail-fast"))
@@ -518,7 +518,7 @@ describe Toys::CI::Template do
     end
 
     it "disables fail fast with the flag when default is true" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Bar", ["bar"], flag: :bar)
@@ -527,7 +527,7 @@ describe Toys::CI::Template do
             ci.fail_fast_default = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci", "--no-fail-fast"))
@@ -558,7 +558,7 @@ describe Toys::CI::Template do
     end
 
     it "runs all jobs if no base ref given" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
@@ -566,7 +566,7 @@ describe Toys::CI::Template do
             ci.base_ref_flag = true
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("ci"))
@@ -576,7 +576,7 @@ describe Toys::CI::Template do
     end
 
     it "checks that base_ref gets passed in" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
@@ -587,7 +587,7 @@ describe Toys::CI::Template do
             end
           end
         end
-      end
+      end)
 
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("ci", "--base-ref", "shabase12345678"))
@@ -597,7 +597,7 @@ describe Toys::CI::Template do
     end
 
     it "checks that base_ref comes from push event" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
@@ -608,7 +608,7 @@ describe Toys::CI::Template do
             end
           end
         end
-      end
+      end)
 
       ENV["GITHUB_EVENT_NAME"] = "push"
       ENV["GITHUB_EVENT_PATH"] = push_event_path
@@ -620,7 +620,7 @@ describe Toys::CI::Template do
     end
 
     it "checks that base_ref comes from pull_request event" do
-      cli.add_config_block(context_directory: basic_tools_dir) do
+      cli.add_source(Toys::SourceSpec.block(context_directory: basic_tools_dir) do
         tool "ci" do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
@@ -631,7 +631,7 @@ describe Toys::CI::Template do
             end
           end
         end
-      end
+      end)
 
       ENV["GITHUB_EVENT_NAME"] = "pull_request"
       ENV["GITHUB_EVENT_PATH"] = pr_event_path

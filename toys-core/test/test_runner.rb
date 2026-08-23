@@ -29,7 +29,7 @@ describe Toys::Runner do
   end
 
   def add_delegation_config(&target_body)
-    cli.add_config_block do
+    cli.add_source do
       tool "target" do
         remaining_args :rest
         to_run(&target_body)
@@ -41,7 +41,7 @@ describe Toys::Runner do
   end
 
   it "runs a tool and returns its exit code" do
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         def run
           exit(3)
@@ -53,7 +53,7 @@ describe Toys::Runner do
 
   it "returns 0 when the tool completes normally" do
     test = self
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         required_arg :bar
         to_run do
@@ -66,7 +66,7 @@ describe Toys::Runner do
 
   it "runs a given block in place of the tool's run handler" do
     test = self
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         required_arg :bar
         to_run do
@@ -92,7 +92,7 @@ describe Toys::Runner do
     end
     middleware_cli = Toys::CLI.new(logger: logger, middleware_stack: [middleware])
     test = self
-    middleware_cli.add_config_block do
+    middleware_cli.add_source do
       tool "foo" do
         to_run do
           test.flunk("Should not have called the tool's run handler")
@@ -107,7 +107,7 @@ describe Toys::Runner do
 
   it "honors the verbosity setting" do
     test = self
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         to_run do
           test.assert_equal(2, verbosity)
@@ -119,7 +119,7 @@ describe Toys::Runner do
   end
 
   it "raises when the tool is not runnable" do
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         # Empty tool
       end
@@ -133,7 +133,7 @@ describe Toys::Runner do
   describe "reuse" do
     it "runs different tools from one runner with independent contexts" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_nil(self[:shared])
@@ -154,7 +154,7 @@ describe Toys::Runner do
     end
 
     it "does not modify the arguments given to run" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           remaining_args :rest
           to_run { nil }
@@ -177,7 +177,7 @@ describe Toys::Runner do
 
     it "looks up the tool from the args" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           tool "bar" do
             required_arg :baz
@@ -220,7 +220,7 @@ describe Toys::Runner do
         seen << tool.full_name
         logger
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { nil }
         end
@@ -235,7 +235,7 @@ describe Toys::Runner do
         count += 1
         Logger.new(::StringIO.new)
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { nil }
         end
@@ -248,7 +248,7 @@ describe Toys::Runner do
 
     it "provides a default logger when no factory is given" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_kind_of(Logger, logger)
@@ -260,7 +260,7 @@ describe Toys::Runner do
 
     it "honors base_level" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal(Logger::INFO - 1, logger.level)
@@ -272,7 +272,7 @@ describe Toys::Runner do
     end
 
     it "restores the logger level after running" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { nil }
         end
@@ -287,7 +287,7 @@ describe Toys::Runner do
       it "does not compound the verbosity of an inner run" do
         test = self
         runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "inner" do
             to_run do
               test.assert_equal(Logger::WARN - 1, logger.level)
@@ -308,7 +308,7 @@ describe Toys::Runner do
       it "does not compound the verbosity across three levels of nesting" do
         test = self
         runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "level3" do
             to_run do
               test.assert_equal(Logger::WARN - 1, logger.level)
@@ -342,7 +342,7 @@ describe Toys::Runner do
       it "resamples the base level in a later independent run" do
         levels = []
         runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "inner" do
             to_run { levels << logger.level }
           end
@@ -362,7 +362,7 @@ describe Toys::Runner do
       it "honors an explicit base_level in an inner run" do
         test = self
         inner_runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "inner" do
             to_run do
               test.assert_equal(Logger::ERROR - 1, logger.level)
@@ -384,7 +384,7 @@ describe Toys::Runner do
       it "uses the enclosing base_level in an inner run that has none" do
         test = self
         inner_runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "inner" do
             to_run do
               test.assert_equal(Logger::ERROR - 1, logger.level)
@@ -404,7 +404,7 @@ describe Toys::Runner do
 
       it "does not record a base level for a run that failed to apply one" do
         levels = []
-        cli.add_config_block do
+        cli.add_source do
           tool "foo" do
             to_run { nil }
           end
@@ -431,7 +431,7 @@ describe Toys::Runner do
           Logger.new(::StringIO.new).tap { |lgr| lgr.level = Logger::WARN }
         end
         runner = nil
-        cli.add_config_block do
+        cli.add_source do
           tool "inner" do
             to_run do
               levels << logger.level
@@ -481,7 +481,7 @@ describe Toys::Runner do
   describe "context data" do
     it "provides the loader in the context" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_same(test.cli.loader, self[Toys::Context::Key::LOADER])
@@ -493,7 +493,7 @@ describe Toys::Runner do
 
     it "provides the loader via the context getter" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_same(test.cli.loader, loader)
@@ -505,7 +505,7 @@ describe Toys::Runner do
 
     it "provides the loader via __loader when the tool overrides loader" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           def loader
             "shadowed"
@@ -522,7 +522,7 @@ describe Toys::Runner do
 
     it "provides external data in the context" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal("hello", self[:custom_data])
@@ -535,7 +535,7 @@ describe Toys::Runner do
 
     it "provides the executable name in the context" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
@@ -548,7 +548,7 @@ describe Toys::Runner do
     it "defaults the executable name to the ruby program name" do
       test = self
       expected = ::File.basename($PROGRAM_NAME)
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal(expected, self[Toys::Context::Key::EXECUTABLE_NAME])
@@ -561,7 +561,7 @@ describe Toys::Runner do
     it "provides the runner in the context" do
       test = self
       runner = nil
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_same(runner, self[Toys::Context::Key::RUNNER])
@@ -575,7 +575,7 @@ describe Toys::Runner do
 
     it "runs a sibling tool from within a tool" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "sibling" do
           to_run do
             test.assert_equal(["sibling"], tool_name)
@@ -593,7 +593,7 @@ describe Toys::Runner do
 
     it "leaves the CLI key unset when no CLI is provided" do
       test = self
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_nil(cli)
@@ -612,7 +612,7 @@ describe Toys::Runner do
         Toys::Context::Key::RUNNER => "hijacked-runner",
       }
       runner = nil
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal(["foo"], self[Toys::Context::Key::TOOL_NAME])
@@ -627,7 +627,7 @@ describe Toys::Runner do
     end
 
     it "does not modify the external data hash" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--bar=VAL"
           to_run { nil }
@@ -641,7 +641,7 @@ describe Toys::Runner do
 
   describe "error wrapping" do
     it "wraps an error raised during argument parsing" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
           to_run { nil }
@@ -656,7 +656,7 @@ describe Toys::Runner do
     end
 
     it "wraps an error raised by the tool, including tool context" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           remaining_args :rest
           to_run { raise "kaboom" }
@@ -673,7 +673,7 @@ describe Toys::Runner do
     end
 
     it "wraps an error raised by a given block" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { nil }
         end
@@ -685,7 +685,7 @@ describe Toys::Runner do
     end
 
     it "propagates errors as-is when wrap_errors is false" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise "kaboom" }
         end
@@ -697,7 +697,7 @@ describe Toys::Runner do
     end
 
     it "propagates argument parsing errors as-is when wrap_errors is false" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           required_arg :bar
           to_run { nil }
@@ -709,7 +709,7 @@ describe Toys::Runner do
     end
 
     it "propagates block errors as-is when wrap_errors is false" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { nil }
         end
@@ -725,7 +725,7 @@ describe Toys::Runner do
 
   describe "error handling" do
     it "reraises a wrapped error by default" do
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise "kaboom" }
         end
@@ -742,7 +742,7 @@ describe Toys::Runner do
         seen = error
         7
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise "kaboom" }
         end
@@ -758,7 +758,7 @@ describe Toys::Runner do
         seen = error
         7
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise "kaboom" }
         end
@@ -775,7 +775,7 @@ describe Toys::Runner do
         seen = error
         7
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise ::Interrupt }
         end
@@ -786,7 +786,7 @@ describe Toys::Runner do
 
     it "propagates a wrapped error when handle_errors is false" do
       handler = proc { |_error| flunk("Should not have called the error handler") }
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { raise "kaboom" }
         end
@@ -801,7 +801,7 @@ describe Toys::Runner do
 
     it "does not pass SystemExit to the handler" do
       handler = proc { |_error| flunk("Should not have called the error handler") }
-      cli.add_config_block do
+      cli.add_source do
         tool "foo" do
           to_run { ::Kernel.exit(5) }
         end
@@ -818,7 +818,7 @@ describe Toys::Runner do
         count += 1
         7
       end
-      cli.add_config_block do
+      cli.add_source do
         tool "target" do
           to_run { raise "kaboom" }
         end
@@ -911,7 +911,7 @@ describe Toys::Runner do
     let(:help_cli) {
       middleware = [[Toys::StandardMiddleware::ShowHelp, {help_flags: true, stream: help_io}]]
       Toys::CLI.new(executable_name: "toys", logger: logger, middleware_stack: middleware).tap do |c|
-        c.add_config_block do
+        c.add_source do
           tool "foo" do
             to_run { nil }
           end
@@ -931,7 +931,7 @@ describe Toys::Runner do
     it "honors the verbosity setting when verbosity flags are present" do
       test = self
       verbose_cli = Toys::CLI.new(executable_name: "toys", logger: logger)
-      verbose_cli.add_config_block do
+      verbose_cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal(2, verbosity)
@@ -945,7 +945,7 @@ describe Toys::Runner do
     it "adds verbosity flags to the initial verbosity setting" do
       test = self
       verbose_cli = Toys::CLI.new(executable_name: "toys", logger: logger)
-      verbose_cli.add_config_block do
+      verbose_cli.add_source do
         tool "foo" do
           to_run do
             test.assert_equal(3, verbosity)

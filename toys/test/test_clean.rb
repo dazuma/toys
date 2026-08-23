@@ -72,7 +72,7 @@ describe "clean template" do
       dir = workspace_dir
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "bar.yml"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: "*.txt"
       end
@@ -88,7 +88,7 @@ describe "clean template" do
       dir = workspace_dir
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "bar.yml"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: "*.txt"
       end
@@ -109,7 +109,7 @@ describe "clean template" do
       FileUtils.mkdir(File.join(dir, "hello"))
       FileUtils.touch(File.join(dir, "hello", "baz.txt"))
       FileUtils.touch(File.join(dir, "hello", "Gemfile.lock"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: :gitignore
       end
@@ -135,7 +135,7 @@ describe "clean template" do
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "bar.txt"))
       FileUtils.touch(File.join(dir, "baz.yml"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: "*.txt", preserve: "bar.*"
       end
@@ -154,7 +154,7 @@ describe "clean template" do
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "subdir", "bar.txt"))
       FileUtils.touch(File.join(dir, "subdir", "baz.yml"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: "subdir", preserve: "subdir/bar.*"
       end
@@ -176,7 +176,7 @@ describe "clean template" do
       FileUtils.mkdir(File.join(dir, "hello"))
       FileUtils.touch(File.join(dir, "hello", "baz.txt"))
       FileUtils.touch(File.join(dir, "hello", "Gemfile.lock"))
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory dir
         expand :clean, paths: :gitignore, preserve: ["**/bar.txt", "hello"]
       end
@@ -194,7 +194,7 @@ describe "clean template" do
       dir = workspace_dir
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "bar.yml"))
-      cli.add_config_block do
+      cli.add_source do
         expand :clean, paths: "*.txt", context_directory: dir
       end
       out, _err = capture_subprocess_io do

@@ -5,7 +5,7 @@ require "toys-core"
 
 cli = ::Toys::CLI.new
 
-cli.add_config_block do
+cli.add_source do
   desc "Display a simple greeting"
   flag :whom, default: "world"
   def run

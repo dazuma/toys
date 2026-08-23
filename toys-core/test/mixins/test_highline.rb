@@ -15,7 +15,7 @@ describe Toys::StandardMixins::Highline do
   }
 
   it "provides a highline instance" do
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :highline
         def run
@@ -27,7 +27,7 @@ describe Toys::StandardMixins::Highline do
   end
 
   it "supports say" do
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :highline
         def run

@@ -41,7 +41,7 @@ describe Toys::StandardMixins::Bundler do
     my_gemfile_dir = gemfile_dir
     my_gemfile_path = gemfile_path
 
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :bundler, search_dirs: my_gemfile_dir
         test.assert_nil(fake_gems.bundle_args)
@@ -64,7 +64,7 @@ describe Toys::StandardMixins::Bundler do
     my_gemfile_dir2 = gemfile_dir2
     my_gemfile_path2 = gemfile_path2
 
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :bundler, setup: :manual, search_dirs: my_gemfile_dir
         test.assert_nil(fake_gems.bundle_args)
@@ -90,7 +90,7 @@ describe Toys::StandardMixins::Bundler do
     my_gemfile_dir = gemfile_dir
     my_gemfile_path = gemfile_path
 
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :bundler, setup: :static, search_dirs: my_gemfile_dir
         test.refute_nil(fake_gems.bundle_args)
@@ -112,7 +112,7 @@ describe Toys::StandardMixins::Bundler do
     fake_gems = FakeGemsService.new
     my_gemfile_dir = gemfile_dir
 
-    cli.add_config_block do
+    cli.add_source do
       tool "foo" do
         include :bundler, setup: :foo, search_dirs: my_gemfile_dir
         def run

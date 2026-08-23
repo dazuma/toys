@@ -87,7 +87,7 @@ describe "rake template" do
 
     it "creates tools" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile1")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path
       end
       tool, remaining = loader.lookup(["foo1", "bar"])
@@ -102,7 +102,7 @@ describe "rake template" do
 
     it "does not replace existing tools" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile1")
-      cli.add_config_block do
+      cli.add_source do
         tool "foo1" do
           desc "Real foo1 description"
         end
@@ -121,10 +121,10 @@ describe "rake template" do
     it "creates tools from multiple rakefiles" do
       rakefile1_path = File.join(rakefiles_dir, "Rakefile1")
       rakefile2_path = File.join(rakefiles_dir, "Rakefile2")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile2_path
       end
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile1_path
       end
       tool, remaining = loader.lookup(["foo1", "bar"])
@@ -139,7 +139,7 @@ describe "rake template" do
 
     it "executes tools honoring rake dependencies" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile2")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path
       end
       assert_output("executing bar1 from 2\nexecuting foo1 from 2\n") do
@@ -149,7 +149,7 @@ describe "rake template" do
 
     it "creates and executes a tool with arguments" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile3")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -164,7 +164,7 @@ describe "rake template" do
 
     it "creates and executes a tool with flags for arguments" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile3")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path, use_flags: true
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -179,7 +179,7 @@ describe "rake template" do
 
     it "allows dashes in flags" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile3")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path, use_flags: true
       end
       assert_output("executing foo\n\"hello\"\nnil\n") do
@@ -189,7 +189,7 @@ describe "rake template" do
 
     it "creates tools without a description by default" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile3")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path
       end
       tool, remaining = loader.lookup(["bar"])
@@ -199,7 +199,7 @@ describe "rake template" do
 
     it "does not creates tools without a description if requested" do
       rakefile_path = File.join(rakefiles_dir, "Rakefile3")
-      cli.add_config_block do
+      cli.add_source do
         expand :rake, rakefile_path: rakefile_path, only_described: true
       end
       tool, remaining = loader.lookup(["bar"])
@@ -234,7 +234,7 @@ describe "rake template" do
     it "honors context_directory argument" do
       basedir = __dir__
       subdir = File.join(rake_dirs_dir, "dir1", "dir2")
-      cli.add_config_block do
+      cli.add_source do
         set_context_directory subdir
         expand :rake, context_directory: basedir
       end
