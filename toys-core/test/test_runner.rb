@@ -192,7 +192,7 @@ describe Toys::Runner do
     end
 
     it "raises a finalized contextual error for a tool definition error" do
-      cli.add_config_path(File.join(lookup_cases_dir, "errors"))
+      cli.add_source(File.join(lookup_cases_dir, "errors"))
       runner = make_runner
       err = assert_raises(Toys::ContextualError) do
         runner.run(["definition"])
@@ -203,7 +203,7 @@ describe Toys::Runner do
     end
 
     it "does not finalize a tool definition error when wrap_errors is false" do
-      cli.add_config_path(File.join(lookup_cases_dir, "errors"))
+      cli.add_source(File.join(lookup_cases_dir, "errors"))
       runner = make_runner
       err = assert_raises(Toys::ContextualError) do
         runner.run(["definition"], wrap_errors: false, handle_errors: false)

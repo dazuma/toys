@@ -209,7 +209,7 @@ describe "rake template" do
 
     it "searches up the directory tree for rakefiles" do
       Dir.chdir(File.join(rake_dirs_dir, "dir1", "dir2")) do
-        cli.add_config_path(File.join(rake_dirs_dir, ".toys.rb"))
+        cli.add_source(File.join(rake_dirs_dir, ".toys.rb"))
         tool, remaining = loader.lookup(["foo1", "bar"])
         assert_equal(["foo1"], tool.full_name)
         assert_equal(["bar"], remaining)
@@ -224,7 +224,7 @@ describe "rake template" do
 
     it "sets the current working directory to the Rakefile directory" do
       Dir.chdir(File.join(rake_dirs_dir, "dir1", "dir2")) do
-        cli.add_config_path(File.join(rake_dirs_dir, ".toys.rb"))
+        cli.add_source(File.join(rake_dirs_dir, ".toys.rb"))
         assert_output("Found = true\n") do
           cli.run("foo1")
         end

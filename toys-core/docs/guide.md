@@ -359,7 +359,7 @@ their options.
 ### Writing tool files
 
 If you want to define tools in separate files, you can do so and pass the file
-paths to the CLI using {Toys::CLI#add_config_path}.
+paths to the CLI using {Toys::CLI#add_source}.
 
 ```ruby
 #!/usr/bin/env ruby
@@ -369,7 +369,7 @@ require "toys-core"
 cli = Toys::CLI.new
 
 # Load a file defining the functionality
-cli.add_config_path("/usr/local/share/my_tool.rb")
+cli.add_source("/usr/local/share/my_tool.rb")
 
 result = cli.run(*ARGV)
 exit(result)
@@ -398,7 +398,7 @@ which it looks for any available files in the current directory or its parents.
 One particularly common use case is to package your command line executable
 along with the tool files it uses, into a gem for distribution. In such a case,
 you can define your tools in a particular directory in the gem and use
-{Toys::CLI#add_config_path} to point to that directory. See the section on
+{Toys::CLI#add_source} to point to that directory. See the section on
 [packaging your executable](#packaging-your-executable) for details on this
 technique.
 
@@ -413,7 +413,7 @@ tool of the same name, only one definition will "win", the one from the source
 with the highest priority.
 
 Each time a tool source is added to a CLI using {Toys::CLI#add_source},
-{Toys::CLI#add_config_path}, or similar, that new source is added to a
+{Toys::CLI#add_search_path}, or similar, that new source is added to a
 prioritized list. By default it is added to the end of the list, at a lower
 priority level than previously added sources. Thus, any tools defined in the
 new source would be overridden by tools of the same name defined in previously
@@ -1089,7 +1089,7 @@ For more complex programs, you may want the actual tool definitions to live in
 a directory of files, much like you'd use a `.toys` directory to write and
 manage more complex sets of Toys tools. To package such a program in a gem,
 just include the `tools` directory in the gem, and load it into the CLI using
-{Toys::CLI#add_config_path}. The
+{Toys::CLI#add_source}. The
 [`multi-file-gem` example](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem)
 example illustrates how to do this.
 
@@ -1133,7 +1133,7 @@ require "toys-core"
 class ToysCoreExample
   def initialize
     @cli = ::Toys::CLI.new
-    @cli.add_config_path(::File.join(::File.dirname(__dir__), "tools"))
+    @cli.add_source(::File.join(::File.dirname(__dir__), "tools"))
   end
 
   def run
@@ -1142,11 +1142,11 @@ class ToysCoreExample
 end
 ```
 
-Note that `add_config_path` backs out to the gem's root directory, and adds the
-`tools` directory from there. You can do this because the lib and tools
-directories will always be installed as part of the gem. (You might want to do
-this instead of creating that relative path from the executable itself, so that
-it's possible to move the executable elsewhere.)
+Note the file path we pass to `add_source` backs out to the gem's root
+directory, and adds the `tools` directory from there. You can do this because
+the lib and tools directories will always be installed as part of the gem. (You
+might want to do this instead of creating that relative path from the
+executable itself, so that it's possible to move the executable elsewhere.)
 
 In the `tools/` directory, you can define tools just like you would normally.
 You also have access to all the features of Toys tool definition, such as

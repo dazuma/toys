@@ -878,7 +878,7 @@ describe Toys::DSL::Tool do
     end
 
     it "reads from a file" do
-      cli.add_config_path(File.join(cases_dir, "long-desc-files"))
+      cli.add_source(File.join(cases_dir, "long-desc-files"))
       tool, _remaining = loader.lookup(["foo"])
       ld = tool.long_desc
       assert_equal(2, ld.size)
@@ -887,7 +887,7 @@ describe Toys::DSL::Tool do
     end
 
     it "reads from data" do
-      cli.add_config_path(File.join(cases_dir, "long-desc-files"))
+      cli.add_source(File.join(cases_dir, "long-desc-files"))
       tool, _remaining = loader.lookup(["bar"])
       ld = tool.long_desc
       assert_equal(2, ld.size)
@@ -2653,32 +2653,32 @@ describe Toys::DSL::Tool do
     end
 
     it "returns path when file found in current data directory" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-1", "foo"))
     end
 
     it "falls back to parent data directory" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-1", "ns-1b", "foo"))
     end
 
     it "falls back to root data directory" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-4", "foo"))
     end
 
     it "returns nil when file not found in any ancestor data directory" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-3", "foo"))
     end
 
     it "filters by type: :file" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-1", "type_file"))
     end
 
     it "filters by type: :directory" do
-      cli.add_config_path(find_data_dir)
+      cli.add_source(find_data_dir)
       assert_equal(0, cli.run("ns-1", "type_dir"))
     end
   end
@@ -2709,58 +2709,58 @@ describe Toys::DSL::Tool do
 
   describe "Toys::Tool subclassing" do
     it "creates a tool" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo"])
       assert_equal("description of foo", tool.desc.to_s)
     end
 
     it "creates a tool with a hyphenated name" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar"])
       assert_equal("description of foo-bar", tool.desc.to_s)
     end
 
     it "creates a nested tool using a nested class" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar", "baz"])
       assert_equal("description of foo-bar baz", tool.desc.to_s)
     end
 
     it "creates a nested tool using a block" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar", "qux"])
       assert_equal("description of foo-bar qux", tool.desc.to_s)
     end
 
     it "creates a tool with a custom name" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["qu_ux"])
       assert_equal("description of qu_ux", tool.desc.to_s)
     end
 
     it "creates a tool subclassing an existing tool" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-child1"])
       assert_equal("description of foo-child1", tool.desc.to_s)
       assert_equal(9, cli.run(["foo-child1"]))
     end
 
     it "creates a custom-named tool subclassing an existing tool" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo_child2"])
       assert_equal("description of foo_child2", tool.desc.to_s)
       assert_equal(9, cli.run(["foo_child2"]))
     end
 
     it "creates a tool subclassing an existing custom-named tool" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["quux-child1"])
       assert_equal("description of quux-child1", tool.desc.to_s)
       assert_equal(8, cli.run(["quux-child1"]))
     end
 
     it "creates a custom-named tool subclassing an existing custom-named tool" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["quux_child2"])
       assert_equal("description of quux_child2", tool.desc.to_s)
       assert_equal(8, cli.run(["quux_child2"]))
@@ -2784,7 +2784,7 @@ describe Toys::DSL::Tool do
     end
 
     it "is not allowed from a tool block" do
-      cli.add_config_path(File.join(cases_dir, "tool-subclass-under-block"))
+      cli.add_source(File.join(cases_dir, "tool-subclass-under-block"))
       ex = assert_raises(Toys::ContextualError) do
         loader.lookup(["foo"])
       end

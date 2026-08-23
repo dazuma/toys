@@ -303,13 +303,19 @@ module Toys
     # the main Toys executable uses this to load the builtin tools from its
     # "builtins" directory.
     #
+    # The source can be specified in one of three ways:
+    #
+    # * A source spec built using one of the {Toys::SourceSpec} module methods.
+    # * A string interpreted as a file system path, which will be passed to
+    #   {Toys::SourceSpec.path} to get the source spec.
+    # * A block, which will be passed to {Toys::SourceSpec.block} to get the
+    #   source spec. (Do not include an argument if passing a block.)
+    #
     # The spec is not resolved here. The loader resolves it, at most once, the
     # first time it looks up a tool, so a source that cannot be read, fetched,
     # or activated fails then rather than now.
     #
-    # @param spec [Toys::SourceSpec::Base] The source spec to add. You can also
-    #     omit the spec and provide a block instead, which will be converted
-    #     to a block spec.
+    # @param spec [Toys::SourceSpec::Base,String] The source spec to add.
     # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
     #
@@ -321,67 +327,13 @@ module Toys
       if block
         raise ::ArgumentError, "Ambiguous source: both spec and block passed" if spec
         spec = SourceSpec.block(&block)
+      elsif spec.is_a?(::String)
+        spec = SourceSpec.path(spec)
       end
       ensure_source_list_open do
         @source_list.add(spec, high_priority: high_priority)
       end
       self
-    end
-
-    ##
-    # Add a specific tool file or directory to the source list.
-    #
-    # @deprecated Prefer {#add_source}.
-    #
-    # @param path [String] A path to add. May reference a single tool file or a
-    #     tool directory.
-    # @param high_priority [boolean] Add the source at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] A custom name for the root source. Optional.
-    # @param context_directory [String,nil,:path,:parent] The context directory
-    #     for tools loaded from this path. You can pass a directory path as a
-    #     string, `:path` to denote the given path, `:parent` to denote the
-    #     given path's parent directory, or `nil` to denote no context.
-    #     Defaults to `:parent`.
-    #
-    # @return [self]
-    # @raise [Toys::SourceListFinalizedError] if the source list has already
-    #     been finalized.
-    #
-    def add_config_path(path,
-                        high_priority: false,
-                        source_name: nil,
-                        context_directory: :parent)
-      spec = SourceSpec.path(path, source_name: source_name, context_directory: context_directory)
-      add_source(spec, high_priority: high_priority)
-    end
-
-    ##
-    # Add a block to the source list.
-    #
-    # @deprecated Prefer {#add_source}.
-    #
-    # @param high_priority [boolean] Add the source at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools defined in this block. If omitted, a default
-    #     unique string will be generated.
-    # @param block [Proc] The source block, executed in the context of the tool
-    #     DSL {Toys::DSL::Tool}.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this block. You can pass a directory path as a string, or
-    #     `nil` to denote no context. Defaults to `nil`.
-    #
-    # @return [self]
-    # @raise [Toys::SourceListFinalizedError] if the source list has already
-    #     been finalized.
-    #
-    def add_config_block(high_priority: false,
-                         source_name: nil,
-                         context_directory: nil,
-                         &block)
-      spec = SourceSpec.block(source_name: source_name, context_directory: context_directory, &block)
-      add_source(spec, high_priority: high_priority)
     end
 
     ##
@@ -547,6 +499,62 @@ module Toys
         end
       end
       self
+    end
+
+    ##
+    # Add a specific tool file or directory to the source list.
+    #
+    # @deprecated Prefer {#add_source}.
+    #
+    # @param path [String] A path to add. May reference a single tool file or a
+    #     tool directory.
+    # @param high_priority [boolean] Add the source at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given path, `:parent` to denote the
+    #     given path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:parent`.
+    #
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_config_path(path,
+                        high_priority: false,
+                        source_name: nil,
+                        context_directory: :parent)
+      spec = SourceSpec.path(path, source_name: source_name, context_directory: context_directory)
+      add_source(spec, high_priority: high_priority)
+    end
+
+    ##
+    # Add a block to the source list.
+    #
+    # @deprecated Prefer {#add_source}.
+    #
+    # @param high_priority [boolean] Add the source at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools defined in this block. If omitted, a default
+    #     unique string will be generated.
+    # @param block [Proc] The source block, executed in the context of the tool
+    #     DSL {Toys::DSL::Tool}.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this block. You can pass a directory path as a string, or
+    #     `nil` to denote no context. Defaults to `nil`.
+    #
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_config_block(high_priority: false,
+                         source_name: nil,
+                         context_directory: nil,
+                         &block)
+      spec = SourceSpec.block(source_name: source_name, context_directory: context_directory, &block)
+      add_source(spec, high_priority: high_priority)
     end
 
     class << self

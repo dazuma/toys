@@ -211,13 +211,13 @@ describe Toys::CLI do
     end
 
     it "accesses data from run" do
-      cli.add_config_path(File.join(lookup_cases_dir, "data-finder"))
+      cli.add_source(File.join(lookup_cases_dir, "data-finder"))
       assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
     end
 
     it "accesses lib directory" do
       skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_source(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("foo")
       end
@@ -227,7 +227,7 @@ describe Toys::CLI do
 
     it "accesses lib directory with overrides" do
       skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_source(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("ns", "bar")
       end
@@ -236,7 +236,7 @@ describe Toys::CLI do
     end
 
     it "does not add a lib directory that is already on the load path" do
-      cli.add_config_path(File.join(lookup_cases_dir, "lib-dirs"))
+      cli.add_source(File.join(lookup_cases_dir, "lib-dirs"))
       lib_path = File.join(lookup_cases_dir, "lib-dirs", ".lib")
       orig_load_path = $LOAD_PATH.dup
       begin
@@ -546,7 +546,7 @@ describe Toys::CLI do
         9
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_config_path(File.join(lookup_cases_dir, "errors"))
+      my_cli.add_source(File.join(lookup_cases_dir, "errors"))
       assert_equal(9, my_cli.run("definition"))
     end
 
@@ -558,7 +558,7 @@ describe Toys::CLI do
         10
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.add_config_path(File.join(lookup_cases_dir, "errors"))
+      my_cli.add_source(File.join(lookup_cases_dir, "errors"))
       assert_equal(10, my_cli.run("runtime", "hello"))
     end
 
@@ -1012,7 +1012,7 @@ describe Toys::CLI do
     end
 
     it "honors high_priority" do
-      cli.add_config_path(File.join(lookup_cases_dir, "normal-file-hierarchy"))
+      cli.add_source(File.join(lookup_cases_dir, "normal-file-hierarchy"))
       cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb", toys_dir: gem_toys_dir),
                      high_priority: true)
       tool, _remaining = cli.loader.lookup(["tool-1"])
@@ -1086,7 +1086,7 @@ describe Toys::CLI do
     it "raises when adding a source after the runner is built" do
       cli.runner
       assert_raises(Toys::SourceListFinalizedError) do
-        cli.add_config_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
+        cli.add_source(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
       end
     end
 
@@ -1107,6 +1107,7 @@ describe Toys::CLI do
       [
         -> { cli.add_config_path(lookup_cases_dir) },
         -> { cli.add_config_block { nil } },
+        -> { cli.add_source(lookup_cases_dir) },
         -> { cli.add_source(Toys::SourceSpec.gem("toys-core")) },
         -> { cli.add_source(Toys::SourceSpec.git("https://example.com/repo.git")) },
         -> { cli.add_search_path(lookup_cases_dir) },
@@ -1411,7 +1412,7 @@ describe Toys::CLI do
     end
 
     it "copies loader sources added from paths" do
-      cli.add_config_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
+      cli.add_source(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
       child = cli.child(copy_sources: true)
       tool, _remaining = child.loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)

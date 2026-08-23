@@ -94,7 +94,7 @@ module Toys
                    git_cache: nil,
                    gems_util: nil)
       require "toys/utils/standard_ui"
-      ui = Toys::Utils::StandardUI.new
+      ui = Utils::StandardUI.new
       super(
         executable_name: EXECUTABLE_NAME,
         toplevel_tool_dir_name: TOPLEVEL_TOOL_DIR_NAME,
@@ -107,7 +107,7 @@ module Toys
         **ui.cli_args
       )
       if custom_paths
-        Array(custom_paths).each { |path| add_config_path(path) }
+        Array(custom_paths).each { |path| add_source(path) }
       else
         add_current_directory_paths(cur_dir)
       end
@@ -121,7 +121,8 @@ module Toys
     #
     def add_builtins
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
-      add_config_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
+      source_spec = SourceSpec.path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
+      add_source(source_spec)
       self
     end
 
