@@ -763,11 +763,21 @@ describe Toys::SourceInfo do
       assert_equal("File is not a ruby file: #{non_ruby_file}", error.message)
     end
 
+    # No path is readable-but-neither-file-nor-directory on every platform.
+    # File::NULL comes closest, but Windows expands it to the device path
+    # "//./NUL", which Ruby 2.7 reports as a directory and which later Rubies
+    # name differently in the message. Stub the two predicates so this checks
+    # the branch itself rather than a platform quirk.
     it "raises SourceResolutionError for a path that is neither a file nor a directory" do
-      error = assert_raises(Toys::SourceResolutionError) do
-        Toys::SourceInfo.check_path(File::NULL, false)
+      expanded = File.expand_path(File::NULL)
+      error = File.stub(:file?, false) do
+        File.stub(:directory?, false) do
+          assert_raises(Toys::SourceResolutionError) do
+            Toys::SourceInfo.check_path(File::NULL, false)
+          end
+        end
       end
-      assert_equal("Not a ruby file or directory: #{File::NULL}", error.message)
+      assert_equal("Not a ruby file or directory: #{expanded}", error.message)
     end
 
     it "raises SourceResolutionError when a gem cannot be activated" do
