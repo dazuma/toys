@@ -226,8 +226,8 @@ module Toys
     def build_tool(words, priority, tool_class = nil)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      ToolDefinition.new(parent, words, @roots_by_priority[priority],
-                         middleware_stack, @middleware_lookup, tool_class)
+      root_source = @roots_by_priority[priority] ||= SourceInfo.resolve(SourceSpec::EMPTY, priority: priority)
+      ToolDefinition.new(parent, words, root_source, middleware_stack, @middleware_lookup, tool_class)
     end
 
     ##

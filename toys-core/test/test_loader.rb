@@ -52,6 +52,23 @@ describe Toys::Loader do
       tool, _remaining = loader.lookup([])
       refute_nil(tool)
     end
+
+    it "gives the root tool a source root at the lowest priority" do
+      tool, _remaining = loader.lookup([])
+      # ToolDefinition#priority reads through to the source root, so it raises
+      # rather than returning a priority if the root is missing.
+      assert_equal(-999_999, tool.priority)
+      refute_nil(tool.source_root)
+      assert_same(tool.source_root, tool.source_root.root)
+      assert_equal(tool.priority, tool.source_root.priority)
+    end
+
+    it "gives a tool created at a priority with no starting source a source root" do
+      tool = loader.activate_tool(["tool-1"], 0)
+      assert_equal(0, tool.priority)
+      refute_nil(tool.source_root)
+      assert_equal(0, tool.source_root.priority)
+    end
   end
 
   describe "starting sources" do

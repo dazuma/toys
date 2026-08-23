@@ -266,6 +266,7 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def initialize(parent, full_name, source_root, middleware_stack, middleware_lookup, tool_class = nil)
+      raise ::ArgumentError, "No source_root for a tool definition" unless source_root
       @parent = parent
       @full_name = full_name.dup.freeze
       @source_root = source_root
@@ -345,9 +346,9 @@ module Toys
     end
 
     ##
-    # The root source info defining this tool, or nil if there is no source.
+    # The root source info defining this tool.
     #
-    # @return [Toys::SourceInfo,nil]
+    # @return [Toys::SourceInfo]
     #
     attr_reader :source_root
 

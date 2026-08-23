@@ -408,5 +408,11 @@ module Toys
         super + [@block]
       end
     end
+
+    ##
+    # An empty SourceSpec
+    # @return [Toys::SourceSpec::Base]
+    #
+    EMPTY = block {}.freeze # rubocop:disable Lint/EmptyBlock
   end
 end
