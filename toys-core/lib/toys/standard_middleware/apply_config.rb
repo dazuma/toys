@@ -27,8 +27,7 @@ module Toys
       #
       def config(tool, loader)
         tool_class = tool.tool_class
-        DSL::Internal.prepare(tool_class, tool.full_name, tool.priority, nil, @source_info,
-                              loader) do
+        DSL::Internal.prepare(tool_class, tool.full_name, nil, @source_info, loader) do
           tool_class.class_eval(&@block)
         end
         yield

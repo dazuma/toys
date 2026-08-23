@@ -59,14 +59,15 @@ module Toys
       @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
       @git_cache = git_cache
       @gems_util = gems_util
-      # Worklist entries are [source_or_spec, words, priority] triples. The
-      # entries seeded here hold unresolved source specs; the entries pushed
-      # back during a directory walk hold resolved SourceInfo objects.
+      # Worklist entries are pairs of either [source_spec, priority] or
+      # [source_info, words]. The entries seeded here hold unresolved source
+      # specs; the entries pushed back during a directory walk hold resolved
+      # SourceInfo objects.
       @worklist = []
       # Populated as each priority level is resolved.
       @roots_by_priority = {}
       source_list.each_with_priority do |spec, priority|
-        @worklist << [spec, [], priority]
+        @worklist << [spec, priority]
       end
       get_tool([], -999_999)
     end
@@ -225,7 +226,7 @@ module Toys
     def build_tool(words, priority, tool_class = nil)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      ToolDefinition.new(parent, words, priority, @roots_by_priority[priority],
+      ToolDefinition.new(parent, words, @roots_by_priority[priority],
                          middleware_stack, @middleware_lookup, tool_class)
     end
 
@@ -252,15 +253,11 @@ module Toys
       @mutex.synchronize do
         cur_worklist = @worklist
         @worklist = []
-        cur_worklist.each do |source, words, priority|
-          next if priority < @stop_priority
-          remaining_words = calc_remaining_words(prefix, words)
+        cur_worklist.each do |source, words_or_priority|
           if source.is_a?(SourceSpec::Base)
-            load_root_spec(source, words, remaining_words, priority)
-          elsif source.source_proc
-            load_proc(source, words, remaining_words, priority)
-          elsif source.source_path
-            load_validated_path(source, words, remaining_words, priority)
+            handle_unresolved_worklist_item(prefix, source, words_or_priority)
+          else
+            handle_resolved_worklist_item(prefix, source, words_or_priority)
           end
         end
       end
@@ -292,23 +289,29 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def load_source(parent_source, spec, words, remaining_words, priority)
+    def load_source(parent_source, spec, words, remaining_words)
       source = SourceInfo.resolve(spec, parent: parent_source,
                                   git_cache: @git_cache, gems_util: @gems_util)
       @mutex.synchronize do
-        load_validated_path(source, words, remaining_words, priority)
+        load_validated_path(source, words, remaining_words)
       end
     end
 
     ##
     # Load a subtool block. Called from the `tool` directive in the DSL.
     #
+    # Distinct from load_source in that it uses SourceInfo#proc_child which
+    # inherits all the SourceInfo fields from the parent source. e.g. we're
+    # still in the same source file or outer block, unlike the `load` methods
+    # which use load_source because they are jumping to a totally different
+    # source with different info fields.
+    #
     # @private This interface is internal and subject to change without warning.
     #
-    def load_block(parent_source, block, words, remaining_words, priority)
+    def load_block(parent_source, block, words, remaining_words)
       source = parent_source.proc_child(block)
       @mutex.synchronize do
-        load_proc(source, words, remaining_words, priority)
+        load_proc(source, words, remaining_words)
       end
     end
 
@@ -480,57 +483,60 @@ module Toys
     end
 
     ##
-    # Resolve a root source spec from the source list, and load the resulting
+    # Resolve a root SourceSpec from the worklist, and handle the resulting
     # source or sources.
+    #
     # Caller must own the mutex.
     #
-    def load_root_spec(spec, words, remaining_words, priority)
-      root = SourceInfo.resolve(spec, priority: priority,
-                                git_cache: @git_cache, gems_util: @gems_util)
+    def handle_unresolved_worklist_item(prefix, source_spec, priority)
+      return if priority < @stop_priority
+      root_source = SourceInfo.resolve(source_spec, priority: priority,
+                                       git_cache: @git_cache, gems_util: @gems_util)
       # Recorded before anything is loaded, because build_tool passes it to
       # each ToolDefinition as the source root.
-      @roots_by_priority[priority] = root
-      expand_root_spec(spec, root).each do |source|
-        if source.source_proc
-          load_proc(source, words, remaining_words, priority)
-        else
-          load_validated_path(source, words, remaining_words, priority)
-        end
+      @roots_by_priority[priority] = root_source
+      relative_paths = source_spec.relative_paths if source_spec.is_a?(SourceSpec::Path)
+      if relative_paths.nil?
+        handle_resolved_worklist_item(prefix, root_source, [])
+        return
       end
+      unless root_source.source_type == :directory
+        raise SourceResolutionError, "Root of a source path set is not a directory: #{root_source.source_path}"
+      end
+      resolved_sources = relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
+      resolved_sources.each { |source| handle_resolved_worklist_item(prefix, source, []) }
     end
 
     ##
-    # Return the sources to load for a resolved root. This is the root itself,
-    # unless the spec named a set of paths relative to it, in which case it is
-    # those paths. Every member is resolved before any is returned, so a
-    # failure partway through a set does not leave a half-loaded priority
-    # level.
+    # Handle a resolved SourceInfo from the worklist.
+    #
     # Caller must own the mutex.
     #
-    def expand_root_spec(spec, root)
-      relative_paths = spec.relative_paths if spec.is_a?(SourceSpec::Path)
-      return [root] if relative_paths.nil?
-      unless root.source_type == :directory
-        raise SourceResolutionError, "Root of a source path set is not a directory: #{root.source_path}"
+    def handle_resolved_worklist_item(prefix, source_info, words)
+      return if source_info.priority < @stop_priority
+      remaining_words = calc_remaining_words(prefix, words)
+      if source_info.source_proc
+        load_proc(source_info, words, remaining_words)
+      elsif source_info.source_path
+        load_validated_path(source_info, words, remaining_words)
       end
-      relative_paths.map { |path| root.relative_child(path, lenient: false) }
     end
 
     ##
     # Loads from a proc source.
     # Caller must own the mutex.
     #
-    def load_proc(source, words, remaining_words, priority)
+    def load_proc(source, words, remaining_words)
       if remaining_words
-        update_min_loaded_priority(priority)
-        tool_class = get_tool(words, priority).tool_class
-        DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, self) do
+        update_min_loaded_priority(source.priority)
+        tool_class = get_tool(words, source.priority).tool_class
+        DSL::Internal.prepare(tool_class, words, remaining_words, source, self) do
           ContextualError.capture(banner: "Error while evaluating tool definition") do
             tool_class.class_eval(&source.source_proc)
           end
         end
       else
-        @worklist << [source, words, priority]
+        @worklist << [source, words]
       end
     end
 
@@ -538,11 +544,11 @@ module Toys
     # Load from a file path source that is known to exist.
     # Caller must own the mutex.
     #
-    def load_validated_path(source, words, remaining_words, priority)
+    def load_validated_path(source, words, remaining_words)
       if remaining_words
-        load_relevant_path(source, words, remaining_words, priority)
+        load_relevant_path(source, words, remaining_words)
       else
-        @worklist << [source, words, priority]
+        @worklist << [source, words]
       end
     end
 
@@ -551,18 +557,19 @@ module Toys
     # relevant to the current load request.
     # Caller must own the mutex.
     #
-    def load_relevant_path(source, words, remaining_words, priority)
+    def load_relevant_path(source, words, remaining_words)
       if source.source_type == :file
+        priority = source.priority
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
-        InputFile.evaluate(tool_class, words, priority, remaining_words, source, self)
+        InputFile.evaluate(tool_class, words, remaining_words, source, self)
       else
         source.find_preload_files.each do |file|
           require file
         end
-        load_index_in(source, words, remaining_words, priority)
+        load_index_in(source, words, remaining_words)
         ::Dir.entries(source.source_path).each do |child|
-          load_child_in(source, child, words, remaining_words, priority)
+          load_child_in(source, child, words, remaining_words)
         end
       end
     end
@@ -571,16 +578,16 @@ module Toys
     # Load an index file in a directory source.
     # Caller must own the mutex.
     #
-    def load_index_in(source, words, remaining_words, priority)
+    def load_index_in(source, words, remaining_words)
       index_source = source.index_child
-      load_relevant_path(index_source, words, remaining_words, priority) if index_source
+      load_relevant_path(index_source, words, remaining_words) if index_source
     end
 
     ##
     # Load non-index file in a directory source.
     # Caller must own the mutex.
     #
-    def load_child_in(source, child, words, remaining_words, priority)
+    def load_child_in(source, child, words, remaining_words)
       return if child.start_with?(".")
       # Reminder: Also bail if in the future any special files/directories do
       # not begin with a dot.
@@ -589,7 +596,7 @@ module Toys
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
-      load_validated_path(child_source, next_words, next_remaining, priority)
+      load_validated_path(child_source, next_words, next_remaining)
     end
 
     ##

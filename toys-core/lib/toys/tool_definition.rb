@@ -265,11 +265,9 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def initialize(parent, full_name, priority, source_root, middleware_stack, middleware_lookup,
-                   tool_class = nil)
+    def initialize(parent, full_name, source_root, middleware_stack, middleware_lookup, tool_class = nil)
       @parent = parent
       @full_name = full_name.dup.freeze
-      @priority = priority
       @source_root = source_root
       @built_middleware = middleware_stack.build(middleware_lookup)
       @subtool_middleware_stack = middleware_stack.dup
@@ -342,7 +340,9 @@ module Toys
     #
     # @return [Integer]
     #
-    attr_reader :priority
+    def priority
+      source_root.priority
+    end
 
     ##
     # The root source info defining this tool, or nil if there is no source.

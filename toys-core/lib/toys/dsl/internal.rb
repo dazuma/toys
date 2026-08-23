@@ -23,7 +23,7 @@ module Toys
         #
         # @private
         #
-        def prepare(tool_class, words, priority, remaining_words, source, loader)
+        def prepare(tool_class, words, remaining_words, source, loader)
           unless tool_class.is_a?(DSL::Tool)
             class << tool_class
               alias_method :include_module, :include
@@ -32,7 +32,7 @@ module Toys
           end
           unless tool_class.instance_variable_defined?(:@__words)
             tool_class.instance_variable_set(:@__words, words)
-            tool_class.instance_variable_set(:@__priority, priority)
+            tool_class.instance_variable_set(:@__priority, source.priority)
             tool_class.instance_variable_set(:@__loader, loader)
             tool_class.instance_variable_set(:@__source, [])
           end

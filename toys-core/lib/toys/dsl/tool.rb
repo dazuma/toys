@@ -315,7 +315,7 @@ module Toys
       #
       def tool(words, if_defined: :combine, delegate_to: nil, delegate_relative: nil, &block)
         subtool_words, next_remaining = DSL::Internal.analyze_name(self, words)
-        subtool = @__loader.get_tool(subtool_words, @__priority)
+        subtool = @__loader.get_tool(subtool_words, source_info.priority)
         if subtool.includes_definition?
           case if_defined
           when :ignore
@@ -334,7 +334,11 @@ module Toys
           end
         end
         if block
-          @__loader.load_block(source_info, block, subtool_words, next_remaining, @__priority)
+          # Intentionally uses load_block instead of load_source because we are
+          # remaining within the same "outer source" and want to inherit all
+          # the SourceInfo fields. (cf. the `load` methods which want to jump
+          # to a totally different source and so use load_source.)
+          @__loader.load_block(source_info, block, subtool_words, next_remaining)
         end
         self
       end
@@ -422,8 +426,8 @@ module Toys
           end
           return self
         end
-        @__loader.load_source(source_info, SourceSpec.path(path),
-                              @__words, @__remaining_words, @__priority)
+        spec = SourceSpec.path(path)
+        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
 
@@ -456,7 +460,7 @@ module Toys
           return self
         end
         spec = SourceSpec.git(remote, path: path, commit: commit, update: update)
-        @__loader.load_source(source_info, spec, @__words, @__remaining_words, @__priority)
+        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
 
@@ -487,7 +491,7 @@ module Toys
           return self
         end
         spec = SourceSpec.gem(name, version: version, path: path, toys_dir: toys_dir)
-        @__loader.load_source(source_info, spec, @__words, @__remaining_words, @__priority)
+        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
 
@@ -1899,7 +1903,7 @@ module Toys
       #     already been loaded.
       #
       def truncate_load_path!
-        unless @__loader.stop_loading_at_priority(@__priority)
+        unless @__loader.stop_loading_at_priority(source_info.priority)
           raise ToolDefinitionError,
                 "Cannot truncate load path because tools have already been loaded"
         end
