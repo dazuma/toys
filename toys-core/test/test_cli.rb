@@ -2,6 +2,8 @@
 
 require "helper"
 
+require "fileutils"
+require "tmpdir"
 require "toys/utils/exec"
 require "toys/utils/standard_ui"
 
@@ -1084,23 +1086,50 @@ describe Toys::CLI do
     end
   end
 
-  describe "permanent source-adding names" do
-    # These names are permanent, because they are what existing toys-core
-    # users call. They were once aliases for add_source_* names, and are now
-    # methods in their own right.
-    #
-    # There is deliberately no entry here for add_config_gem or
-    # add_config_git. Those two were aliases for add_source_gem and
-    # add_source_git, all four of which are deleted: they were added after
-    # toys-core v0.22.0 and so never shipped. Their replacement is
-    # add_source with a gem or git spec.
-    [:add_config_path, :add_config_block, :add_search_path, :add_search_path_hierarchy].each do |name|
-      it "defines #{name}" do
-        assert(Toys::CLI.method_defined?(name), "#{name} is not defined")
-      end
+  describe "convenience source-adding methods" do
+    # A CLI that recognizes toplevel tool files and directories, as the
+    # standard Toys CLI does. The search path methods find nothing without
+    # them.
+    let(:search_cli) {
+      Toys::CLI.new(
+        executable_name: executable_name,
+        logger: logger,
+        middleware_stack: [],
+        toplevel_tool_file_name: ".toys.rb",
+        toplevel_tool_dir_name: ".toys"
+      )
+    }
+    let(:config_items_dir) { File.join(lookup_cases_dir, "config-items") }
+    # Realpath, so that paths built from it match the paths that a directory
+    # walk starting inside it produces.
+    let(:tmp_dir) { File.realpath(Dir.mktmpdir("toys_cli_search_path_test")) }
+
+    after do
+      FileUtils.rm_rf(tmp_dir)
     end
 
-    it "adds a source through a permanent name" do
+    # Creates a directory, named by path elements relative to the temp
+    # directory, containing a toplevel tool file that defines a tool with the
+    # given name and description. Returns the directory path.
+    def make_search_dir(*path_elems, tool_name:, desc:)
+      dir = File.join(tmp_dir, *path_elems)
+      FileUtils.mkdir_p(dir)
+      contents = "tool(#{tool_name.inspect}) { desc(#{desc.inspect}) }\n"
+      File.write(File.join(dir, ".toys.rb"), contents)
+      dir
+    end
+
+    # Asserts that the given CLI has no tool by the given name. A lookup miss
+    # falls back to the nearest namespace, which here is always the root.
+    def refute_tool_defined(a_cli, name)
+      tool, _remaining = a_cli.loader.lookup([name])
+      assert_empty(tool.full_name, "expected no tool named #{name.inspect}")
+    end
+
+    # The add_config_* methods are deprecated in favor of add_source, so they
+    # get only enough coverage to show that they still reach the source list.
+
+    it "adds a source through add_config_block" do
       cli.add_config_block do
         tool "foo" do
           def run
@@ -1109,6 +1138,247 @@ describe Toys::CLI do
         end
       end
       assert_equal(3, cli.run("foo"))
+    end
+
+    it "adds a source through add_config_path" do
+      cli.add_config_path(File.join(config_items_dir, ".toys.rb"))
+      tool, remaining = cli.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal([], remaining)
+      # add_config_path, unlike add_search_path, defaults the context
+      # directory to the parent of the given path.
+      assert_equal(config_items_dir, tool.context_directory)
+    end
+
+    describe "add_search_path" do
+      it "loads tools from the toplevel tool file" do
+        search_cli.add_search_path(config_items_dir)
+        tool, remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+        assert_equal([], remaining)
+      end
+
+      it "loads tools from the toplevel tool directory" do
+        search_cli.add_search_path(config_items_dir)
+        tool, _remaining = search_cli.loader.lookup(["tool-2"])
+        assert_equal("directory tool-2 short description", tool.desc.to_s)
+      end
+
+      it "loads nothing from a directory with no toplevel tool file or directory" do
+        search_cli.add_search_path(File.join(lookup_cases_dir, "normal-file-hierarchy"))
+        refute_tool_defined(search_cli, "tool-1")
+      end
+
+      it "ignores a toplevel tool file that is a directory" do
+        FileUtils.mkdir_p(File.join(tmp_dir, ".toys.rb"))
+        File.write(File.join(tmp_dir, ".toys.rb", "tool-1.rb"), "desc 'from a bogus tool file'\n")
+        search_cli.add_search_path(tmp_dir)
+        refute_tool_defined(search_cli, "tool-1")
+      end
+
+      it "ignores a toplevel tool directory that is a file" do
+        File.write(File.join(tmp_dir, ".toys"), "tool('tool-1') { desc 'from a bogus tool dir' }\n")
+        search_cli.add_search_path(tmp_dir)
+        refute_tool_defined(search_cli, "tool-1")
+      end
+
+      it "ignores the toplevel tool file if the CLI does not define one" do
+        dir_only_cli = Toys::CLI.new(logger: logger, middleware_stack: [],
+                                     toplevel_tool_dir_name: ".toys")
+        dir_only_cli.add_search_path(config_items_dir)
+        tool, _remaining = dir_only_cli.loader.lookup(["tool-2"])
+        assert_equal("directory tool-2 short description", tool.desc.to_s)
+        refute_tool_defined(dir_only_cli, "tool-1")
+      end
+
+      it "ignores the toplevel tool directory if the CLI does not define one" do
+        file_only_cli = Toys::CLI.new(logger: logger, middleware_stack: [],
+                                      toplevel_tool_file_name: ".toys.rb")
+        file_only_cli.add_search_path(config_items_dir)
+        tool, _remaining = file_only_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+        refute_tool_defined(file_only_cli, "tool-2")
+      end
+
+      it "defaults the context directory to the search path itself" do
+        search_cli.add_search_path(config_items_dir)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(config_items_dir, tool.context_directory)
+      end
+
+      it "honors a context directory of :parent" do
+        search_cli.add_search_path(config_items_dir, context_directory: :parent)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(lookup_cases_dir, tool.context_directory)
+      end
+
+      it "honors an explicit context directory" do
+        search_cli.add_search_path(config_items_dir, context_directory: tmp_dir)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(tmp_dir, tool.context_directory)
+      end
+
+      it "honors a nil context directory" do
+        search_cli.add_search_path(config_items_dir, context_directory: nil)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_nil(tool.context_directory)
+      end
+
+      it "adds at the tail of the priority list by default" do
+        search_cli.add_search_path(config_items_dir)
+        search_cli.add_search_path(make_search_dir(tool_name: "tool-1", desc: "temp tool-1"))
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+      end
+
+      it "honors high_priority" do
+        search_cli.add_search_path(config_items_dir)
+        search_cli.add_search_path(make_search_dir(tool_name: "tool-1", desc: "temp tool-1"),
+                                   high_priority: true)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("temp tool-1", tool.desc.to_s)
+      end
+
+      it "returns self" do
+        assert_same(search_cli, search_cli.add_search_path(config_items_dir))
+      end
+
+      it "skips a search path that does not exist" do
+        search_cli.add_search_path(File.join(tmp_dir, "nonexistent"))
+        search_cli.add_search_path(config_items_dir)
+        refute_tool_defined(search_cli, "nonexistent")
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+      end
+
+      it "skips a search path that is a file rather than a directory" do
+        file_path = File.join(tmp_dir, "not-a-directory")
+        File.write(file_path, "tool('tool-1') { desc 'from a file search path' }\n")
+        search_cli.add_search_path(file_path)
+        refute_tool_defined(search_cli, "tool-1")
+      end
+
+      it "skips a search path that is not readable" do
+        unreadable_dir = make_search_dir("unreadable", tool_name: "tool-1", desc: "unreadable tool")
+        File.chmod(0o000, unreadable_dir)
+        begin
+          skip "Skipped because this process can read a mode 000 directory" if File.readable?(unreadable_dir)
+          search_cli.add_search_path(unreadable_dir)
+          refute_tool_defined(search_cli, "tool-1")
+        ensure
+          File.chmod(0o755, unreadable_dir)
+        end
+      end
+
+      it "accepts a path-convertible object as a search path" do
+        require "pathname"
+        search_cli.add_search_path(Pathname.new(config_items_dir))
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+      end
+
+      it "raises if the source list is finalized, even for a path it would skip" do
+        search_cli.loader
+        assert_raises(Toys::SourceListFinalizedError) do
+          search_cli.add_search_path(File.join(tmp_dir, "nonexistent"))
+        end
+      end
+
+      it "rejects an argument that is not a legal path" do
+        error = assert_raises(ArgumentError) { search_cli.add_search_path(12_345) }
+        assert_equal("Illegal path: 12345", error.message)
+      end
+    end
+
+    describe "add_search_path_hierarchy" do
+      # Terminating at the temp directory's parent keeps the walk from
+      # reaching real directories above it.
+      let(:terminate_dirs) { [File.dirname(tmp_dir)] }
+
+      it "adds the start directory and its ancestors" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        start_dir = make_search_dir("ns-1", "ns-2", tool_name: "tool-start", desc: "start tool")
+        # ns-1, in the middle of the hierarchy, has no tool file at all.
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_equal("start tool", tool.desc.to_s)
+        tool, _remaining = search_cli.loader.lookup(["tool-top"])
+        assert_equal("top tool", tool.desc.to_s)
+      end
+
+      it "gives the start directory a higher priority than its ancestors" do
+        make_search_dir(tool_name: "tool-1", desc: "top tool")
+        make_search_dir("ns-1", tool_name: "tool-1", desc: "middle tool")
+        start_dir = make_search_dir("ns-1", "ns-2", tool_name: "tool-1", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("start tool", tool.desc.to_s)
+      end
+
+      it "halts the walk without checking a terminating directory" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        middle_dir = make_search_dir("ns-1", tool_name: "tool-middle", desc: "middle tool")
+        start_dir = make_search_dir("ns-1", "ns-2", tool_name: "tool-start", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: [middle_dir])
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_equal("start tool", tool.desc.to_s)
+        refute_tool_defined(search_cli, "tool-middle")
+        refute_tool_defined(search_cli, "tool-top")
+      end
+
+      it "defaults the start directory to the current directory" do
+        start_dir = make_search_dir("ns-1", "ns-2", tool_name: "tool-1", desc: "start tool")
+        Dir.chdir(start_dir) do
+          search_cli.add_search_path_hierarchy(terminate: terminate_dirs)
+        end
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("start tool", tool.desc.to_s)
+      end
+
+      it "adds the hierarchy at the tail of the priority list by default" do
+        search_cli.add_source do
+          tool "tool-1" do
+            desc "block tool"
+          end
+        end
+        start_dir = make_search_dir("ns-1", tool_name: "tool-1", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("block tool", tool.desc.to_s)
+      end
+
+      it "honors high_priority, preserving the order within the hierarchy" do
+        search_cli.add_source do
+          tool "tool-1" do
+            desc "block tool"
+          end
+        end
+        make_search_dir(tool_name: "tool-1", desc: "top tool")
+        start_dir = make_search_dir("ns-1", tool_name: "tool-1", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs,
+                                             high_priority: true)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("start tool", tool.desc.to_s)
+      end
+
+      it "skips directories in the hierarchy that do not exist" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        start_dir = File.join(tmp_dir, "nonexistent", "also-nonexistent")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-top"])
+        assert_equal("top tool", tool.desc.to_s)
+      end
+
+      it "stops the walk at the file system root" do
+        # Nothing is loaded here; the assertion is that the walk returns at
+        # all, rather than looping on a root whose parent is itself.
+        assert_same(search_cli, search_cli.add_search_path_hierarchy(start: "/"))
+      end
+
+      it "returns self" do
+        result = search_cli.add_search_path_hierarchy(start: tmp_dir, terminate: terminate_dirs)
+        assert_same(search_cli, result)
+      end
     end
   end
 

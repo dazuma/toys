@@ -346,10 +346,14 @@ module Toys
     # Checks the given directory path. If it contains a tool file and/or
     # tool directory, those are added to the source list.
     #
+    # A search path is a location that might contain tools. One that is not a
+    # readable directory simply has none, so it is ignored rather than added.
+    #
     # The main Toys executable uses this method to load tools from directories
     # in the `TOYS_PATH`.
     #
-    # @param search_path [String] A path to search for sources.
+    # @param search_path [String] A path to search for sources. A path that is
+    #     not a readable directory is ignored.
     # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
     # @param context_directory [String,nil,:path,:parent] The context directory
@@ -365,6 +369,15 @@ module Toys
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
+      # Building a spec up front checks the argument type, and converts a
+      # path-convertible object such as a Pathname to a string, so that a bad
+      # argument is reported the same way as it is by #add_source.
+      search_path = SourceSpec.path(search_path, context_directory: context_directory).path
+      # Checked here as well as in #add_source, because a search path that
+      # holds no tools returns below without reaching #add_source, and a
+      # finalized source list must reject the call either way.
+      check_source_list_open
+      return self unless ::File.directory?(search_path) && ::File.readable?(search_path)
       paths = []
       if @toplevel_tool_file_name
         file_path = ::File.join(search_path, @toplevel_tool_file_name)
@@ -655,12 +668,20 @@ module Toys
     #
     def ensure_source_list_open
       @source_definition_mutex.synchronize do
-        if @loader
-          raise SourceListFinalizedError,
-                "Cannot add a source because this CLI's source list has already been finalized"
-        end
+        check_source_list_open
         yield
       end
+    end
+
+    ##
+    # Ensure that the source list is still open for additions.
+    #
+    # @raise [Toys::SourceListFinalizedError] if the source list is finalized.
+    #
+    def check_source_list_open
+      return unless @loader
+      raise SourceListFinalizedError,
+            "Cannot add a source because this CLI's source list has already been finalized"
     end
 
     ##
