@@ -1152,7 +1152,7 @@ describe Toys::ToolDefinition do
     describe "default completion using only a loader" do
       def make_loader(extra_delimiters: ":")
         source_list = Toys::SourceList.new
-        source_list.add_block do
+        spec = Toys::SourceSpec.block do
           tool "ns" do
             tool "sub1" do
               to_run do
@@ -1167,6 +1167,7 @@ describe Toys::ToolDefinition do
           end
           tool "deleg", delegate_to: ["ns"]
         end
+        source_list.add(spec)
         Toys::Loader.new(source_list,
                          tool_name_splitter: Toys::ToolNameSplitter.new(extra_delimiters))
       end
@@ -1213,8 +1214,12 @@ describe Toys::ToolDefinition do
   describe "source info" do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:source_path2) { File.expand_path(__dir__) }
-    let(:source_info) { Toys::SourceInfo.create_path_root(source_path, -1) }
-    let(:source_info2) { Toys::SourceInfo.create_path_root(source_path2, -1) }
+    let(:source_info) {
+      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path, context_directory: nil), priority: -1)
+    }
+    let(:source_info2) {
+      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path2, context_directory: nil), priority: -1)
+    }
 
     it "starts at nil" do
       assert_nil(tool.source_info)
@@ -1339,7 +1344,8 @@ describe Toys::ToolDefinition do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:default_context_dir) { File.expand_path(__dir__) }
     let(:source_info) {
-      Toys::SourceInfo.create_path_root(source_path, -1, context_directory: :parent)
+      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path, context_directory: :parent),
+                               priority: -1)
     }
 
     it "defaults to nil" do

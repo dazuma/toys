@@ -23,7 +23,7 @@ describe Toys::StandardMixins::Exec do
 
   it "executes a shell command" do
     skip "Skipped test on Windows" if Toys::Compat.windows?
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -36,7 +36,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a unix command" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -49,7 +49,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a ruby command" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -63,7 +63,7 @@ describe Toys::StandardMixins::Exec do
 
   it "executes a proc" do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -77,7 +77,7 @@ describe Toys::StandardMixins::Exec do
 
   it "executes a toys tool in a fork" do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    cli.add_source_block do
+    cli.add_source do
       tool "bar" do
         def run
           puts "hello" if defined?(::Minitest)
@@ -96,7 +96,7 @@ describe Toys::StandardMixins::Exec do
 
   it "executes a toys tool in a fork with no CLI in the context" do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    cli.add_source_block do
+    cli.add_source do
       tool "bar" do
         def run
           puts "hello" if defined?(::Minitest)
@@ -116,7 +116,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a toys tool in a spawned process" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -143,7 +143,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a unix command" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -156,7 +156,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a ruby command" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -170,7 +170,7 @@ describe Toys::StandardMixins::Exec do
 
   it "captures a proc" do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -184,7 +184,7 @@ describe Toys::StandardMixins::Exec do
 
   it "captures a toys tool" do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    cli.add_source_block do
+    cli.add_source do
       tool "bar" do
         def run
           puts "hello"
@@ -202,7 +202,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "does not exit on nonzero status by default" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -215,7 +215,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "configures exit_on_nonzero_status" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -229,7 +229,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "configures e" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -243,7 +243,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "handles a proc as a result callback" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
         def run
@@ -261,7 +261,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "handles a method as a result callback" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :exec
 
@@ -281,7 +281,7 @@ describe Toys::StandardMixins::Exec do
 
   describe "include options" do
     it "supports a stream option" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, out: :capture
           def run
@@ -294,7 +294,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "supports a proc as a result_callback" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           callback = proc do |result, context|
             context.exit(result.exit_code)
@@ -309,7 +309,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "supports a method name as a result_callback" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, result_callback: :callback
 
@@ -329,7 +329,7 @@ describe Toys::StandardMixins::Exec do
   describe "exit_on_nonzero_status option" do
     it "exits on nonzero status" do
       completed = false
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, exit_on_nonzero_status: true
           to_run do
@@ -344,7 +344,7 @@ describe Toys::StandardMixins::Exec do
 
     it "exits on failure to spawn" do
       completed = false
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, exit_on_nonzero_status: true
           to_run do
@@ -360,7 +360,7 @@ describe Toys::StandardMixins::Exec do
     it "exits on signal" do
       skip "Skipped test on Windows" if Toys::Compat.windows?
       completed = false
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, exit_on_nonzero_status: true
           to_run do
@@ -378,7 +378,7 @@ describe Toys::StandardMixins::Exec do
 
     it "can be overridden to false" do
       completed = false
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec, exit_on_nonzero_status: true
           to_run do
@@ -402,7 +402,7 @@ describe Toys::StandardMixins::Exec do
 
     it "handles ok result object" do
       result = ok_exec_result
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -416,7 +416,7 @@ describe Toys::StandardMixins::Exec do
 
     it "handles ok process status" do
       status = ok_process_status
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -429,7 +429,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "handles ok integer" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -443,7 +443,7 @@ describe Toys::StandardMixins::Exec do
 
     it "handles error result object" do
       result = error_exec_result
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -457,7 +457,7 @@ describe Toys::StandardMixins::Exec do
 
     it "handles error process status" do
       status = error_process_status
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -470,7 +470,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "handles error integer" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           to_run do
@@ -485,7 +485,7 @@ describe Toys::StandardMixins::Exec do
 
   describe "verbosity_flags" do
     it "returns an empty array when verbosity is zero" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -497,7 +497,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns a short flag for verbosity 1" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -509,7 +509,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns a short flag for verbosity 2" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -521,7 +521,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns a short flag for verbosity -1" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -533,7 +533,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns a short flag for verbosity -2" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -545,7 +545,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns long flags for verbosity 1" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -557,7 +557,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns long flags for verbosity 2" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -569,7 +569,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns long flags for verbosity -1" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run
@@ -581,7 +581,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "returns long flags for verbosity -2" do
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           include :exec
           def run

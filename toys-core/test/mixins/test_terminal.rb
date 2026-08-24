@@ -16,7 +16,7 @@ describe Toys::StandardMixins::Terminal do
   }
 
   it "provides a terminal instance" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :terminal
         def run
@@ -28,7 +28,7 @@ describe Toys::StandardMixins::Terminal do
   end
 
   it "supports styled puts with forced style" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :terminal, styled: true
         def run
@@ -42,7 +42,7 @@ describe Toys::StandardMixins::Terminal do
   end
 
   it "supports unstyled puts by default when capturing" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :terminal
         def run

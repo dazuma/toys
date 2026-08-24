@@ -199,7 +199,7 @@ describe "rspec template" do
 
     it "executes a successful spec" do
       dir = cases_dir
-      cli.add_source_block do
+      cli.add_source do
         set_context_directory dir
         expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb"
       end
@@ -211,7 +211,7 @@ describe "rspec template" do
 
     it "executes an unsuccessful spec" do
       dir = cases_dir
-      cli.add_source_block do
+      cli.add_source do
         set_context_directory dir
         expand :rspec, libs: "lib2", pattern: "spec/*_spec.rb"
       end
@@ -223,7 +223,7 @@ describe "rspec template" do
 
     it "honors the context_directory setting" do
       dir = cases_dir
-      cli.add_source_block do
+      cli.add_source do
         expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb", context_directory: dir
       end
       out, _err = capture_subprocess_io do

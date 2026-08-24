@@ -15,7 +15,7 @@ describe Toys::StandardMixins::Fileutils do
   }
 
   it "adds fileutils module" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :fileutils
         def run

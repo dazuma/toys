@@ -20,7 +20,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   #
   # @private This interface is internal and subject to change without warning.
   #
-  def self.evaluate(tool_class, words, priority, remaining_words, source, loader)
+  def self.evaluate(tool_class, words, remaining_words, source, loader)
     namespace = ::Module.new
     namespace.module_eval do
       include ::Toys::Context::Key # rubocop:disable Layout/EmptyLinesAfterModuleInclusion
@@ -32,7 +32,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     str = build_eval_string(name, ::IO.read(path))
     if str
       const_set(name, namespace)
-      ::Toys::DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, loader) do
+      ::Toys::DSL::Internal.prepare(tool_class, words, remaining_words, source, loader) do
         ::Toys::ContextualError.capture(banner: "Error while loading tool file", path: path) do
           eval(str, __binding, path) # rubocop:disable Security/Eval
         end

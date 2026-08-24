@@ -18,7 +18,7 @@ describe Toys::StandardMixins::Gems do
 
   it "provides a gems instance" do
     test = self
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :gems
         test.assert_instance_of(Toys::Utils::Gems, gems)
@@ -32,7 +32,7 @@ describe Toys::StandardMixins::Gems do
 
   it "passes arguments to gems util constructor" do
     exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :gems
         def run

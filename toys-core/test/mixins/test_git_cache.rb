@@ -15,7 +15,7 @@ describe Toys::StandardMixins::GitCache do
   }
 
   it "accesses git_cache" do
-    cli.add_source_block do
+    cli.add_source do
       tool "foo" do
         include :git_cache
         def run

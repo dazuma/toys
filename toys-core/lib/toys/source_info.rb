@@ -260,78 +260,105 @@ module Toys
       results
     end
 
-    #### ROOT SOURCE FACTORY METHODS ####
+    #### RESOLUTION ####
 
     class << self
       ##
-      # Create a root source info for a file path.
+      # Resolve a source spec into a SourceInfo, performing the file system
+      # access, git fetch, or gem activation that the spec describes.
+      #
+      # If a parent source is given, the result is a child of it, and inherits
+      # the parent's priority and context directory; the spec's own context
+      # directory and any explicit priority are ignored. If no parent is given,
+      # the result is a root, and a priority is required.
+      #
+      # Each kind of spec drops the fields it does not own, so for example a
+      # path source resolved under a git parent carries no git information.
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def create_path_root(source_path, priority,
-                           context_directory: nil,
-                           source_name: nil)
-        source_path, type = check_path(source_path, false)
-        case context_directory
-        when :parent
-          context_directory = ::File.dirname(source_path)
-        when :path
-          context_directory = source_path
+      def resolve(spec, parent: nil, priority: nil, git_cache: nil, gems_util: nil)
+        if parent
+          priority = parent.priority
+        elsif priority.nil?
+          raise ::ArgumentError, "A priority is required when resolving a root source"
         end
-        new(nil, priority, context_directory, type, source_path, nil,
-            nil, nil, nil, nil, nil, nil,
-            source_name)
+        case spec
+        when SourceSpec::Path
+          resolve_path_spec(spec, parent, priority)
+        when SourceSpec::Git
+          resolve_git_spec(spec, parent, priority, git_cache)
+        when SourceSpec::Gem
+          resolve_gem_spec(spec, parent, priority, gems_util)
+        when SourceSpec::Block
+          resolve_block_spec(spec, parent, priority)
+        else
+          raise ::ArgumentError, "Unrecognized source spec: #{spec.inspect}"
+        end
       end
 
-      ##
-      # Create a root source info for a cached git repo.
-      #
-      # @private This interface is internal and subject to change without warning.
-      #
-      def create_git_root(git_remote, priority,
-                          git_path: nil,
-                          git_commit: nil,
-                          git_cache: nil,
-                          update: false,
-                          context_directory: nil,
-                          source_name: nil)
-        git_commit, git_path, source_path = resolve_git_info(git_cache, git_remote, git_path, git_commit, update)
+      private
+
+      def resolve_path_spec(spec, parent, priority)
+        if parent
+          if spec.relative_paths
+            raise ::ArgumentError, "A path spec with relative paths cannot be resolved as a child"
+          end
+          if parent.git_remote
+            raise SourceResolutionError,
+                  "Git source #{parent.source_name} tried to load from the local file system"
+          end
+        end
+        source_path, type = check_path(spec.path, false)
+        context_directory =
+          if parent
+            parent.context_directory
+          else
+            case spec.context_directory
+            when :parent then ::File.dirname(source_path)
+            when :path then source_path
+            else spec.context_directory
+            end
+          end
+        new(parent, priority, context_directory, type, source_path, nil,
+            nil, nil, nil, nil, nil, nil,
+            spec.source_name)
+      end
+
+      def resolve_git_spec(spec, parent, priority, git_cache)
+        git_remote = spec.remote || parent&.git_remote
+        raise SourceResolutionError, "Git remote not specified" unless git_remote
+        git_commit = spec.commit || parent&.git_commit
+        git_commit, git_path, source_path =
+          resolve_git_info(git_cache, git_remote, spec.path, git_commit, spec.update)
         source_path, type = check_path(source_path, false)
-        new(nil, priority, context_directory, type, source_path, nil,
+        new(parent, priority, inherited_context_directory(spec, parent), type, source_path, nil,
             git_remote, git_path, git_commit, nil, nil, nil,
-            source_name)
+            spec.source_name)
       end
 
-      ##
-      # Create a root source info for a loaded gem.
-      #
-      # @private This interface is internal and subject to change without warning.
-      #
-      def create_gem_root(gem_name, priority,
-                          gem_version: nil,
-                          gem_path: nil,
-                          gem_toys_dir: nil,
-                          gems_util: nil,
-                          context_directory: nil,
-                          source_name: nil)
-        gem_version, gem_path, source_path = resolve_gem_info(gems_util, gem_name, gem_version, gem_path, gem_toys_dir)
+      def resolve_gem_spec(spec, parent, priority, gems_util)
+        gem_version, gem_path, source_path =
+          resolve_gem_info(gems_util, spec.name, spec.version, spec.path, spec.toys_dir)
         source_path, type = check_path(source_path, false)
-        new(nil, priority, context_directory, type, source_path, nil,
-            nil, nil, nil, gem_name, gem_version, gem_path,
-            source_name)
+        new(parent, priority, inherited_context_directory(spec, parent), type, source_path, nil,
+            nil, nil, nil, spec.name, gem_version, gem_path,
+            spec.source_name)
+      end
+
+      def resolve_block_spec(spec, parent, priority)
+        raise ::ArgumentError, "A block spec cannot be resolved as a child" if parent
+        new(nil, priority, spec.context_directory, :proc, nil, spec.block,
+            nil, nil, nil, nil, nil, nil,
+            spec.source_name)
       end
 
       ##
-      # Create a root source info for a proc.
+      # The context directory for a spec that has no symbolic forms: the
+      # parent's if there is a parent, otherwise the spec's own.
       #
-      # @private This interface is internal and subject to change without warning.
-      #
-      def create_proc_root(source_proc, priority,
-                           context_directory: nil,
-                           source_name: nil)
-        new(nil, priority, context_directory, :proc, nil, source_proc,
-            nil, nil, nil, nil, nil, nil,
-            source_name)
+      def inherited_context_directory(spec, parent)
+        parent ? parent.context_directory : spec.context_directory
       end
     end
 
@@ -362,56 +389,6 @@ module Toys
     def index_child(source_name: nil)
       raise ::ArgumentError, "index_child is valid only on a directory source" unless source_type == :directory
       relative_child(INDEX_FILE_NAME, source_name: source_name)
-    end
-
-    ##
-    # Create a child SourceInfo with an absolute path.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def absolute_child(child_path, source_name: nil)
-      child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     nil, nil, nil, nil, nil, nil,
-                     source_name)
-    end
-
-    ##
-    # Create a child SourceInfo with a git source.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def git_child(child_git_remote,
-                  child_git_path: nil,
-                  child_git_commit: nil,
-                  git_cache: nil,
-                  update: false,
-                  source_name: nil)
-      child_git_commit, child_git_path, source_path =
-        SourceInfo.resolve_git_info(git_cache, child_git_remote, child_git_path, child_git_commit, update)
-      source_path, type = SourceInfo.check_path(source_path, false)
-      SourceInfo.new(self, priority, context_directory, type, source_path, nil,
-                     child_git_remote, child_git_path, child_git_commit, nil, nil, nil,
-                     source_name)
-    end
-
-    ##
-    # Create a child SourceInfo with a gem source.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def gem_child(child_gem_name,
-                  child_gem_version: nil,
-                  child_gem_path: nil,
-                  gem_toys_dir: nil,
-                  gems_util: nil,
-                  source_name: nil)
-      child_gem_version, child_gem_path, source_path =
-        SourceInfo.resolve_gem_info(gems_util, child_gem_name, child_gem_version, child_gem_path, gem_toys_dir)
-      source_path, type = SourceInfo.check_path(source_path, false)
-      SourceInfo.new(self, priority, context_directory, type, source_path, nil,
-                     nil, nil, nil, child_gem_name, child_gem_version, child_gem_path,
-                     source_name)
     end
 
     ##
@@ -472,19 +449,19 @@ module Toys
       def check_path(path, lenient)
         path = ::File.expand_path(path)
         unless ::File.readable?(path)
-          raise ToolDefinitionError, "Cannot read: #{path}" unless lenient
+          raise SourceResolutionError, "Cannot read: #{path}" unless lenient
           return [nil, nil]
         end
         if ::File.file?(path)
           unless ::File.extname(path) == ".rb"
-            raise ToolDefinitionError, "File is not a ruby file: #{path}" unless lenient
+            raise SourceResolutionError, "File is not a ruby file: #{path}" unless lenient
             return [nil, nil]
           end
           [path, :file]
         elsif ::File.directory?(path)
           [path, :directory]
         else
-          raise ToolDefinitionError, "Not a ruby file or directory: #{path}" unless lenient
+          raise SourceResolutionError, "Not a ruby file or directory: #{path}" unless lenient
           [nil, nil]
         end
       end
@@ -494,16 +471,15 @@ module Toys
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def resolve_gem_info(gems_util, gem_name, gem_version, gem_path, gem_toys_dir)
+      def resolve_gem_info(gems_util, gem_name, gem_versions, gem_path, gem_toys_dir)
         require "toys/utils/gems"
         begin
-          gem_versions = Array(gem_version)
           (gems_util || default_gems_util).activate(gem_name, *gem_versions)
         rescue ::Toys::Utils::Gems::ActivationFailedError => e
-          raise ToolDefinitionError, e.message
+          raise SourceResolutionError, e.message
         end
         gem_spec = ::Gem.loaded_specs[gem_name]
-        raise ToolDefinitionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
+        raise SourceResolutionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
         gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
         gem_path = gem_path.to_s.empty? ? gem_toys_dir : ::File.join(gem_toys_dir, gem_path)
         source_path = ::File.join(gem_spec.gem_dir, gem_path)
@@ -523,7 +499,7 @@ module Toys
         source_path = begin
           git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
         rescue ::Toys::Utils::GitCache::Error => e
-          raise ToolDefinitionError, "Unable to access git repo #{git_remote}: #{e.message}"
+          raise SourceResolutionError, "Unable to access git repo #{git_remote}: #{e.message}"
         end
         [git_commit, git_path, source_path]
       end

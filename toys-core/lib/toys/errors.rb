@@ -8,6 +8,17 @@ module Toys
   end
 
   ##
+  # An exception indicating that a source could not be resolved: a path that
+  # cannot be read, a git repo that cannot be accessed, a gem that cannot be
+  # activated, and the like.
+  #
+  # This is a subclass of {Toys::ToolDefinitionError} because a source that
+  # cannot be resolved is a source that cannot define its tools.
+  #
+  class SourceResolutionError < ToolDefinitionError
+  end
+
+  ##
   # An exception indicating that a tool has no run method.
   #
   class NotRunnableError < ::StandardError

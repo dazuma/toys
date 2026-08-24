@@ -636,7 +636,7 @@ describe Toys::Utils::HelpText do
 
       it "shows separate sources when requested" do
         source_list = Toys::SourceList.new
-        source_list.add_block(source_name: "block 1") do
+        spec = Toys::SourceSpec.block(source_name: "block 1") do
           tool "foo bar" do
             tool "one" do
               desc "one description"
@@ -644,7 +644,8 @@ describe Toys::Utils::HelpText do
             end
           end
         end
-        source_list.add_block(source_name: "block 2") do
+        source_list.add(spec)
+        spec = Toys::SourceSpec.block(source_name: "block 2") do
           tool "foo bar" do
             tool "two" do
               desc "two description"
@@ -652,6 +653,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
+        source_list.add(spec)
         loader = Toys::Loader.new(source_list)
         base_tool, _remaining = loader.lookup(["foo", "bar"])
         help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
@@ -672,11 +674,12 @@ describe Toys::Utils::HelpText do
     describe "source section" do
       let(:source_loader) {
         source_list = Toys::SourceList.new
-        source_list.add_block(source_name: "myfile.rb") do
+        spec = Toys::SourceSpec.block(source_name: "myfile.rb") do
           tool "foo" do
             def run; end
           end
         end
+        source_list.add(spec)
         loader = Toys::Loader.new(source_list)
         loader
       }
@@ -707,16 +710,18 @@ describe Toys::Utils::HelpText do
 
       it "shows the delegation source path" do
         source_list = Toys::SourceList.new
-        source_list.add_block(source_name: "target.rb") do
+        spec = Toys::SourceSpec.block(source_name: "target.rb") do
           tool "foo" do
             def run; end
           end
         end
-        source_list.add_block(source_name: "delegator.rb") do
+        source_list.add(spec)
+        spec = Toys::SourceSpec.block(source_name: "delegator.rb") do
           tool "bar" do
             def run; end
           end
         end
+        source_list.add(spec)
         loader = Toys::Loader.new(source_list)
         target_tool, = loader.lookup(["foo"])
         delegator_tool, = loader.lookup(["bar"])
@@ -827,7 +832,7 @@ describe Toys::Utils::HelpText do
 
     it "shows separate sources when requested" do
       source_list = Toys::SourceList.new
-      source_list.add_block(source_name: "block 1") do
+      spec = Toys::SourceSpec.block(source_name: "block 1") do
         tool "foo bar" do
           tool "one" do
             desc "one description"
@@ -835,7 +840,8 @@ describe Toys::Utils::HelpText do
           end
         end
       end
-      source_list.add_block(source_name: "block 2") do
+      source_list.add(spec)
+      spec = Toys::SourceSpec.block(source_name: "block 2") do
         tool "foo bar" do
           tool "two" do
             desc "two description"
@@ -843,6 +849,7 @@ describe Toys::Utils::HelpText do
           end
         end
       end
+      source_list.add(spec)
       loader = Toys::Loader.new(source_list)
       base_tool, _remaining = loader.lookup(["foo", "bar"])
       help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
@@ -1017,7 +1024,7 @@ describe Toys::Utils::HelpText do
 
       it "show subtools separated by source" do
         source_list = Toys::SourceList.new
-        source_list.add_block(source_name: "block 1") do
+        spec = Toys::SourceSpec.block(source_name: "block 1") do
           tool "foo bar" do
             tool "one" do
               desc "one description"
@@ -1029,7 +1036,8 @@ describe Toys::Utils::HelpText do
             end
           end
         end
-        source_list.add_block(source_name: "block 2") do
+        source_list.add(spec)
+        spec = Toys::SourceSpec.block(source_name: "block 2") do
           tool "foo bar" do
             tool "three" do
               desc "three description"
@@ -1037,6 +1045,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
+        source_list.add(spec)
         loader = Toys::Loader.new(source_list)
         base_tool, _remaining = loader.lookup(["foo", "bar"])
         help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)

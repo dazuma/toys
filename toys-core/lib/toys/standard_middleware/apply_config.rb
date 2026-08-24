@@ -10,19 +10,13 @@ module Toys
       # Create an ApplyConfig middleware
       #
       # @param parent_source [Toys::SourceInfo] The SourceInfo corresponding to
-      #     the source where this block is provided, or `nil` (the default) if
-      #     the block does not come from a Toys file.
+      #     the source where this block is provided.
       # @param source_name [String] A user-visible name for the source, or
       #     `nil` to use the default.
       # @param block [Proc] The configuration to apply.
       #
-      def initialize(parent_source: nil, source_name: nil, &block)
-        @source_info =
-          if parent_source
-            parent_source.proc_child(block, source_name: source_name)
-          else
-            SourceInfo.create_proc_root(block, source_name: source_name)
-          end
+      def initialize(parent_source:, source_name: nil, &block)
+        @source_info = parent_source.proc_child(block, source_name: source_name)
         @block = block
       end
 
@@ -33,8 +27,7 @@ module Toys
       #
       def config(tool, loader)
         tool_class = tool.tool_class
-        DSL::Internal.prepare(tool_class, tool.full_name, tool.priority, nil, @source_info,
-                              loader) do
+        DSL::Internal.prepare(tool_class, tool.full_name, nil, @source_info, loader) do
           tool_class.class_eval(&@block)
         end
         yield

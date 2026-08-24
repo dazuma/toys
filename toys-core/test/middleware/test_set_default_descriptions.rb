@@ -20,7 +20,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default tool description" do
     it "is set for a normal tool" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           def run; end
         end
@@ -31,7 +31,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a namespace" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           tool "bar" do
             def run; end
@@ -44,7 +44,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a delegate" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo", delegate_to: "bar" do
           # Empty tool
         end
@@ -63,7 +63,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default flag description" do
     it "is set for a boolean with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar
           def run; end
@@ -76,7 +76,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a boolean with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, default: true
           def run; end
@@ -90,7 +90,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a string with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--barrr=VALUE"
           def run; end
@@ -103,7 +103,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a string with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--barrr=VALUE", default: "hello"
           def run; end
@@ -117,7 +117,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--barrr=VALUE", accept: Integer
           def run; end
@@ -130,7 +130,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag :bar, "--barrr=VALUE", accept: Integer, default: 3
           def run; end
@@ -146,7 +146,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default flag group description" do
     it "is set for an basic group" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           flag_group
         end
@@ -159,7 +159,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a required group" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           all_required
         end
@@ -173,7 +173,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an exactly-one group" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           exactly_one
         end
@@ -187,7 +187,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an at-most-one group" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           at_most_one
         end
@@ -201,7 +201,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an at-least-one group" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           at_least_one
         end
@@ -217,7 +217,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default required arg description" do
     it "is set for a string" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           required :bar
           def run; end
@@ -230,7 +230,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           required :bar, accept: Integer
           def run; end
@@ -245,7 +245,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default optional arg description" do
     it "is set for a string with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           optional :bar
           def run; end
@@ -258,7 +258,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a string with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           optional :bar, default: "hello"
           def run; end
@@ -271,7 +271,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           optional :bar, accept: Integer
           def run; end
@@ -284,7 +284,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           optional :bar, accept: Integer, default: 3
           def run; end
@@ -299,7 +299,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
   describe "default remaining args description" do
     it "is set for a string with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           remaining :bar
           def run; end
@@ -312,7 +312,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for a string with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           remaining :bar, default: ["hello"]
           def run; end
@@ -325,7 +325,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with no default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           remaining :bar, accept: Integer
           def run; end
@@ -338,7 +338,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
 
     it "is set for an integer with a default" do
       cli = make_cli
-      cli.add_source_block do
+      cli.add_source do
         tool "foo" do
           remaining :bar, accept: Integer, default: [3, 4, 5]
           def run; end

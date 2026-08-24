@@ -41,9 +41,11 @@
 #   {Toys::Context} is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
-#   provenance, and {Toys::InputFile} evaluates them. A loader is created
-#   from a fixed list of starting sources, which {Toys::SourceList}
-#   accumulates and assigns priorities to. Note that {Toys::Loader} is the
+#   provenance, and {Toys::InputFile} evaluates them. A source is described
+#   unresolved by a {Toys::SourceSpec}; {Toys::SourceList} is the ordered
+#   collection of root sources that a loader reads tools from, and assigns
+#   each a priority. The loader resolves each spec into a {Toys::SourceInfo}
+#   when it first needs that priority level. Note that {Toys::Loader} is the
 #   factory for Definition objects (described below) and thus holds onto
 #   several objects that are necessary for constructing tool definitions.
 # * **Definition** — models a tool. {Toys::ToolDefinition} is the central
@@ -181,6 +183,7 @@ require "toys/positional_arg"
 require "toys/runner"
 require "toys/source_info"
 require "toys/source_list"
+require "toys/source_spec"
 require "toys/template"
 require "toys/tool_definition"
 require "toys/tool_name_splitter"

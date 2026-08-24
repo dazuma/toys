@@ -7,7 +7,7 @@ require "fileutils"
 require "tmpdir"
 
 describe Toys::StandardCLI do
-  describe "source_list" do
+  describe "custom resolvers" do
     let(:exec_tool) { Toys::Utils::Exec.new }
     # Each test gets its own temp directory, so no test can see cache or repo
     # state left behind by another, whether in this suite or elsewhere.
@@ -69,11 +69,10 @@ describe Toys::StandardCLI do
 
     it "resolves git sources using a custom git cache" do
       git_cache = Toys::Utils::GitCache.new(cache_dir: cache_dir)
-      source_list = Toys::SourceList.new(git_cache: git_cache)
       cli = Toys::StandardCLI.new(custom_paths: custom_path,
                                   include_builtins: false,
-                                  source_list: source_list)
-      cli.add_source_git(local_remote)
+                                  git_cache: git_cache)
+      cli.add_source(Toys::SourceSpec.git(local_remote))
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("greet"))
       end

@@ -23,7 +23,7 @@ module Toys
   #     #!/usr/bin/env ruby
   #     require "toys-core"
   #     cli = Toys::CLI.new
-  #     cli.add_source_block do
+  #     cli.add_source do
   #       def run
   #         puts "Hello, world!"
   #       end
@@ -40,7 +40,7 @@ module Toys
   #         # Run "some-tool" with the tools from the "my-tools" gem also
   #         # available.
   #         child = cli.child(copy_sources: true) do |c|
-  #           c.add_source_gem("my-tools", high_priority: true)
+  #           c.add_source(Toys::SourceSpec.gem("my-tools"), high_priority: true)
   #         end
   #         child.run("some-tool")
   #       end
@@ -75,6 +75,8 @@ module Toys
     #      *  `toplevel_tool_dir_name`: Directory name containing tool files
     #      *  `toplevel_tool_file_name`: File name for tools
     #      *  `source_list`: Initial sources to populate
+    #      *  `git_cache`: How to resolve git sources
+    #      *  `gems_util`: How to resolve gem sources
     #
     # @param logger [Logger] A global logger to use for all tools. This can be
     #     set if the CLI will call at most one tool at a time. However, it will
@@ -147,6 +149,12 @@ module Toys
     #     which is fixed at `".toys.rb"`.
     # @param source_list [Toys::SourceList] An optional list of sources to
     #     prepopulate into the CLI.
+    # @param git_cache [Toys::Utils::GitCache,nil] A custom GitCache instance
+    #     to use when resolving git sources. Optional. If nil or not
+    #     specified, uses a process-wide default GitCache.
+    # @param gems_util [Toys::Utils::Gems,nil] A custom Gems utility instance
+    #     to use when resolving gem sources. Optional. If nil or not
+    #     specified, uses a process-wide default Gems utility.
     #
     def initialize(executable_name: nil,
                    middleware_stack: nil,
@@ -161,7 +169,9 @@ module Toys
                    base_level: nil,
                    error_handler: nil,
                    completion: nil,
-                   source_list: nil)
+                   source_list: nil,
+                   git_cache: nil,
+                   gems_util: nil)
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @middleware_stack = middleware_stack || CLI.default_middleware_stack
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
@@ -178,6 +188,8 @@ module Toys
       @toplevel_tool_dir_name = toplevel_tool_dir_name
       @toplevel_tool_file_name = toplevel_tool_file_name
       @source_list = source_list&.dup || SourceList.new
+      @git_cache = git_cache
+      @gems_util = gems_util
       @loader = @runner = nil
       @source_definition_mutex = ::Monitor.new
     end
@@ -283,7 +295,7 @@ module Toys
     attr_reader :completion
 
     ##
-    # Add a specific tool file or directory to the source list.
+    # Add a source to the source list, described by the given source spec.
     #
     # This is generally used to load a static or "built-in" set of tools,
     # either for a standalone command line executable based on Toys, or to
@@ -291,178 +303,57 @@ module Toys
     # the main Toys executable uses this to load the builtin tools from its
     # "builtins" directory.
     #
-    # @param path [String] A path to add. May reference a single tool file or a
-    #     tool directory.
+    # The source can be specified in one of three ways:
+    #
+    # * A source spec built using one of the {Toys::SourceSpec} module methods.
+    # * A string (or other object convertible to a path, such as a `Pathname`)
+    #   interpreted as a file system path, which will be passed to
+    #   {Toys::SourceSpec.path} to get the source spec.
+    # * A block, which will be passed to {Toys::SourceSpec.block} to get the
+    #   source spec. (Do not include an argument if passing a block.)
+    #
+    # The spec is not resolved here. The loader resolves it, at most once, the
+    # first time it looks up a tool, so a source that cannot be read, fetched,
+    # or activated fails then rather than now.
+    #
+    # @param spec [Toys::SourceSpec::Base,String] The source spec to add.
     # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
-    # @param source_name [String] A custom name for the root source. Optional.
-    # @param context_directory [String,nil,:path,:parent] The context directory
-    #     for tools loaded from this path. You can pass a directory path as a
-    #     string, `:path` to denote the given path, `:parent` to denote the
-    #     given path's parent directory, or `nil` to denote no context.
-    #     Defaults to `:parent`.
     #
     # @return [self]
-    # @raise [Toys::SourceListFinalizedError] if the source list has already
-    #     been finalized.
-    # @raise [Toys::ToolDefinitionError] if the given path does not point at
-    #     a readable Ruby file or directory.
-    #
-    def add_source_path(path,
-                        high_priority: false,
-                        source_name: nil,
-                        context_directory: :parent)
-      ensure_open_source_list do
-        @source_list.add_path(path,
-                              high_priority: high_priority,
-                              source_name: source_name,
-                              context_directory: context_directory)
-      end
-      self
-    end
-    alias add_config_path add_source_path
-
-    ##
-    # Add a block to the source list.
-    #
-    # This is used to create tools "inline", and is useful for simple command
-    # line executables based on Toys.
-    #
-    # @param high_priority [boolean] Add the source at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools defined in this block. If omitted, a default
-    #     unique string will be generated.
-    # @param block [Proc] The source block, executed in the context of the tool
-    #     DSL {Toys::DSL::Tool}.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this block. You can pass a directory path as a string, or
-    #     `nil` to denote no context. Defaults to `nil`.
-    #
-    # @return [self]
+    # @raise [ArgumentError] if no source is given, or if the given source is
+    #     neither a source spec nor a legal path.
     # @raise [Toys::SourceListFinalizedError] if the source list has already
     #     been finalized.
     #
-    def add_source_block(high_priority: false,
-                         source_name: nil,
-                         context_directory: nil,
-                         &block)
-      ensure_open_source_list do
-        @source_list.add_block(high_priority: high_priority,
-                               source_name: source_name,
-                               context_directory: context_directory,
-                               &block)
+    def add_source(spec = nil, high_priority: false, &block)
+      if block
+        raise ::ArgumentError, "Ambiguous source: both spec and block passed" if spec
+        spec = SourceSpec.block(&block)
+      elsif !spec.is_a?(SourceSpec::Base)
+        raise ::ArgumentError, "No source spec, path, or block given" if spec.nil?
+        # Anything else is taken as a path. SourceSpec.path raises if it is
+        # not one, so a bad argument is reported here rather than at load time.
+        spec = SourceSpec.path(spec)
+      end
+      ensure_source_list_open do
+        @source_list.add(spec, high_priority: high_priority)
       end
       self
     end
-    alias add_config_block add_source_block
-
-    ##
-    # Add the tools from a gem to the source list.
-    #
-    # The gem is activated, installing it if necessary, and tools are loaded
-    # from the gem's toys directory (or a file or subdirectory within it).
-    #
-    # @param gem_name [String] The name of the gem.
-    # @param gem_version [String,Array<String>] Version requirements for the
-    #     gem. Optional. If not provided, any version is allowed.
-    # @param gem_path [String,nil] The path from the gem's toys directory to
-    #     the relevant file or directory. Optional. If not provided, the entire
-    #     toys directory is used.
-    # @param gem_toys_dir [String] The name of the gem's toys directory.
-    #     Optional. Defaults to the directory specified in the gem's metadata,
-    #     or the value "toys".
-    # @param high_priority [boolean] Add the source at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] A custom name for the root source. Optional.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this source. You can pass a directory path as a string,
-    #     or `nil` to denote no context. Defaults to `nil`.
-    #
-    # @return [self]
-    # @raise [Toys::SourceListFinalizedError] if the source list has already
-    #     been finalized.
-    # @raise [Toys::ToolDefinitionError] if the specified gem could not be
-    #     activated or did not contain valid toys files/directories.
-    #
-    def add_source_gem(gem_name,
-                       gem_version: nil,
-                       gem_path: nil,
-                       gem_toys_dir: nil,
-                       high_priority: false,
-                       source_name: nil,
-                       context_directory: nil)
-      ensure_open_source_list do
-        @source_list.add_gem(gem_name,
-                             gem_version: gem_version,
-                             gem_path: gem_path,
-                             gem_toys_dir: gem_toys_dir,
-                             high_priority: high_priority,
-                             source_name: source_name,
-                             context_directory: context_directory)
-      end
-      self
-    end
-    alias add_config_gem add_source_gem
-
-    ##
-    # Add the tools from a git repository to the source list.
-    #
-    # The repository is fetched into a local cache, and tools are loaded from
-    # it (or from a file or subdirectory within it).
-    #
-    # @param git_remote [String] The git repo URL.
-    # @param git_path [String] The path to the relevant file or directory in
-    #     the repo. Optional. Defaults to the entire repo.
-    # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name).
-    #     Optional. Defaults to `"HEAD"`.
-    # @param update [boolean,Integer] Whether to update non-SHA commit
-    #     references if they were previously loaded. This is useful, for
-    #     example, if the commit is `HEAD` or a branch name. Pass `true` or
-    #     `false` to specify whether to update, or an integer to update if
-    #     last update was done at least that many seconds ago. Default is
-    #     `false`.
-    # @param high_priority [boolean] Add the source at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] A custom name for the root source. Optional.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this source. You can pass a directory path as a string,
-    #     or `nil` to denote no context. Defaults to `nil`.
-    #
-    # @return [self]
-    # @raise [Toys::SourceListFinalizedError] if the source list has already
-    #     been finalized.
-    # @raise [Toys::ToolDefinitionError] if the specified git repo could not be
-    #     accessed or did not contain valid toys files/directories.
-    #
-    def add_source_git(git_remote,
-                       git_path: nil,
-                       git_commit: nil,
-                       update: false,
-                       high_priority: false,
-                       source_name: nil,
-                       context_directory: nil)
-      ensure_open_source_list do
-        @source_list.add_git(git_remote,
-                             git_path: git_path,
-                             git_commit: git_commit,
-                             high_priority: high_priority,
-                             source_name: source_name,
-                             update: update,
-                             context_directory: context_directory)
-      end
-      self
-    end
-    alias add_config_git add_source_git
 
     ##
     # Checks the given directory path. If it contains a tool file and/or
     # tool directory, those are added to the source list.
     #
+    # A search path is a location that might contain tools. One that is not a
+    # readable directory simply has none, so it is ignored rather than added.
+    #
     # The main Toys executable uses this method to load tools from directories
     # in the `TOYS_PATH`.
     #
-    # @param search_path [String] A path to search for sources.
+    # @param search_path [String] A path to search for sources. A path that is
+    #     not a readable directory is ignored.
     # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
     # @param context_directory [String,nil,:path,:parent] The context directory
@@ -478,20 +369,26 @@ module Toys
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
-      ensure_open_source_list do
-        paths = []
-        if @toplevel_tool_file_name
-          file_path = ::File.join(search_path, @toplevel_tool_file_name)
-          paths << @toplevel_tool_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
-        end
-        if @toplevel_tool_dir_name
-          dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
-          paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
-        end
-        @source_list.add_path_set(search_path, paths,
-                                  high_priority: high_priority,
-                                  context_directory: context_directory)
+      # Building a spec up front checks the argument type, and converts a
+      # path-convertible object such as a Pathname to a string, so that a bad
+      # argument is reported the same way as it is by #add_source.
+      search_path = SourceSpec.path(search_path, context_directory: context_directory).path
+      # Checked here as well as in #add_source, because a search path that
+      # holds no tools returns below without reaching #add_source, and a
+      # finalized source list must reject the call either way.
+      check_source_list_open
+      return self unless ::File.directory?(search_path) && ::File.readable?(search_path)
+      paths = []
+      if @toplevel_tool_file_name
+        file_path = ::File.join(search_path, @toplevel_tool_file_name)
+        paths << @toplevel_tool_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
       end
+      if @toplevel_tool_dir_name
+        dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
+        paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
+      end
+      spec = SourceSpec.path(search_path, relative_paths: paths, context_directory: context_directory)
+      add_source(spec, high_priority: high_priority)
       self
     end
 
@@ -518,20 +415,18 @@ module Toys
     def add_search_path_hierarchy(start: nil,
                                   terminate: [],
                                   high_priority: false)
-      ensure_open_source_list do
-        path = start || ::Dir.pwd
-        paths = []
-        loop do
-          break if terminate.include?(path)
-          paths << path
-          next_path = ::File.dirname(path)
-          break if next_path == path
-          path = next_path
-        end
-        paths.reverse! if high_priority
-        paths.each do |p|
-          add_search_path(p, high_priority: high_priority)
-        end
+      path = start || ::Dir.pwd
+      paths = []
+      loop do
+        break if terminate.include?(path)
+        paths << path
+        next_path = ::File.dirname(path)
+        break if next_path == path
+        path = next_path
+      end
+      paths.reverse! if high_priority
+      paths.each do |p|
+        add_search_path(p, high_priority: high_priority)
       end
       self
     end
@@ -605,7 +500,9 @@ module Toys
                               tool_name_splitter: @tool_name_splitter,
                               mixin_lookup: @mixin_lookup,
                               template_lookup: @template_lookup,
-                              middleware_lookup: @middleware_lookup)
+                              middleware_lookup: @middleware_lookup,
+                              git_cache: @git_cache,
+                              gems_util: @gems_util)
           runner = Runner.new(loader,
                               logger_factory: @logger_factory,
                               base_level: @base_level,
@@ -617,6 +514,62 @@ module Toys
         end
       end
       self
+    end
+
+    ##
+    # Add a specific tool file or directory to the source list.
+    #
+    # @deprecated Prefer {#add_source}.
+    #
+    # @param path [String] A path to add. May reference a single tool file or a
+    #     tool directory.
+    # @param high_priority [boolean] Add the source at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given path, `:parent` to denote the
+    #     given path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:parent`.
+    #
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_config_path(path,
+                        high_priority: false,
+                        source_name: nil,
+                        context_directory: :parent)
+      spec = SourceSpec.path(path, source_name: source_name, context_directory: context_directory)
+      add_source(spec, high_priority: high_priority)
+    end
+
+    ##
+    # Add a block to the source list.
+    #
+    # @deprecated Prefer {#add_source}.
+    #
+    # @param high_priority [boolean] Add the source at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools defined in this block. If omitted, a default
+    #     unique string will be generated.
+    # @param block [Proc] The source block, executed in the context of the tool
+    #     DSL {Toys::DSL::Tool}.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this block. You can pass a directory path as a string, or
+    #     `nil` to denote no context. Defaults to `nil`.
+    #
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_config_block(high_priority: false,
+                         source_name: nil,
+                         context_directory: nil,
+                         &block)
+      spec = SourceSpec.block(source_name: source_name, context_directory: context_directory, &block)
+      add_source(spec, high_priority: high_priority)
     end
 
     class << self
@@ -713,14 +666,22 @@ module Toys
     #
     # @raise [Toys::SourceListFinalizedError] if the source list is finalized.
     #
-    def ensure_open_source_list
+    def ensure_source_list_open
       @source_definition_mutex.synchronize do
-        if @loader
-          raise SourceListFinalizedError,
-                "Cannot add a source because this CLI's source list has already been finalized"
-        end
+        check_source_list_open
         yield
       end
+    end
+
+    ##
+    # Ensure that the source list is still open for additions.
+    #
+    # @raise [Toys::SourceListFinalizedError] if the source list is finalized.
+    #
+    def check_source_list_open
+      return unless @loader
+      raise SourceListFinalizedError,
+            "Cannot add a source because this CLI's source list has already been finalized"
     end
 
     ##
@@ -732,7 +693,7 @@ module Toys
         if copy_sources
           @source_definition_mutex.synchronize { @source_list.dup }
         else
-          SourceList.new(git_cache: @source_list.git_cache, gems_util: @source_list.gems_util)
+          SourceList.new
         end
       {
         executable_name: @executable_name,
@@ -749,6 +710,8 @@ module Toys
         error_handler: @error_handler,
         completion: @completion,
         source_list: source_list,
+        git_cache: @git_cache,
+        gems_util: @gems_util,
       }
     end
   end
