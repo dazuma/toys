@@ -454,9 +454,12 @@ module Toys
     end
 
     ##
-    # An empty SourceSpec
+    # An empty SourceSpec. Used as a synthetic root SourceSpec for tools
+    # without a true source (such as the default root tool, and synthetic
+    # tools used for testing.)
+    #
     # @return [Toys::SourceSpec::Base]
     #
-    EMPTY = block {}.freeze # rubocop:disable Lint/EmptyBlock
+    EMPTY = Block.new(proc {}, nil, "(No source)").freeze
   end
 end

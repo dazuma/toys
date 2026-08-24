@@ -60,9 +60,9 @@ module Toys
     # @return [self] if a block is given.
     # @return [Enumerator] if no block is given.
     #
-    def each_with_priority(&block)
-      return to_enum(:each_with_priority) unless block
-      @sources.each(&block)
+    def each_with_priority
+      return to_enum(:each_with_priority) unless block_given?
+      @sources.each { |pair| yield pair[0], pair[1] }
       self
     end
 
@@ -80,7 +80,7 @@ module Toys
     def add(spec, high_priority: false)
       raise ::ArgumentError, "Illegal source spec: #{spec.inspect}" unless spec.is_a?(SourceSpec::Base)
       priority = high_priority ? @max_priority + 1 : @min_priority - 1
-      @sources << [spec, priority]
+      @sources << [spec, priority].freeze
       @max_priority = priority if priority > @max_priority
       @min_priority = priority if priority < @min_priority
       self

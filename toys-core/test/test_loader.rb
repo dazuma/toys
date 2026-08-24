@@ -76,7 +76,7 @@ describe Toys::Loader do
       source_list.add(Toys::SourceSpec.path(File.join(cases_dir, "config-items"),
                                             relative_paths: [".toys", ".toys.rb"],
                                             context_directory: :path))
-      # Both members share the synthetic root source created by add_path_set.
+      # Both members share the synthetic root source.
       # SourceList guarantees that every priority maps to exactly one root,
       # which is why the loader can index roots by priority without checking.
       tool1, _remaining = loader.lookup(["tool-1"])

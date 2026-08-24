@@ -365,19 +365,17 @@ module Toys
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
-      ensure_source_list_open do
-        paths = []
-        if @toplevel_tool_file_name
-          file_path = ::File.join(search_path, @toplevel_tool_file_name)
-          paths << @toplevel_tool_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
-        end
-        if @toplevel_tool_dir_name
-          dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
-          paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
-        end
-        spec = SourceSpec.path(search_path, relative_paths: paths, context_directory: context_directory)
-        add_source(spec, high_priority: high_priority)
+      paths = []
+      if @toplevel_tool_file_name
+        file_path = ::File.join(search_path, @toplevel_tool_file_name)
+        paths << @toplevel_tool_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
       end
+      if @toplevel_tool_dir_name
+        dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
+        paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
+      end
+      spec = SourceSpec.path(search_path, relative_paths: paths, context_directory: context_directory)
+      add_source(spec, high_priority: high_priority)
       self
     end
 
@@ -404,20 +402,18 @@ module Toys
     def add_search_path_hierarchy(start: nil,
                                   terminate: [],
                                   high_priority: false)
-      ensure_source_list_open do
-        path = start || ::Dir.pwd
-        paths = []
-        loop do
-          break if terminate.include?(path)
-          paths << path
-          next_path = ::File.dirname(path)
-          break if next_path == path
-          path = next_path
-        end
-        paths.reverse! if high_priority
-        paths.each do |p|
-          add_search_path(p, high_priority: high_priority)
-        end
+      path = start || ::Dir.pwd
+      paths = []
+      loop do
+        break if terminate.include?(path)
+        paths << path
+        next_path = ::File.dirname(path)
+        break if next_path == path
+        path = next_path
+      end
+      paths.reverse! if high_priority
+      paths.each do |p|
+        add_search_path(p, high_priority: high_priority)
       end
       self
     end
