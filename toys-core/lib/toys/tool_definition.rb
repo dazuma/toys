@@ -1400,11 +1400,14 @@ module Toys
     #
     # See {#custom_context_directory} for details.
     #
-    # @param dir [String]
+    # @param dir [String,Pathname,nil] The context directory path, which should
+    #     generally be absolute. Relative paths will be converted to absolute,
+    #     using the current working directory at the time of the method call.
+    #     If you pass nil, unsets the value.
     #
     def custom_context_directory=(dir)
       check_definition_state
-      @custom_context_directory = dir
+      @custom_context_directory = SourceSpec.check_and_normalize_path(dir, name: "context directory", allow_nil: true)
     end
 
     ##
@@ -1453,15 +1456,15 @@ module Toys
     end
 
     ##
-    # Return the effective context directory.
+    # Return the tool's context directory.
+    #
     # If there is a custom context directory, uses that. Otherwise, looks for
     # a custom context directory up the tool ancestor chain. If none is
-    # found, uses the default context directory from the source info. It is
-    # possible for there to be no context directory at all, in which case,
-    # returns nil.
+    # found, uses the default context directory from the source info. If the
+    # source info has no context directory either, returns nil.
     #
-    # @return [String] The effective context directory path.
-    # @return [nil] if there is no effective context directory.
+    # @return [String] The context directory path.
+    # @return [nil] if the tool has no context directory.
     #
     def context_directory
       lookup_custom_context_directory || source_info&.context_directory

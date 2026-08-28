@@ -80,14 +80,16 @@ module Toys
     attr_reader :priority
 
     ##
-    # The context directory path (normally the directory containing the
-    # toplevel toys file or directory).
+    # The context directory path set by this source or inherited from its
+    # parent. Sometimes this is the directory containing the toplevel toys
+    # file/directory, for example for the `toys` gem directory search that uses
+    # the CLI `add_search*` methods. But other source types typically leave
+    # this unset (nil).
     #
     # This is not affected by setting a custom context directory for a tool.
     #
     # @return [String] The context directory path.
-    # @return [nil] if there is no context directory (perhaps because the root
-    #     source was a block)
+    # @return [nil] if there is no context directory
     #
     attr_reader :context_directory
 
@@ -291,7 +293,8 @@ module Toys
         when SourceSpec::Gem
           resolve_gem_spec(spec, parent, priority, gems_util)
         when SourceSpec::Block
-          resolve_block_spec(spec, parent, priority)
+          raise ::ArgumentError, "A block spec cannot be resolved as a child" if parent
+          resolve_block_spec(spec, priority)
         else
           raise ::ArgumentError, "Unrecognized source spec: #{spec.inspect}"
         end
@@ -310,16 +313,7 @@ module Toys
           end
         end
         source_path, type = check_path(spec.path, false)
-        context_directory =
-          if parent
-            parent.context_directory
-          else
-            case spec.context_directory
-            when :parent then ::File.dirname(source_path)
-            when :path then source_path
-            else spec.context_directory
-            end
-          end
+        context_directory = spec.context_directory || parent&.context_directory
         new(parent, priority, context_directory, type, source_path, nil,
             nil, nil, nil, nil, nil, nil,
             spec.source_name)
@@ -332,7 +326,8 @@ module Toys
         git_commit, git_path, source_path =
           resolve_git_info(git_cache, git_remote, spec.path, git_commit, spec.update)
         source_path, type = check_path(source_path, false)
-        new(parent, priority, inherited_context_directory(spec, parent), type, source_path, nil,
+        context_directory = spec.context_directory || parent&.context_directory
+        new(parent, priority, context_directory, type, source_path, nil,
             git_remote, git_path, git_commit, nil, nil, nil,
             spec.source_name)
       end
@@ -341,24 +336,16 @@ module Toys
         gem_version, gem_path, source_path =
           resolve_gem_info(gems_util, spec.name, spec.version, spec.path, spec.toys_dir)
         source_path, type = check_path(source_path, false)
-        new(parent, priority, inherited_context_directory(spec, parent), type, source_path, nil,
+        context_directory = spec.context_directory || parent&.context_directory
+        new(parent, priority, context_directory, type, source_path, nil,
             nil, nil, nil, spec.name, gem_version, gem_path,
             spec.source_name)
       end
 
-      def resolve_block_spec(spec, parent, priority)
-        raise ::ArgumentError, "A block spec cannot be resolved as a child" if parent
+      def resolve_block_spec(spec, priority)
         new(nil, priority, spec.context_directory, :proc, nil, spec.block,
             nil, nil, nil, nil, nil, nil,
             spec.source_name)
-      end
-
-      ##
-      # The context directory for a spec that has no symbolic forms: the
-      # parent's if there is a parent, otherwise the spec's own.
-      #
-      def inherited_context_directory(spec, parent)
-        parent ? parent.context_directory : spec.context_directory
       end
     end
 

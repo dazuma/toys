@@ -64,7 +64,7 @@ module Toys
       CLI = ::Toys::UniqueKey.new("Toys::Context::Key::CLI")
 
       ##
-      # Context key for the context directory path. The value is a string
+      # Context key for the context directory path. The value is a string.
       # @return [Object]
       #
       CONTEXT_DIRECTORY = ::Toys::UniqueKey.new("Toys::Context::Key::CONTEXT_DIRECTORY")
@@ -193,18 +193,18 @@ module Toys
     alias __cli cli
 
     ##
-    # Return the context directory for this tool. Generally, this defaults
-    # to the directory containing the toys config directory structure being
-    # read, but it may be changed by setting a different context directory
-    # for the tool.
+    # Return the effective context directory for this tool run. Generally, this
+    # is set to the directory _containing_ the toys tool directory structure
+    # being read, or it may have been set by the tool definition itself. If a
+    # context directory has not been set explicitly, returns the current
+    # working directory. Will not return nil.
     #
     # This is a convenience getter for {Toys::Context::Key::CONTEXT_DIRECTORY}.
     #
     # If the `context_directory` method is overridden by the tool, you can
     # still access it using the name `__context_directory`.
     #
-    # @return [String] Context directory path
-    # @return [nil] if there is no context.
+    # @return [String] Effective context directory path
     #
     def context_directory
       @__data[Key::CONTEXT_DIRECTORY]

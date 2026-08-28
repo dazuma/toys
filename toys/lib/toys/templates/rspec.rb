@@ -482,7 +482,7 @@ module Toys
           # @private
           def run
             require "tempfile"
-            ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.chdir(context_directory) do
               loaded_gem_versions = init_bundle_or_gems
               ::Tempfile.create(["toys-rspec-script-", ".rb"]) do |script_file|
                 script_file.write(ruby_script(loaded_gem_versions))

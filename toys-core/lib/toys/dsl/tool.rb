@@ -414,19 +414,25 @@ module Toys
       # at the current location.
       #
       # @param path [String] The file or directory to load.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. If not provided,
+      #     defaults to the context directory for the surrounding source.
+      #     Context directory paths should generally be absolute. Relative
+      #     paths will be converted to absolute, using the current working
+      #     directory at the time of loading.
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     tools will be loaded into the current namespace.
       #
       # @return [self]
       #
-      def load(path, as: nil)
+      def load(path, as: nil, context_directory: nil)
         if as
           tool(as) do
-            load(path)
+            load(path, context_directory: context_directory)
           end
           return self
         end
-        spec = SourceSpec.path(path)
+        spec = SourceSpec.path(path, context_directory: context_directory)
         @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
@@ -441,25 +447,44 @@ module Toys
       #     to load. Defaults to the root of the repo.
       # @param commit [String] The commit branch, tag, or sha. Defaults to the
       #     current commit if already loading from git, or to `HEAD`.
-      # @param as [String] Load into the given tool/namespace. If omitted,
-      #     tools will be loaded into the current namespace.
       # @param update [boolean,Integer] Whether and when to force-fetch from
       #     the remote (unless the commit is a SHA). Force-fetching will ensure
       #     that symbolic commits, such as branch names or HEAD, are up to date.
       #     You can pass `true` or `false` to specify whether to update, or an
       #     integer to update if the last update was done at least that many
       #     seconds ago. Default is false.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. If not provided,
+      #     defaults to the context directory for the surrounding source.
+      #     Context directory paths should generally be absolute. Relative
+      #     paths will be converted to absolute, using the current working
+      #     directory at the time of loading.
+      # @param as [String] Load into the given tool/namespace. If omitted,
+      #     tools will be loaded into the current namespace.
       #
       # @return [self]
       #
-      def load_git(remote: nil, path: nil, commit: nil, as: nil, update: false)
+      def load_git(remote: nil,
+                   path: nil,
+                   commit: nil,
+                   update: false,
+                   context_directory: nil,
+                   as: nil)
         if as
           tool(as) do
-            load_git(remote: remote, path: path, commit: commit, update: update)
+            load_git(remote: remote,
+                     path: path,
+                     commit: commit,
+                     update: update,
+                     context_directory: context_directory)
           end
           return self
         end
-        spec = SourceSpec.git(remote, path: path, commit: commit, update: update)
+        spec = SourceSpec.git(remote,
+                              path: path,
+                              commit: commit,
+                              update: update,
+                              context_directory: context_directory)
         @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
@@ -476,21 +501,40 @@ module Toys
       #     directory to load. Defaults to the root of the gem's toys directory.
       # @param toys_dir [String] Optional override for the gem's toys
       #     directory name. If not specified, the default specified by the gem
-      #     will be used.
+      #     will be used (normally "toys").
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. If not provided,
+      #     defaults to the context directory for the surrounding source.
+      #     Context directory paths should generally be absolute. Relative
+      #     paths will be converted to absolute, using the current working
+      #     directory at the time of loading.
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     tools will be loaded into the current namespace.
       #
       # @return [self]
       #
-      def load_gem(name, *versions, version: nil, path: nil, toys_dir: nil, as: nil)
+      def load_gem(name, *versions,
+                   version: nil,
+                   path: nil,
+                   toys_dir: nil,
+                   context_directory: nil,
+                   as: nil)
         version = versions + Array(version)
         if as
           tool(as) do
-            load_gem(name, version: version, path: path, toys_dir: toys_dir)
+            load_gem(name,
+                     version: version,
+                     path: path,
+                     toys_dir: toys_dir,
+                     context_directory: context_directory)
           end
           return self
         end
-        spec = SourceSpec.gem(name, version: version, path: path, toys_dir: toys_dir)
+        spec = SourceSpec.gem(name,
+                              version: version,
+                              path: path,
+                              toys_dir: toys_dir,
+                              context_directory: context_directory)
         @__loader.load_source(source_info, spec, @__words, @__remaining_words)
         self
       end
@@ -1817,13 +1861,13 @@ module Toys
       end
 
       ##
-      # Return the context directory for this tool. Generally, this defaults
-      # to the directory containing the toys tool directory structure being
-      # read, but it may be changed by setting a different context directory
-      # for the tool.
+      # Return the context directory for this tool. Generally, this is set to
+      # the directory _containing_ the toys tool directory structure being read,
+      # but it may be unset (nil) if the tool was not loaded from a normal tool
+      # file. It may also be changed by the tool definition itself.
       #
       # @return [String] Context directory path
-      # @return [nil] if there is no context.
+      # @return [nil] if there is no context directory
       #
       def context_directory
         cur_tool = DSL::Internal.current_tool(self, false)
@@ -1847,7 +1891,7 @@ module Toys
       # @return [self]
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
-        cur_tool = DSL::Internal.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.custom_context_directory = dir
         self

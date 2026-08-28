@@ -33,7 +33,7 @@ The classes under `lib/toys/` are organized into layers (execution, loading, def
 ## Testing
 
 - Tests are in `test/` using Minitest spec style (`describe`/`it`) with assertions (not expectations)
-- Test helper: `test/helper.rb` provides `Toys::TestHelper` with `isolate_ruby` for subprocess testing
+- Test helper: `test/helper.rb` provides `Toys::TestHelper`, mixed into all tests, with `isolate_ruby` for subprocess testing and `assert_expanded_path` for asserting an expanded absolute path portably (Windows prepends a drive letter)
 - Test fixtures: `test-data/` contains tool definitions and gem fixtures organized by test scenario
 - Subdirectories `test/middleware/`, `test/mixins/`, `test/utils/` mirror the source structure
 - Integration tests are gated behind `TOYS_TEST_INTEGRATION=true`

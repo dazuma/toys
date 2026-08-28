@@ -1344,11 +1344,11 @@ describe Toys::ToolDefinition do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:default_context_dir) { File.expand_path(__dir__) }
     let(:source_info) {
-      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path, context_directory: :parent),
-                               priority: -1)
+      source_spec = Toys::SourceSpec.path(source_path, context_directory: default_context_dir)
+      Toys::SourceInfo.resolve(source_spec, priority: -1)
     }
 
-    it "defaults to nil" do
+    it "defaults to nil when the source is not locked" do
       assert_nil(tool.context_directory)
     end
 
@@ -1358,13 +1358,43 @@ describe Toys::ToolDefinition do
     end
 
     it "can be set" do
-      tool.custom_context_directory = "hi/there"
-      assert_equal("hi/there", tool.context_directory)
+      tool.custom_context_directory = "/hi/there"
+      assert_expanded_path("/hi/there", tool.context_directory)
     end
 
     it "can be set in an ancestor tool" do
-      tool.custom_context_directory = "hi/there"
-      assert_equal("hi/there", subtool.context_directory)
+      tool.custom_context_directory = "/hi/there"
+      assert_expanded_path("/hi/there", subtool.context_directory)
+    end
+
+    it "expands a relative custom context directory" do
+      tool.custom_context_directory = "relative/dir"
+      assert_equal(File.expand_path("relative/dir"), tool.custom_context_directory)
+    end
+
+    it "collapses dot segments in a custom context directory" do
+      tool.custom_context_directory = "/hi/over/../there"
+      assert_expanded_path("/hi/there", tool.custom_context_directory)
+    end
+
+    it "converts a path-convertible custom context directory to a string" do
+      require "pathname"
+      tool.custom_context_directory = Pathname.new("/hi/there")
+      assert_expanded_path("/hi/there", tool.custom_context_directory)
+      assert_instance_of(::String, tool.custom_context_directory)
+    end
+
+    it "can be unset with nil, falling back to the source info" do
+      tool.lock_source(source_info)
+      tool.custom_context_directory = "/hi/there"
+      tool.custom_context_directory = nil
+      assert_nil(tool.custom_context_directory)
+      assert_equal(default_context_dir, tool.context_directory)
+    end
+
+    it "rejects a custom context directory that is not a legal path" do
+      error = assert_raises(ArgumentError) { tool.custom_context_directory = 12_345 }
+      assert_equal("Illegal context directory value: 12345", error.message)
     end
   end
 

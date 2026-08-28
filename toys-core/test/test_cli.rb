@@ -1009,7 +1009,7 @@ describe Toys::CLI do
 
     it "rejects an argument that is neither a spec nor a legal path" do
       error = assert_raises(ArgumentError) { cli.add_source(12_345) }
-      assert_equal("Illegal path: 12345", error.message)
+      assert_equal("Illegal path value: 12345", error.message)
     end
 
     it "leaves the source list untouched when an argument is rejected" do
@@ -1243,6 +1243,18 @@ describe Toys::CLI do
         assert_same(search_cli, search_cli.add_search_path(config_items_dir))
       end
 
+      # The return value is used for chaining, e.g. by the "system tools" builtin,
+      # so it must be the CLI even on the paths that add no source.
+      it "returns self for a search path that does not exist" do
+        assert_same(search_cli, search_cli.add_search_path(File.join(tmp_dir, "nonexistent")))
+      end
+
+      it "returns self for a search path that holds no toplevel tool file or directory" do
+        empty_dir = File.join(tmp_dir, "empty")
+        FileUtils.mkdir_p(empty_dir)
+        assert_same(search_cli, search_cli.add_search_path(empty_dir))
+      end
+
       it "skips a search path that does not exist" do
         search_cli.add_search_path(File.join(tmp_dir, "nonexistent"))
         search_cli.add_search_path(config_items_dir)
@@ -1286,7 +1298,46 @@ describe Toys::CLI do
 
       it "rejects an argument that is not a legal path" do
         error = assert_raises(ArgumentError) { search_cli.add_search_path(12_345) }
-        assert_equal("Illegal path: 12345", error.message)
+        assert_equal("Illegal search_path value: 12345", error.message)
+      end
+
+      # Whether an argument is well formed must not depend on what happens to be
+      # on disk, so the check happens before the search path is examined.
+      it "rejects an illegal context directory, even for a path it would skip" do
+        error = assert_raises(ArgumentError) do
+          search_cli.add_search_path(File.join(tmp_dir, "nonexistent"), context_directory: 12_345)
+        end
+        assert_equal("Illegal context_directory value: 12345", error.message)
+      end
+
+      it "expands a relative search path, and the context directory derived from it" do
+        expected = nil
+        Dir.chdir(lookup_cases_dir) do
+          expected = File.expand_path("config-items")
+          search_cli.add_search_path("config-items")
+        end
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+        assert_equal(expected, tool.context_directory)
+      end
+
+      it "collapses dot segments in the search path before deriving the context directory" do
+        search_cli.add_search_path(File.join(config_items_dir, ".toys", ".."))
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(config_items_dir, tool.context_directory)
+      end
+
+      it "expands a relative context directory" do
+        search_cli.add_search_path(config_items_dir, context_directory: "relative/context")
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(File.expand_path("relative/context"), tool.context_directory)
+      end
+
+      it "accepts a path-convertible object as a context directory" do
+        require "pathname"
+        search_cli.add_search_path(config_items_dir, context_directory: Pathname.new(tmp_dir))
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal(tmp_dir, tool.context_directory)
       end
     end
 
@@ -1379,6 +1430,120 @@ describe Toys::CLI do
         result = search_cli.add_search_path_hierarchy(start: tmp_dir, terminate: terminate_dirs)
         assert_same(search_cli, result)
       end
+
+      it "defaults each directory's context directory to that directory" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        start_dir = make_search_dir("ns-1", tool_name: "tool-start", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_equal(start_dir, tool.context_directory)
+        tool, _remaining = search_cli.loader.lookup(["tool-top"])
+        assert_equal(tmp_dir, tool.context_directory)
+      end
+
+      it "honors an explicit context directory for every directory in the hierarchy" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        start_dir = make_search_dir("ns-1", tool_name: "tool-start", desc: "start tool")
+        context_dir = File.join(tmp_dir, "context")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs,
+                                             context_directory: context_dir)
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_equal(context_dir, tool.context_directory)
+        tool, _remaining = search_cli.loader.lookup(["tool-top"])
+        assert_equal(context_dir, tool.context_directory)
+      end
+
+      it "honors a nil context directory for every directory in the hierarchy" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        start_dir = make_search_dir("ns-1", tool_name: "tool-start", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir, terminate: terminate_dirs,
+                                             context_directory: nil)
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_nil(tool.context_directory)
+        tool, _remaining = search_cli.loader.lookup(["tool-top"])
+        assert_nil(tool.context_directory)
+      end
+
+      # An uncollapsed start path would name a directory that the walk then
+      # reaches again by its plain name, adding it twice at two priorities.
+      it "collapses dot segments in the start directory" do
+        start_dir = make_search_dir("ns-1", tool_name: "tool-1", desc: "start tool")
+        FileUtils.mkdir_p(File.join(start_dir, "ns-2"))
+        search_cli.add_search_path_hierarchy(start: File.join(start_dir, "ns-2", ".."),
+                                             terminate: terminate_dirs)
+        tool, _remaining = search_cli.loader.lookup(["tool-1"])
+        assert_equal("start tool", tool.desc.to_s)
+        assert_equal(start_dir, tool.context_directory)
+      end
+
+      it "collapses dot segments in a terminating directory" do
+        make_search_dir(tool_name: "tool-top", desc: "top tool")
+        middle_dir = make_search_dir("ns-1", tool_name: "tool-middle", desc: "middle tool")
+        start_dir = make_search_dir("ns-1", "ns-2", tool_name: "tool-start", desc: "start tool")
+        search_cli.add_search_path_hierarchy(start: start_dir,
+                                             terminate: [File.join(middle_dir, "ns-2", "..")])
+        tool, _remaining = search_cli.loader.lookup(["tool-start"])
+        assert_equal("start tool", tool.desc.to_s)
+        refute_tool_defined(search_cli, "tool-middle")
+        refute_tool_defined(search_cli, "tool-top")
+      end
+    end
+  end
+
+  # A context directory has two forms. The one a source or a tool definition
+  # sets may be unset; the effective one seen by a running tool falls back to
+  # the working directory and is never nil.
+  describe "runtime context directory" do
+    it "falls back to the working directory when nothing sets one" do
+      captured = nil
+      cli.add_source do
+        tool "foo" do
+          to_run { captured = context_directory }
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      assert_nil(tool.context_directory)
+      cli.run("foo")
+      assert_equal(Dir.getwd, captured)
+    end
+
+    it "uses the working directory in effect when the tool runs" do
+      captured = nil
+      cli.add_source do
+        tool "foo" do
+          to_run { captured = context_directory }
+        end
+      end
+      other_dir = File.realpath(Dir.mktmpdir("toys_cli_context_dir_test"))
+      begin
+        Dir.chdir(other_dir) { cli.run("foo") }
+        assert_equal(other_dir, captured)
+      ensure
+        FileUtils.rm_rf(other_dir)
+      end
+    end
+
+    it "prefers the source context directory over the working directory" do
+      captured = nil
+      cli.add_source(Toys::SourceSpec.block(context_directory: "/source/dir") do
+        tool "foo" do
+          to_run { captured = context_directory }
+        end
+      end)
+      cli.run("foo")
+      assert_expanded_path("/source/dir", captured)
+    end
+
+    it "prefers a context directory set by the tool definition" do
+      captured = nil
+      cli.add_source(Toys::SourceSpec.block(context_directory: "/source/dir") do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+          to_run { captured = context_directory }
+        end
+      end)
+      cli.run("foo")
+      assert_expanded_path("/custom/dir", captured)
     end
   end
 

@@ -320,7 +320,7 @@ module Toys
       # handled later during execution.
       def build_context
         common_data = {
-          Context::Key::CONTEXT_DIRECTORY => @tool.context_directory,
+          Context::Key::CONTEXT_DIRECTORY => @tool.context_directory || ::Dir.getwd,
           Context::Key::DELEGATED_FROM => @delegated_from,
           Context::Key::EXECUTABLE_NAME => @executable_name,
           Context::Key::LOADER => @loader,

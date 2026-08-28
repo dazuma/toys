@@ -81,4 +81,43 @@ describe Toys::StandardCLI do
       refute(File.exist?(default_cache_dir))
     end
   end
+
+  # A custom path sets no context directory of its own, so tools loaded from it
+  # fall back to the working directory at run time, rather than to the
+  # directory the tool files happen to live in.
+  describe "custom paths" do
+    # Resolve symlinks, because the context directory a tool reports comes from
+    # Dir.getwd, which reports the real path.
+    let(:tmp_dir) { File.realpath(Dir.mktmpdir("toys_standard_cli_test")) }
+    let(:custom_path) { File.join(tmp_dir, "custom") }
+    let(:other_dir) { File.join(tmp_dir, "other") }
+
+    before do
+      FileUtils.mkdir_p(custom_path)
+      FileUtils.mkdir_p(other_dir)
+      File.write(File.join(custom_path, "where.rb"), <<~TOOL)
+        def run
+          puts context_directory
+        end
+      TOOL
+    end
+
+    after do
+      FileUtils.rm_rf(tmp_dir)
+    end
+
+    it "leaves the context directory of the loaded tools unset" do
+      cli = Toys::StandardCLI.new(custom_paths: custom_path, include_builtins: false)
+      tool, _remaining = cli.loader.lookup(["where"])
+      assert_nil(tool.context_directory)
+    end
+
+    it "runs the loaded tools with the working directory as the context directory" do
+      cli = Toys::StandardCLI.new(custom_paths: custom_path, include_builtins: false)
+      out, _err = capture_subprocess_io do
+        Dir.chdir(other_dir) { assert_equal(0, cli.run("where")) }
+      end
+      assert_equal("#{other_dir}\n", out)
+    end
+  end
 end

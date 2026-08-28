@@ -121,7 +121,7 @@ module Toys
     #
     def add_builtins
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
-      source_spec = SourceSpec.path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
+      source_spec = SourceSpec.path(builtins_path, source_name: "(builtin tools)")
       add_source(source_spec)
       self
     end

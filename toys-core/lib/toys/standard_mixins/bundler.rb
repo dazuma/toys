@@ -162,7 +162,7 @@ module Toys
         setup ||= (static ? :static : :auto)
         case setup
         when :static
-          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
+          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory || ::Dir.getwd, source_info, **kwargs)
         when :manual
           # @private Defined dynamically for the tool but not visible to YARD
           def bundler_setup(**kwargs)

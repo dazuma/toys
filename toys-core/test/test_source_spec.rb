@@ -10,9 +10,9 @@ describe Toys::SourceSpec do
     it "creates a Path spec with defaults" do
       spec = Toys::SourceSpec.path("/path/to/source")
       assert_instance_of(Toys::SourceSpec::Path, spec)
-      assert_equal("/path/to/source", spec.path)
+      assert_expanded_path("/path/to/source", spec.path)
       assert_nil(spec.relative_paths)
-      assert_equal(:parent, spec.context_directory)
+      assert_nil(spec.context_directory)
       assert_nil(spec.source_name)
     end
 
@@ -21,9 +21,9 @@ describe Toys::SourceSpec do
                                    relative_paths: [".toys", ".toys.rb"],
                                    context_directory: "/my/context",
                                    source_name: "mysource")
-      assert_equal("/path/to/source", spec.path)
+      assert_expanded_path("/path/to/source", spec.path)
       assert_equal([".toys", ".toys.rb"], spec.relative_paths)
-      assert_equal("/my/context", spec.context_directory)
+      assert_expanded_path("/my/context", spec.context_directory)
       assert_equal("mysource", spec.source_name)
     end
 
@@ -45,10 +45,8 @@ describe Toys::SourceSpec do
       assert_predicate(spec.relative_paths, :frozen?)
     end
 
-    it "accepts :parent, :path, a string, and nil as a context directory" do
-      assert_equal(:parent, Toys::SourceSpec.path("/p", context_directory: :parent).context_directory)
-      assert_equal(:path, Toys::SourceSpec.path("/p", context_directory: :path).context_directory)
-      assert_equal("/c", Toys::SourceSpec.path("/p", context_directory: "/c").context_directory)
+    it "accepts a string or nil as a context directory" do
+      assert_expanded_path("/c", Toys::SourceSpec.path("/p", context_directory: "/c").context_directory)
       assert_nil(Toys::SourceSpec.path("/p", context_directory: nil).context_directory)
     end
 
@@ -58,6 +56,18 @@ describe Toys::SourceSpec do
       end
       assert_raises(ArgumentError) do
         Toys::SourceSpec.path("/p", context_directory: 12_345)
+      end
+    end
+
+    # The symbolic forms are interpreted by the high level CLI methods rather
+    # than by specs, so a path spec must reject them just as the other kinds do.
+    it "rejects :parent and :path as a context directory" do
+      error = assert_raises(ArgumentError) do
+        Toys::SourceSpec.path("/p", context_directory: :parent)
+      end
+      assert_equal("Illegal context_directory value: :parent", error.message)
+      assert_raises(ArgumentError) do
+        Toys::SourceSpec.path("/p", context_directory: :path)
       end
     end
 
@@ -88,7 +98,7 @@ describe Toys::SourceSpec do
       assert_equal("toys", spec.path)
       assert_equal("main", spec.commit)
       assert_equal(true, spec.update)
-      assert_equal("/my/context", spec.context_directory)
+      assert_expanded_path("/my/context", spec.context_directory)
       assert_equal("mysource", spec.source_name)
     end
 
@@ -139,7 +149,7 @@ describe Toys::SourceSpec do
       assert_equal(["~> 1.0", "< 1.5"], spec.version)
       assert_equal("subdir", spec.path)
       assert_equal("mytoys", spec.toys_dir)
-      assert_equal("/my/context", spec.context_directory)
+      assert_expanded_path("/my/context", spec.context_directory)
       assert_equal("mysource", spec.source_name)
     end
 
@@ -188,7 +198,7 @@ describe Toys::SourceSpec do
     it "creates a Block spec with all attributes" do
       spec = Toys::SourceSpec.block(context_directory: "/my/context", source_name: "mysource", &my_proc)
       assert_same(my_proc, spec.block)
-      assert_equal("/my/context", spec.context_directory)
+      assert_expanded_path("/my/context", spec.context_directory)
       assert_equal("mysource", spec.source_name)
     end
 
@@ -215,7 +225,7 @@ describe Toys::SourceSpec do
   describe "argument checking" do
     it "requires a path to be a string" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.path(nil) }
-      assert_equal("Illegal path: nil", error.message)
+      assert_equal("Illegal path value: nil", error.message)
       assert_raises(ArgumentError) { Toys::SourceSpec.path(12_345) }
       assert_raises(ArgumentError) { Toys::SourceSpec.path(:sym) }
     end
@@ -223,13 +233,13 @@ describe Toys::SourceSpec do
     it "accepts a path-convertible object as a path, converting it to a string" do
       require "pathname"
       spec = Toys::SourceSpec.path(Pathname.new("/path/to/source"))
-      assert_equal("/path/to/source", spec.path)
+      assert_expanded_path("/path/to/source", spec.path)
       assert_instance_of(::String, spec.path)
     end
 
     it "requires each relative path to be a string" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", relative_paths: [".toys", 5]) }
-      assert_equal("Illegal relative path: 5", error.message)
+      assert_equal("Illegal relative path value: 5", error.message)
       assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", relative_paths: :toys) }
     end
 
@@ -241,18 +251,18 @@ describe Toys::SourceSpec do
 
     it "requires a source name to be a string if given" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.path("/p", source_name: :sym) }
-      assert_equal("Illegal source_name: :sym", error.message)
+      assert_equal("Illegal source_name value: :sym", error.message)
       assert_raises(ArgumentError) { Toys::SourceSpec.block(source_name: 12_345) { nil } }
     end
 
     it "requires a context directory to be a string if given" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.git("r", context_directory: 12_345) }
-      assert_equal("Illegal context_directory: 12345", error.message)
+      assert_equal("Illegal context_directory value: 12345", error.message)
     end
 
     it "requires a git remote to be a string if given" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.git(12_345) }
-      assert_equal("Illegal remote: 12345", error.message)
+      assert_equal("Illegal remote value: 12345", error.message)
     end
 
     it "requires the other git fields to be strings if given" do
@@ -262,7 +272,7 @@ describe Toys::SourceSpec do
 
     it "requires a git update to be a boolean or an integer" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.git("r", update: "yes") }
-      assert_equal("Illegal update: \"yes\"", error.message)
+      assert_equal("Illegal update value: \"yes\"", error.message)
       assert_raises(ArgumentError) { Toys::SourceSpec.git("r", update: nil) }
     end
 
@@ -274,13 +284,13 @@ describe Toys::SourceSpec do
 
     it "requires a gem name to be a string" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.gem(nil) }
-      assert_equal("Illegal name: nil", error.message)
+      assert_equal("Illegal name value: nil", error.message)
       assert_raises(ArgumentError) { Toys::SourceSpec.gem(:mygem) }
     end
 
     it "requires each gem version requirement to be a string" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.gem("g", version: ["~> 1.0", 2]) }
-      assert_equal("Illegal version requirement: 2", error.message)
+      assert_equal("Illegal version requirement value: 2", error.message)
     end
 
     it "requires the other gem fields to be strings if given" do
@@ -291,6 +301,65 @@ describe Toys::SourceSpec do
     it "requires a block" do
       error = assert_raises(ArgumentError) { Toys::SourceSpec.block }
       assert_equal("Illegal source block: nil", error.message)
+    end
+  end
+
+  # Every path a spec holds is normalized at construction, so that downstream
+  # consumers can compare paths as strings and can rely on a path remaining
+  # correct after the process changes its working directory.
+  describe "path normalization" do
+    let(:relative_dir) { "some/relative/dir" }
+
+    it "expands a relative path to an absolute path" do
+      spec = Toys::SourceSpec.path(relative_dir)
+      assert_equal(File.expand_path(relative_dir), spec.path)
+    end
+
+    it "collapses dot segments in an absolute path" do
+      assert_expanded_path("/path/to/source", Toys::SourceSpec.path("/path/to/other/../source").path)
+      assert_expanded_path("/path/to/source", Toys::SourceSpec.path("/path/./to//source").path)
+    end
+
+    it "expands a relative context directory to an absolute path" do
+      spec = Toys::SourceSpec.path("/p", context_directory: relative_dir)
+      assert_equal(File.expand_path(relative_dir), spec.context_directory)
+    end
+
+    it "collapses dot segments in an absolute context directory" do
+      spec = Toys::SourceSpec.path("/p", context_directory: "/my/other/../context")
+      assert_expanded_path("/my/context", spec.context_directory)
+    end
+
+    it "converts a path-convertible context directory to a string" do
+      require "pathname"
+      spec = Toys::SourceSpec.path("/p", context_directory: Pathname.new("/my/context"))
+      assert_expanded_path("/my/context", spec.context_directory)
+      assert_instance_of(::String, spec.context_directory)
+    end
+
+    it "normalizes the context directory of every kind of spec" do
+      assert_expanded_path(
+        "/my/context", Toys::SourceSpec.git("r", context_directory: "/my/other/../context").context_directory
+      )
+      assert_expanded_path(
+        "/my/context", Toys::SourceSpec.gem("g", context_directory: "/my/other/../context").context_directory
+      )
+      assert_expanded_path(
+        "/my/context",
+        Toys::SourceSpec.block(context_directory: "/my/other/../context") { nil }.context_directory
+      )
+    end
+
+    it "leaves relative paths within a path set relative" do
+      spec = Toys::SourceSpec.path("/p", relative_paths: [".toys", ".toys.rb"])
+      assert_equal([".toys", ".toys.rb"], spec.relative_paths)
+    end
+
+    it "treats two specs naming the same directory differently as equal" do
+      spec1 = Toys::SourceSpec.path("/path/to/source")
+      spec2 = Toys::SourceSpec.path("/path/to/other/../source")
+      assert_equal(spec1, spec2)
+      assert_equal(spec1.hash, spec2.hash)
     end
   end
 
@@ -312,7 +381,7 @@ describe Toys::SourceSpec do
 
     it "distinguishes specs by base fields" do
       spec = Toys::SourceSpec.path("/p")
-      refute_equal(spec, Toys::SourceSpec.path("/p", context_directory: :path))
+      refute_equal(spec, Toys::SourceSpec.path("/p", context_directory: "/p"))
       refute_equal(spec, Toys::SourceSpec.path("/p", source_name: "n"))
     end
 
