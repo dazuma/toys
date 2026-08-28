@@ -240,5 +240,5 @@ def parse_path_request(path_request)
     logger.fatal("Invalid --path value: #{path_request.inspect}")
     exit(1)
   end
-  ::Toys::SourceSpec.path(path, context_directory: nil)
+  ::Toys::SourceSpec.path(path)
 end

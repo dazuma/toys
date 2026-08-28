@@ -317,7 +317,7 @@ module Toys
           def run # rubocop:disable all
             gem "rdoc", *gem_version
 
-            ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.chdir(context_directory) do
               files = []
               template_files.each do |pattern|
                 files.concat(::Dir.glob(pattern))

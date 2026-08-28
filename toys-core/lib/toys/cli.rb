@@ -206,7 +206,8 @@ module Toys
     # will take priority over the originals.
     #
     # @param copy_sources [boolean] If true, the new CLI is populated with the
-    #     same sources as the original.
+    #     same sources as the original. Default is false, resulting in a copy
+    #     with no sources initially.
     # @param opts [keywords] Any configuration arguments that should be
     #     modified from the original. See {#initialize} for a list of
     #     recognized keywords.
@@ -306,6 +307,8 @@ module Toys
     # The source can be specified in one of three ways:
     #
     # * A source spec built using one of the {Toys::SourceSpec} module methods.
+    #   If you need to configure the context directory or name of the source,
+    #   you must use a full SourceSpec object.
     # * A string (or other object convertible to a path, such as a `Pathname`)
     #   interpreted as a file system path, which will be passed to
     #   {Toys::SourceSpec.path} to get the source spec.
@@ -332,8 +335,7 @@ module Toys
         spec = SourceSpec.block(&block)
       elsif !spec.is_a?(SourceSpec::Base)
         raise ::ArgumentError, "No source spec, path, or block given" if spec.nil?
-        # Anything else is taken as a path. SourceSpec.path raises if it is
-        # not one, so a bad argument is reported here rather than at load time.
+        # Anything else is taken as a path.
         spec = SourceSpec.path(spec)
       end
       ensure_source_list_open do
@@ -343,41 +345,44 @@ module Toys
     end
 
     ##
-    # Checks the given directory path. If it contains a tool file and/or
-    # tool directory, those are added to the source list.
-    #
-    # A search path is a location that might contain tools. One that is not a
-    # readable directory simply has none, so it is ignored rather than added.
+    # Checks the given search directory. If it contains a tool file and/or
+    # tool directory (identified by the `toplevel_tool_file_name` and
+    # `toplevel_tool_dir_name` constructor arguments), those are added to the
+    # source list. If the given search directory path does not exist or does
+    # not contain either the file or directory, nothing is added.
     #
     # The main Toys executable uses this method to load tools from directories
     # in the `TOYS_PATH`.
     #
-    # @param search_path [String] A path to search for sources. A path that is
-    #     not a readable directory is ignored.
+    # @param search_path [String,Pathname] A directory path to search for the
+    #     well-known source file and directory. Must be a String or a Pathname.
+    #     Paths should generally be absolute. Relative paths will be converted
+    #     to absolute, using the current working directory at call time.
     # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
-    # @param context_directory [String,nil,:path,:parent] The context directory
-    #     for tools loaded from this path. You can pass a directory path as a
-    #     string, `:path` to denote the given path, `:parent` to denote the
-    #     given path's parent directory, or `nil` to denote no context.
-    #     Defaults to `:path`.
+    # @param context_directory [String,Pathname,nil,:path,:parent] The context
+    #     directory for tools loaded from sources found using this method. You
+    #     can pass a directory path as a String or Pathname, `:path` to denote
+    #     the given search_path, `:parent` to denote the given search_path's
+    #     parent directory, or `nil` to denote no context. Defaults to `:path`.
+    #     If a path is provided, it should generally be an absolute path; any
+    #     relative path will be expanded relative to the current working
+    #     directory at call time.
     #
     # @return [self]
+    # @raise [ArgumentError] if a given path is not a legal value.
     # @raise [Toys::SourceListFinalizedError] if the source list has already
     #     been finalized.
     #
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
-      # Building a spec up front checks the argument type, and converts a
-      # path-convertible object such as a Pathname to a string, so that a bad
-      # argument is reported the same way as it is by #add_source.
-      search_path = SourceSpec.path(search_path, context_directory: context_directory).path
-      # Checked here as well as in #add_source, because a search path that
-      # holds no tools returns below without reaching #add_source, and a
-      # finalized source list must reject the call either way.
+      # Pre-check for source list finalization. Do this so that we error out
+      # (instead of just silently do nothing) if the source list is finalized
+      # and the "empty" checks below result in no attempt to add a source.
       check_source_list_open
-      return self unless ::File.directory?(search_path) && ::File.readable?(search_path)
+      search_path = SourceSpec.check_and_normalize_path(search_path, name: "search_path")
+      context_directory = resolve_context_directory(context_directory, search_path)
       paths = []
       if @toplevel_tool_file_name
         file_path = ::File.join(search_path, @toplevel_tool_file_name)
@@ -387,35 +392,58 @@ module Toys
         dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
         paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
       end
-      spec = SourceSpec.path(search_path, relative_paths: paths, context_directory: context_directory)
-      add_source(spec, high_priority: high_priority)
+      unless paths.empty?
+        spec = SourceSpec.path(search_path, relative_paths: paths, context_directory: context_directory)
+        add_source(spec, high_priority: high_priority)
+      end
       self
     end
 
     ##
-    # Walk up the directory hierarchy from the given start location, and add
-    # any tool files and directories found.
+    # Walk up the directory hierarchy from the given start location, searching
+    # for toplevel tool files and directories, and add any found. Starts at the
+    # given directory and works up through parent directories until it reaches
+    # the file system root or it encounters one of the "terminate" directories.
     #
     # The main Toys executable uses this method to load tools from the current
     # directory and its ancestors.
     #
-    # @param start [String] The first directory to add. Defaults to the current
-    #     working directory.
-    # @param terminate [Array<String>] Optional list of directories that should
-    #     terminate the search. If the walk up the directory tree encounters
-    #     one of these directories, the search is halted without checking the
-    #     terminating directory.
+    # @param start [String,Pathname,nil] The first directory path to search.
+    #     If not given, defaults to the current working directory. If provided,
+    #     must be a String or a Pathname. Paths should generally be absolute.
+    #     Relative paths will be converted to absolute, using the current
+    #     working directory at call time.
+    # @param terminate [Array<String,Pathname>] Optional list of directories
+    #     that should terminate the search. If the walk up the directory tree
+    #     encounters one of these directories, the search is halted without
+    #     checking the terminating directory. Terminating directories should
+    #     generally be absolute paths. Relative paths will be converted to
+    #     absolute, using the current working directory at call time.
     # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
+    # @param context_directory [String,Pathname,nil,:path,:parent] The context
+    #     directory for tools loaded from sources found using this method. You
+    #     can pass a directory path as a String or Pathname, `:path` to denote
+    #     the current path during the directory walk, `:parent` to denote the
+    #     current walk directory's _parent directory_, or `nil` to denote no
+    #     context. Defaults to `:path`, which is the behavior of the Toys
+    #     executable when it loads tools from the current directory and its
+    #     ancestors. If a context directory path is provided, it should
+    #     generally be an absolute path; any relative path will be expanded
+    #     relative to the current working directory at call time.
     #
     # @return [self]
+    # @raise [ArgumentError] if a given path is not a legal value.
     # @raise [Toys::SourceListFinalizedError] if the source list has already
     #     been finalized.
     #
     def add_search_path_hierarchy(start: nil,
                                   terminate: [],
-                                  high_priority: false)
-      path = start || ::Dir.pwd
+                                  high_priority: false,
+                                  context_directory: :path)
+      start = SourceSpec.check_and_normalize_path(start || ::Dir.getwd, name: "start path")
+      terminate = terminate.map { |path| SourceSpec.check_and_normalize_path(path, name: "terminate path") }
+      path = start
       paths = []
       loop do
         break if terminate.include?(path)
@@ -426,7 +454,7 @@ module Toys
       end
       paths.reverse! if high_priority
       paths.each do |p|
-        add_search_path(p, high_priority: high_priority)
+        add_search_path(p, high_priority: high_priority, context_directory: context_directory)
       end
       self
     end
@@ -519,6 +547,19 @@ module Toys
     ##
     # Add a specific tool file or directory to the source list.
     #
+    # This is a deprecated legacy method that has been superseded by
+    # {#add_source}. However, note that while `add_config_path` sets a
+    # particular context directory by default, {#add_source} does not. So the
+    # equivalent of:
+    #
+    #     cli.add_config_path("/path/to/tools")
+    #
+    # is technically:
+    #
+    #     source = Toys::SourceSpec.path("/path/to/tools",
+    #                                    context_directory: "/path/to")
+    #     cli.add_source(source)
+    #
     # @deprecated Prefer {#add_source}.
     #
     # @param path [String] A path to add. May reference a single tool file or a
@@ -540,12 +581,34 @@ module Toys
                         high_priority: false,
                         source_name: nil,
                         context_directory: :parent)
+      path = SourceSpec.check_and_normalize_path(path)
+      context_directory = resolve_context_directory(context_directory, path)
       spec = SourceSpec.path(path, source_name: source_name, context_directory: context_directory)
       add_source(spec, high_priority: high_priority)
     end
 
     ##
     # Add a block to the source list.
+    #
+    # This is a deprecated legacy method that has been superseded by
+    # {#add_source}. Instead of:
+    #
+    #     cli.add_config_block do
+    #       ...
+    #     end
+    #
+    # You should now:
+    #
+    #     cli.add_source do
+    #       ...
+    #     end
+    #
+    # Or, if you need to configure the source name or context directory:
+    #
+    #     source = Toys::SourceSpec.block(context_directory: "/var/project") do
+    #       ...
+    #     end
+    #     cli.add_source(source)
     #
     # @deprecated Prefer {#add_source}.
     #
@@ -713,6 +776,25 @@ module Toys
         git_cache: @git_cache,
         gems_util: @gems_util,
       }
+    end
+
+    ##
+    # Resolve symbolic values for context_directory supported by
+    # add_search_path and add_config_path. The values `:parent` and `:path` are
+    # resolved relative to the given path, which must be an absolute path as
+    # a string.
+    #
+    def resolve_context_directory(context_directory, path)
+      case context_directory
+      when :parent
+        ::File.dirname(path)
+      when :path
+        path
+      when nil
+        nil
+      else
+        SourceSpec.check_and_normalize_path(context_directory, name: "context_directory")
+      end
     end
   end
 end

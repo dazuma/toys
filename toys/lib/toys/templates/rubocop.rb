@@ -189,7 +189,7 @@ module Toys
           def run
             gem "rubocop", *gem_version
 
-            ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.chdir(context_directory) do
               logger.info "Running RuboCop..."
               rubocop_args = rubocop_options + args
               code = <<~CODE

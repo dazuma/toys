@@ -36,22 +36,23 @@ writing custom command line executables in Ruby. The framework provides common
 facilities such as argument parsing and online help. Your executable can then
 choose and configure those facilities, and implement the actual behavior.
 
-The entry point for Toys-Core is the **cli object**. Typically your executable
-script instantiates a CLI, configures it with the desired tool implementations,
+The entry point for Toys-Core is the **CLI object**. Typically your executable
+script instantiates a CLI, configures it with the desired implementation code,
 and runs it.
 
-An executable defines its functionality using the **Toys DSL** which can be
-written in **toys files** or in **blocks** passed to the CLI. It uses the same
-DSL used by Toys itself, and supports tools, subtools, flags, arguments, help
-text, and all the other features of Toys.
+Implementation code is provided by **tool sources**, which could be blocks,
+**toys files**, and other ways to define functionality. Tool sources define
+functionality using the **Toys DSL**, the same DSL used by Toys itself,
+supporting tools, subtools, flags, arguments, help text, and all the other
+features of Toys.
 
 An executable can customize its own facilities for writing tools by providing
 **built-in mixins** and **built-in templates**, and can implement default
 behavior across all tools by providing **middleware**.
 
 Most executables will provide a set of **static tools**, but it is possible to
-support user-provided tools as Toys does. Executables can customize how such
-tool definitions are searched and loaded from the file system.
+support user-provided tools, as Toys does, by defining a tool source pointing
+at user-controlled files.
 
 An executable can customize many aspects of its behavior, such as the
 **logging output**, **error handling**, and even shell **tab completion**.
@@ -111,6 +112,26 @@ $ ./greet.rb
 $ ./greet.rb --whom=Ruby
 ```
 
+### Configuring the CLI
+
+Generally, you control CLI features by passing arguments to its constructor.
+These features include:
+
+ *  How to define tools and find related code and data. See the section on
+    [defining functionality](#defining-functionality).
+ *  Middleware, providing common behavior for all tools. See the section on
+    [customizing the middleware stack](#customizing-default-behavior).
+ *  Common mixins and templates available to all tools. See the section on
+    [customizing the built-in mixins and templates](#customizing-built-in-mixins-and-templates).
+ *  How logs, errors, and signals are reported. See the section on
+    [customizing diagnostic output](#customizing-diagnostic-output).
+
+Each of the actual parameters is covered in detail in the documentation for
+{Toys::CLI#initialize}. The configuration of a CLI cannot be changed once the
+CLI is constructed. If you need a CLI with modified configuration, use
+{Toys::CLI#child}, which creates a _copy_ of the CLI with any modifications you
+request.
+
 ### CLI execution
 
 This section provides some detail on how a CLI executes your code.
@@ -132,7 +153,7 @@ to that Runner, which carries out three phases:
 #### The Loader
 
 When Toys needs the definition of a tool, it queries the {Toys::Loader}. The
-loader object is configured with a set of tool _sources_ representing ways to
+loader object is configured with a set of _tool sources_ representing ways to
 define a tool. These sources may be blocks passed directly to the CLI, or
 directories and files loaded from the file system, from gems, or even from
 remote git repositories. When a tool is requested by name, the loader is
@@ -252,42 +273,6 @@ options that {Toys::CLI#run} does not expose, such as `wrap_errors` and
 still sees the CLI. Note that {Toys::CLI#child} builds a new CLI with a runner
 of its own.
 
-### Configuring the CLI
-
-Generally, you control CLI features by passing arguments to its constructor.
-These features include:
-
- *  How to find toys files and related code and data. See the section on
-    [defining functionality](#defining-functionality).
- *  Middleware, providing common behavior for all tools. See the section on
-    [customizing the middleware stack](#customizing-default-behavior).
- *  Common mixins and templates available to all tools. See the section on
-    [customizing the built-in mixins and templates](#customizing-built-in-mixins-and-templates).
- *  How logs, errors, and signals are reported. See the section on
-    [customizing diagnostic output](#customizing-diagnostic-output).
-
-Each of the actual parameters is covered in detail in the documentation for
-{Toys::CLI#initialize}. The configuration of a CLI cannot be changed once the
-CLI is constructed. If you need a CLI with modified configuration, use
-{Toys::CLI#child}, which creates a _copy_ of the CLI with any modifications you
-request.
-
-By default, the copy starts with an empty source list, containing none of the
-tool sources of the original. This is useful if you want to run a tool loaded
-from an entirely different configuration. If instead you want the copy to see
-the same tools as the original, pass `copy_sources: true`. This is the way to
-run a tool with an _additional_ source, because sources cannot be added to a
-CLI once its source list has been finalized. For example:
-
-```ruby
-# Run a tool, also making the tools from the "my-tools" gem available, and
-# giving them priority over the tools that this CLI already knows about.
-child_cli = cli.child(copy_sources: true) do |child|
-  child.add_source(Toys::SourceSpec.gem("my-tools"), high_priority: true)
-end
-child_cli.run("some-tool")
-```
-
 ## Defining functionality
 
 Toys-Core uses (and indeed, provides the underlying implementation of) the
@@ -296,16 +281,16 @@ familiar Toys DSL that you can read about in the
 [Toys User's Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
 This section assumes familiarity with those techniques for defining tools.
 
-Here we will cover how to use the Toys-Core interfaces to point to specific
-tool definition files or to load tool definitions programmatically. We'll also
-look more closely at how tool definition works, providing insights into lazy
-loading and the tool prioritization system.
+Here we will cover how to use the Toys-Core interfaces to define the different
+types of _tool sources_ that provide tool definitions. We'll also look more
+closely at how tool definition works, providing insights into lazy loading and
+the tool prioritization system.
 
 ### Writing tools in blocks
 
 If you are writing your own command line executable using Toys-Core, often the
-easiest way to define your tools is to use a block. The "hello world" example
-at the start of this guide uses this technique:
+easiest way to define your tools is to add a "block" tool source. The "hello
+world" example at the start of this guide uses this technique:
 
 ```ruby
 #!/usr/bin/env ruby
@@ -327,39 +312,16 @@ result = cli.run(*ARGV)
 exit(result)
 ```
 
-The block simply contains Toys DSL syntax. The above example configures the
-"root tool", that is, the functionality of the program if you do not pass a
-tool name on the command line. You can also include "tool" blocks to define
-named tools and subtools, just as you would in a normal Toys file.
-
-Passing a block directly to {Toys::CLI#add_source} is shorthand for a common
-case. In general, `add_source` takes a *source spec*, an unresolved description
-of where tools come from, and {Toys::SourceSpec.block} builds one from a block.
-Constructing the spec yourself lets you pass additional options:
-
-```ruby
-cli.add_source(Toys::SourceSpec.block(context_directory: my_dir) do
-  tool "hello" do
-    def run
-      puts "Hello from #{context_directory}!"
-    end
-  end
-end)
-```
-
-The `:context_directory` option selects a context directory for tools defined
-in the block. Normally, this is the directory containing the Toys files in
-which the tool is defined, but when tools are defined in a block, it must be
-set explicitly. (Otherwise, calling the `context_directory` from within the
-tool will return `nil`.) Similarly, the `:source_name`, normally the path to
-the Toys file that appears in error messages and documentation, can also be
-set explicitly. See {Toys::SourceSpec} for the full set of source specs and
-their options.
+Here we called {Toys::CLI#add_source} and passed it a block containing Toys DSL
+syntax. It configures the "root tool", that is, the functionality of the
+program if you do not pass a tool name on the command line. You can also
+include "tool" blocks within the main block to define named tools and subtools,
+just as you would in a normal Toys file.
 
 ### Writing tool files
 
 If you want to define tools in separate files, you can do so and pass the file
-paths to the CLI using {Toys::CLI#add_source}.
+paths to {Toys::CLI#add_source}.
 
 ```ruby
 #!/usr/bin/env ruby
@@ -401,6 +363,91 @@ you can define your tools in a particular directory in the gem and use
 {Toys::CLI#add_source} to point to that directory. See the section on
 [packaging your executable](#packaging-your-executable) for details on this
 technique.
+
+### Configuring sources
+
+Passing a block or a file path directly to {Toys::CLI#add_source} is actually
+just a convenient shorthand. The standard usage is to pass in a **source spec**
+object that describes the source.
+
+The block example above could be written to create the source spec explicitly:
+
+```ruby
+#!/usr/bin/env ruby
+
+require "toys-core"
+
+cli = Toys::CLI.new
+
+# Define the functionality in a "block" source spec:
+source = Toys::SourceSpec.block do
+  desc "My first executable!"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
+
+# Add it to the CLI
+cli.add_source(source)
+
+result = cli.run(*ARGV)
+exit(result)
+```
+
+Similarly, to create a source spec for a file system path, pass it to
+{Toys::SourceSpec.path}. Full source spec objects are useful because they can
+include several attributes governing how the source behaves, including setting
+the context directory for tools loaded from that source, and setting a name
+for the source that will appear in error messages and documentation.
+For example:
+
+```ruby
+#!/usr/bin/env ruby
+
+require "toys-core"
+
+cli = Toys::CLI.new
+
+# A source that loads tools from a directory with a particular context directory
+source = Toys::SourceSpec.path("/usr/local/share/my_tools/",
+                               context_directory: "/var/my_project",
+                               source_name: "My local tools directory")
+cli.add_source(source)
+
+result = cli.run(*ARGV)
+exit(result)
+```
+
+The {Toys::CLI#add_search_path} and {Toys::CLI#add_search_path_hierarchy}
+convenience methods also provide a way to set the context_directory. In fact,
+by default they set the context directory to the directory _containing_ the
+toys file/directory to load, which is the behavior of the Toys gem itself.
+
+### Gem and Git sources
+
+Toys-Core provides two less common ways to source tools: from a RubyGem and
+from a remote git repository. This is similar to using the `load_gem` and
+`load_git` DSL directives to load tools from these sources. There is no
+shorthand for the gem and git source types; you need to create a source spec
+explicitly using {Toys::SourceSpec.gem} or {Toys::SourceSpec.git} and add it to
+your CLI. For example:
+
+```ruby
+#!/usr/bin/env ruby
+
+require "toys-core"
+
+cli = Toys::CLI.new
+
+# A source that loads tools from a gem with a particular context directory
+source = Toys::SourceSpec.gem("toys-release", version: "~> 0.9",
+                              context_directory: "/var/my_project")
+cli.add_source(source)
+
+result = cli.run(*ARGV)
+exit(result)
+```
 
 ### Tool priority
 
@@ -454,7 +501,7 @@ source at the *front* of the priority list by passing an argument:
 
 ```ruby
 # Add tools with the highest priority
-cli.add_source high_priority: true do
+cli.add_source(high_priority: true) do
   tool "hello" do
     def run
       puts "Hello from the second source block!"

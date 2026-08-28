@@ -516,7 +516,7 @@ module Toys
           # @private
           def run
             require "tempfile"
-            ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.chdir(context_directory) do
               loaded_gem_versions = init_bundle_or_gems
               found_tests = expand_tests
               validate_tests(found_tests)

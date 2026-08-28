@@ -66,7 +66,7 @@ describe Toys::SourceInfo do
 
   describe "resolving a root" do
     it "resolves a path spec pointing to a directory" do
-      si = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: :path))
+      si = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: directory_path))
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -85,7 +85,7 @@ describe Toys::SourceInfo do
     end
 
     it "resolves a path spec pointing to a file" do
-      si = resolve_root(Toys::SourceSpec.path(file_path, context_directory: :parent))
+      si = resolve_root(Toys::SourceSpec.path(file_path, context_directory: directory_path))
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -458,10 +458,32 @@ describe Toys::SourceInfo do
       assert_equal(priority, si.priority)
     end
 
-    it "takes the context directory from the parent, ignoring the spec's own" do
+    it "takes the context directory from the spec, overriding the parent" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.path(file_path, context_directory: "/somewhere/else")
       si = Toys::SourceInfo.resolve(spec, parent: parent)
+      assert_equal("/somewhere/else", si.context_directory)
+    end
+
+    it "takes the context directory from a git spec, overriding the parent" do
+      parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
+      spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit,
+                                  context_directory: "/somewhere/else")
+      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      assert_equal("/somewhere/else", si.context_directory)
+    end
+
+    it "takes the context directory from a gem spec, overriding the parent" do
+      parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
+      spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir,
+                                  context_directory: "/somewhere/else")
+      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      assert_equal("/somewhere/else", si.context_directory)
+    end
+
+    it "inherits the context directory when the spec does not give one" do
+      parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
+      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
       assert_equal(lookup_cases_dir, si.context_directory)
     end
 
@@ -505,7 +527,7 @@ describe Toys::SourceInfo do
 
   describe "#relative_child" do
     it "creates a relative child of a file system root" do
-      parent = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: :parent))
+      parent = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: lookup_cases_dir))
       si = parent.relative_child(".toys.rb")
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -585,7 +607,7 @@ describe Toys::SourceInfo do
 
   describe "#proc_child" do
     it "creates a proc child of a file system root" do
-      parent = resolve_root(Toys::SourceSpec.path(file_path, context_directory: :parent))
+      parent = resolve_root(Toys::SourceSpec.path(file_path, context_directory: directory_path))
       si = parent.proc_child(my_proc)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)

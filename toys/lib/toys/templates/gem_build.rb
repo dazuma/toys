@@ -257,7 +257,7 @@ module Toys
           def run
             require "rubygems"
             require "rubygems/package"
-            ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.chdir(context_directory) do
               gemspec = ::Gem::Specification.load("#{gem_name}.gemspec")
               ::Gem::Package.build(gemspec)
               version = gemspec.version

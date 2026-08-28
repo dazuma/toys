@@ -204,5 +204,22 @@ describe "clean template" do
       assert(File.exist?(File.join(dir, "bar.yml")))
       refute(File.exist?(File.join(dir, "foo.txt")))
     end
+
+    # The template cleans within the context directory unconditionally, relying
+    # on the runtime falling back to the working directory when nothing set one.
+    it "falls back to the working directory when no context directory is set" do
+      dir = workspace_dir
+      FileUtils.touch(File.join(dir, "foo.txt"))
+      FileUtils.touch(File.join(dir, "bar.yml"))
+      cli.add_source do
+        expand :clean, paths: "*.txt"
+      end
+      out, _err = capture_subprocess_io do
+        Dir.chdir(dir) { assert_equal(0, cli.run("clean")) }
+      end
+      assert_equal("Cleaned: foo.txt\n", out)
+      assert(File.exist?(File.join(dir, "bar.yml")))
+      refute(File.exist?(File.join(dir, "foo.txt")))
+    end
   end
 end

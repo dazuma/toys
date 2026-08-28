@@ -28,3 +28,15 @@ _Avoid_: Config list, search path, load path
 A source's rank within a source list. When more than one source defines the same
 tool name, the definition from the highest priority source wins.
 _Avoid_: Precedence, order, rank
+
+**Context directory**:
+The directory that tools treat as their project root, normally the directory
+_containing_ the toplevel toys file or directory, so that a tool behaves the
+same whichever subdirectory it was invoked from. It is often set by the source
+of a tool, but can be overridden by the tool definition, and may be left unset
+(nil). The version of the context directory that a tool sees *at runtime*
+through the `CONTEXT_DIRECTORY` context key, is the tool's context directory,
+but if unset it falls back to the current working directory. So unlike a
+tool's context directory, the effective context directory at runtime is never
+nil.
+_Avoid_: Base directory, project directory, source directory

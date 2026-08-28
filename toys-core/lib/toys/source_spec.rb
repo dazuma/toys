@@ -29,26 +29,29 @@ module Toys
       ##
       # Create a spec for a file system path.
       #
-      # @param path [String] Path to a tool file or directory. An object
-      #     convertible to a path, such as a `Pathname`, is also accepted, and
-      #     is converted to a string.
+      # @param path [String,Pathname] Path to a tool file or directory. Must be
+      #     a String or a Pathname. Paths should generally be absolute.
+      #     Relative paths will be converted to absolute, using the current
+      #     working directory at the time of construction.
       # @param relative_paths [String,Array<String>,nil] If provided, the given
       #     path is treated as a root directory, and these paths, relative to
       #     it, are the sources actually loaded. Pass `nil` (the default) to
       #     load the path itself. Note that `nil` and the empty array mean
-      #     different things: the empty array loads nothing from the root.
-      # @param context_directory [String,nil,:path,:parent] The context
-      #     directory for tools loaded from this source. You can pass a
-      #     directory path as a string, `:path` to denote the given path,
-      #     `:parent` to denote the given path's parent directory, or `nil` to
-      #     denote no context. Defaults to `:parent`.
+      #     different things: the empty array indicates no paths under the
+      #     given root path, effectively a noop, while `nil` indicates a single
+      #     path equal to the given root path.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. Defaults to nil
+      #     if not provided. Context directory paths should generally be
+      #     absolute. Relative paths will be converted to absolute, using the
+      #     current working directory at the time of construction.
       # @param source_name [String,nil] The source name that will be shown in
       #     documentation for tools loaded from this source. If omitted, a
       #     default is generated at resolution time.
       # @return [Toys::SourceSpec::Path]
       # @raise [ArgumentError] if an argument is not a legal value.
       #
-      def path(path, relative_paths: nil, context_directory: :parent, source_name: nil)
+      def path(path, relative_paths: nil, context_directory: nil, source_name: nil)
         Path.new(path, relative_paths, context_directory, source_name)
       end
 
@@ -67,9 +70,11 @@ module Toys
       #     references if they were previously loaded. Pass `true` or `false`
       #     to specify whether to update, or an integer to update if the last
       #     update was done at least that many seconds ago. Default is `false`.
-      # @param context_directory [String,nil] The context directory for tools
-      #     loaded from this source. You can pass a directory path as a string,
-      #     or `nil` to denote no context. Defaults to `nil`.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. Defaults to nil
+      #     if not provided. Context directory paths should generally be
+      #     absolute. Relative paths will be converted to absolute, using the
+      #     current working directory at the time of construction.
       # @param source_name [String,nil] The source name that will be shown in
       #     documentation for tools loaded from this source. If omitted, a
       #     default is generated at resolution time.
@@ -92,9 +97,11 @@ module Toys
       # @param toys_dir [String,nil] The name of the gem's toys directory.
       #     Optional. Defaults to the directory specified in the gem's
       #     metadata, or the value `"toys"`.
-      # @param context_directory [String,nil] The context directory for tools
-      #     loaded from this source. You can pass a directory path as a string,
-      #     or `nil` to denote no context. Defaults to `nil`.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. Defaults to nil
+      #     if not provided. Context directory paths should generally be
+      #     absolute. Relative paths will be converted to absolute, using the
+      #     current working directory at the time of construction.
       # @param source_name [String,nil] The source name that will be shown in
       #     documentation for tools loaded from this source. If omitted, a
       #     default is generated at resolution time.
@@ -108,9 +115,11 @@ module Toys
       ##
       # Create a spec for a block of DSL code.
       #
-      # @param context_directory [String,nil] The context directory for tools
-      #     loaded from this source. You can pass a directory path as a string,
-      #     or `nil` to denote no context. Defaults to `nil`.
+      # @param context_directory [String,Pathname,nil] The context directory
+      #     path for tools loaded from this source. Optional. Defaults to nil
+      #     if not provided. Context directory paths should generally be
+      #     absolute. Relative paths will be converted to absolute, using the
+      #     current working directory at the time of construction.
       # @param source_name [String,nil] The source name that will be shown in
       #     documentation for tools loaded from this source. If omitted, a
       #     default is generated at resolution time.
@@ -121,6 +130,35 @@ module Toys
       #
       def block(context_directory: nil, source_name: nil, &block)
         Block.new(block, context_directory, source_name)
+      end
+
+      ##
+      # @private
+      #
+      # Checks the type of a path argument value, and normalizes to an absolute
+      # path string.
+      #
+      # @param path [String,Pathname] The input path.
+      # @param allow_relative [boolean] If true, do not expand relative paths.
+      #     Defaults to false.
+      # @param allow_nil [boolean] If true, allow nil values. Defaults to false.
+      # @param name [String] What kind of thing is being normalized, used in
+      #     error messages. Defaults to "path".
+      # @return [String] Normalized output path.
+      # @raise [ArgumentError] if an argument is not a legal path string or
+      #     Pathname object.
+      #
+      def check_and_normalize_path(path, name: "path", allow_relative: false, allow_nil: false)
+        return nil if allow_nil && path.nil?
+        unless path.is_a?(::String)
+          if path.respond_to?(:to_path)
+            path = path.to_path
+          else
+            raise ::ArgumentError, "Illegal #{name} value: #{path.inspect}"
+          end
+        end
+        path = ::File.expand_path(path) unless allow_relative
+        path
       end
     end
 
@@ -140,19 +178,18 @@ module Toys
       # @private
       #
       def initialize(context_directory, source_name)
-        validate_context_directory(context_directory)
-        @context_directory = context_directory
+        @context_directory = SourceSpec.check_and_normalize_path(context_directory,
+                                                                 name: "context_directory",
+                                                                 allow_nil: true)
         @source_name = check_optional_string(source_name, "source_name")
         freeze
       end
 
       ##
-      # The context directory for tools loaded from this source, or a symbol
-      # directing how to compute it. This is honored only when the spec is
-      # resolved as a root; a child source inherits its parent's context
-      # directory.
+      # The context directory for tools loaded from this source, or nil if the
+      # source does not dictate a context directory.
       #
-      # @return [String,nil,:path,:parent]
+      # @return [String,nil]
       #
       attr_reader :context_directory
 
@@ -198,21 +235,12 @@ module Toys
       private
 
       ##
-      # Raise unless the given context directory is legal for this kind of
-      # spec. Only {Toys::SourceSpec::Path} recognizes the symbolic forms.
-      #
-      def validate_context_directory(context_directory)
-        return if context_directory.nil? || context_directory.is_a?(::String)
-        raise ::ArgumentError, "Illegal context_directory: #{context_directory.inspect}"
-      end
-
-      ##
       # Return the given value if it is a string, otherwise raise. The name is
       # used only to describe the offending field in the error message.
       #
       def check_string(value, name)
         return value if value.is_a?(::String)
-        raise ::ArgumentError, "Illegal #{name}: #{value.inspect}"
+        raise ::ArgumentError, "Illegal #{name} value: #{value.inspect}"
       end
 
       ##
@@ -220,15 +248,6 @@ module Toys
       #
       def check_optional_string(value, name)
         value.nil? ? nil : check_string(value, name)
-      end
-
-      ##
-      # Same as {#check_string} but also accepts an object convertible to a
-      # path, such as a `Pathname`, and converts it to a string.
-      #
-      def check_path_string(value, name)
-        value = value.to_path if !value.is_a?(::String) && value.respond_to?(:to_path)
-        check_string(value, name)
       end
     end
 
@@ -244,11 +263,14 @@ module Toys
       # @private
       #
       def initialize(path, relative_paths, context_directory, source_name)
-        @path = check_path_string(path, "path")
+        @path = SourceSpec.check_and_normalize_path(path)
         @relative_paths =
           unless relative_paths.nil?
-            Array(relative_paths).map { |rp| check_path_string(rp, "relative path") }.freeze
+            Array(relative_paths).map do |rp|
+              SourceSpec.check_and_normalize_path(rp, name: "relative path", allow_relative: true)
+            end
           end
+        @relative_paths.freeze
         super(context_directory, source_name)
       end
 
@@ -275,13 +297,6 @@ module Toys
       #
       def equality_fields
         super + [@path, @relative_paths]
-      end
-
-      private
-
-      def validate_context_directory(context_directory)
-        return if [:path, :parent].include?(context_directory)
-        super
       end
     end
 
@@ -351,7 +366,7 @@ module Toys
       #
       def check_update(update)
         return update if update.is_a?(::Integer) || update.equal?(true) || update.equal?(false)
-        raise ::ArgumentError, "Illegal update: #{update.inspect}"
+        raise ::ArgumentError, "Illegal update value: #{update.inspect}"
       end
     end
 

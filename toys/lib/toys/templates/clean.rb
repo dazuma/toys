@@ -131,7 +131,7 @@ module Toys
           # @private
           #
           def run
-            cd(context_directory || ::Dir.getwd) do
+            cd(context_directory) do
               preserve_set = make_preserve_set(template_preserve)
               clean_globs(template_paths, preserve_set)
               clean_gitignore(preserve_set) if template_gitignore
