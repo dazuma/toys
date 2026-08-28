@@ -701,10 +701,10 @@ describe Toys::Loader do
       assert_nil(tool.context_directory)
       tool, _remaining = loader.lookup(["ns1"])
       assert_nil(tool.source_info.context_directory)
-      assert_equal(custom_dir, tool.context_directory)
+      assert_expanded_path(custom_dir, tool.context_directory)
       tool, _remaining = loader.lookup(["ns1", "tool1"])
       assert_nil(tool.source_info.context_directory)
-      assert_equal(custom_dir, tool.context_directory)
+      assert_expanded_path(custom_dir, tool.context_directory)
     end
   end
 

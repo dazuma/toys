@@ -1531,7 +1531,7 @@ describe Toys::CLI do
         end
       end)
       cli.run("foo")
-      assert_equal("/source/dir", captured)
+      assert_expanded_path("/source/dir", captured)
     end
 
     it "prefers a context directory set by the tool definition" do
@@ -1543,7 +1543,7 @@ describe Toys::CLI do
         end
       end)
       cli.run("foo")
-      assert_equal("/custom/dir", captured)
+      assert_expanded_path("/custom/dir", captured)
     end
   end
 

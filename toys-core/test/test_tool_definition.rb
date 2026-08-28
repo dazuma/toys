@@ -1359,12 +1359,12 @@ describe Toys::ToolDefinition do
 
     it "can be set" do
       tool.custom_context_directory = "/hi/there"
-      assert_equal("/hi/there", tool.context_directory)
+      assert_expanded_path("/hi/there", tool.context_directory)
     end
 
     it "can be set in an ancestor tool" do
       tool.custom_context_directory = "/hi/there"
-      assert_equal("/hi/there", subtool.context_directory)
+      assert_expanded_path("/hi/there", subtool.context_directory)
     end
 
     it "expands a relative custom context directory" do
@@ -1374,13 +1374,13 @@ describe Toys::ToolDefinition do
 
     it "collapses dot segments in a custom context directory" do
       tool.custom_context_directory = "/hi/over/../there"
-      assert_equal("/hi/there", tool.custom_context_directory)
+      assert_expanded_path("/hi/there", tool.custom_context_directory)
     end
 
     it "converts a path-convertible custom context directory to a string" do
       require "pathname"
       tool.custom_context_directory = Pathname.new("/hi/there")
-      assert_equal("/hi/there", tool.custom_context_directory)
+      assert_expanded_path("/hi/there", tool.custom_context_directory)
       assert_instance_of(::String, tool.custom_context_directory)
     end
 

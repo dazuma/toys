@@ -2373,7 +2373,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/source/dir", tool.context_directory)
+      assert_expanded_path("/source/dir", tool.context_directory)
     end
 
     it "sets the context directory for the loaded source" do
@@ -2384,7 +2384,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
 
     it "sets the context directory for a source loaded as a name" do
@@ -2393,7 +2393,7 @@ describe Toys::DSL::Tool do
         load(file_to_load, as: "ns1 ns2", context_directory: "/loaded/dir")
       end)
       tool, _remaining = loader.lookup(["ns1", "ns2", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
 
     it "expands a relative context directory for the loaded source" do
@@ -2478,7 +2478,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/source/dir", tool.context_directory)
+      assert_expanded_path("/source/dir", tool.context_directory)
     end
 
     it "sets the context directory for the loaded source" do
@@ -2490,7 +2490,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
 
     it "sets the context directory for a source loaded as a name" do
@@ -2501,7 +2501,7 @@ describe Toys::DSL::Tool do
                  context_directory: "/loaded/dir", as: "ns1 ns2")
       end)
       tool, _remaining = loader.lookup(["ns1", "ns2", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
   end
 
@@ -2568,7 +2568,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/source/dir", tool.context_directory)
+      assert_expanded_path("/source/dir", tool.context_directory)
     end
 
     it "sets the context directory for the loaded source" do
@@ -2580,7 +2580,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
 
     it "sets the context directory for a source loaded as a name" do
@@ -2590,7 +2590,7 @@ describe Toys::DSL::Tool do
                  context_directory: "/loaded/dir", as: "ns1 ns2")
       end)
       tool, _remaining = loader.lookup(["ns1", "ns2", "tool-1"])
-      assert_equal("/loaded/dir", tool.context_directory)
+      assert_expanded_path("/loaded/dir", tool.context_directory)
     end
   end
 
@@ -2663,7 +2663,7 @@ describe Toys::DSL::Tool do
         end
       end)
       loader.lookup(["foo"])
-      assert_equal("/source/dir", captured)
+      assert_expanded_path("/source/dir", captured)
     end
 
     it "returns the custom directory after set_context_directory" do
@@ -2675,7 +2675,7 @@ describe Toys::DSL::Tool do
         end
       end
       loader.lookup(["foo"])
-      assert_equal("/custom/dir", captured)
+      assert_expanded_path("/custom/dir", captured)
     end
 
     it "returns the custom directory over the source context directory" do
@@ -2687,7 +2687,7 @@ describe Toys::DSL::Tool do
         end
       end)
       loader.lookup(["foo"])
-      assert_equal("/custom/dir", captured)
+      assert_expanded_path("/custom/dir", captured)
     end
 
     # Reading the context directory is an inspection, not a definition, so it
@@ -2721,7 +2721,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", tool.custom_context_directory)
+      assert_expanded_path("/custom/dir", tool.custom_context_directory)
     end
 
     it "does not set custom_context_directory if not called" do
@@ -2741,7 +2741,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", tool.context_directory)
+      assert_expanded_path("/custom/dir", tool.context_directory)
     end
 
     it "overrides the source context directory" do
@@ -2751,7 +2751,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", tool.context_directory)
+      assert_expanded_path("/custom/dir", tool.context_directory)
     end
 
     it "nil clears a previously set custom directory and reverts to source" do
@@ -2766,9 +2766,9 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", captured_after_set)
+      assert_expanded_path("/custom/dir", captured_after_set)
       assert_nil(tool.custom_context_directory)
-      assert_equal("/source/dir", captured_after_clear)
+      assert_expanded_path("/source/dir", captured_after_clear)
     end
 
     it "is inherited by subtools that have no custom directory" do
@@ -2782,7 +2782,7 @@ describe Toys::DSL::Tool do
       end
       child, _remaining = loader.lookup(["foo", "bar"])
       assert_nil(child.custom_context_directory)
-      assert_equal("/custom/dir", child.context_directory)
+      assert_expanded_path("/custom/dir", child.context_directory)
     end
 
     it "can be overridden in a subtool" do
@@ -2796,8 +2796,8 @@ describe Toys::DSL::Tool do
       end
       parent, _remaining = loader.lookup(["foo"])
       child, _remaining = loader.lookup(["foo", "bar"])
-      assert_equal("/parent/dir", parent.context_directory)
-      assert_equal("/child/dir", child.context_directory)
+      assert_expanded_path("/parent/dir", parent.context_directory)
+      assert_expanded_path("/child/dir", child.context_directory)
     end
 
     it "expands a relative directory" do
@@ -2819,7 +2819,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", tool.custom_context_directory)
+      assert_expanded_path("/custom/dir", tool.custom_context_directory)
       assert_instance_of(::String, tool.custom_context_directory)
     end
 
@@ -2839,7 +2839,7 @@ describe Toys::DSL::Tool do
         end
       end)
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal("/custom/dir", tool.context_directory)
+      assert_expanded_path("/custom/dir", tool.context_directory)
       refute_equal("the real foo", tool.desc.to_s)
       refute(tool.runnable?)
       assert_equal("setter", tool.source_info.source_name)
@@ -2860,7 +2860,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["foo"])
       assert_equal("the real foo", tool.desc.to_s)
-      assert_equal("/definer/dir", tool.context_directory)
+      assert_expanded_path("/definer/dir", tool.context_directory)
       assert_nil(tool.custom_context_directory)
     end
   end

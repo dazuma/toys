@@ -462,7 +462,7 @@ describe Toys::SourceInfo do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.path(file_path, context_directory: "/somewhere/else")
       si = Toys::SourceInfo.resolve(spec, parent: parent)
-      assert_equal("/somewhere/else", si.context_directory)
+      assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
     it "takes the context directory from a git spec, overriding the parent" do
@@ -470,7 +470,7 @@ describe Toys::SourceInfo do
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit,
                                   context_directory: "/somewhere/else")
       si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
-      assert_equal("/somewhere/else", si.context_directory)
+      assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
     it "takes the context directory from a gem spec, overriding the parent" do
@@ -478,7 +478,7 @@ describe Toys::SourceInfo do
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir,
                                   context_directory: "/somewhere/else")
       si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
-      assert_equal("/somewhere/else", si.context_directory)
+      assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
     it "inherits the context directory when the spec does not give one" do
