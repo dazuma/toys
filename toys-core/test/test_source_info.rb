@@ -4,6 +4,12 @@ require "helper"
 require "toys/utils/gems"
 require "toys/utils/git_cache"
 
+# Stand-ins for Toys::Tool subclasses. A SourceInfo only records the class and
+# reads its name, and a real Toys::Tool subclass cannot be created here because
+# subclassing is allowed only from within a tool file.
+MyToolClass = Class.new
+MyNestedToolClass = Class.new
+
 describe Toys::SourceInfo do
   let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
   let(:directory_path) { File.join(lookup_cases_dir, "config-items") }
@@ -55,6 +61,8 @@ describe Toys::SourceInfo do
 
   let(:my_proc) { proc { :a } }
   let(:my_proc2) { proc { :b } }
+  let(:my_class) { MyToolClass }
+  let(:my_class2) { MyNestedToolClass }
   let(:data_dir_name) { ".data" }
   let(:custom_source_name) { "mysource" }
   let(:priority) { -1 }
@@ -688,6 +696,112 @@ describe Toys::SourceInfo do
       assert_nil(si.gem_version)
       assert_nil(si.gem_path)
       assert_equal(custom_source_name, si.source_name)
+    end
+  end
+
+  describe "#subclass_child" do
+    it "creates a subclass child of a file system root" do
+      parent = resolve_root(Toys::SourceSpec.path(file_path, context_directory: directory_path))
+      si = parent.subclass_child(my_class)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_equal(directory_path, si.context_directory)
+      assert_equal(my_class, si.source)
+      assert_equal(:subclass, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_equal(my_class, si.source_subclass)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
+      assert_equal("#{file_path} (class MyToolClass)", si.source_name)
+    end
+
+    it "creates a subclass child of a git root" do
+      spec = Toys::SourceSpec.git(git_remote, path: git_file_path, commit: git_commit)
+      parent = resolve_root(spec, git_cache: git_cache)
+      si = parent.subclass_child(my_class)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(my_class, si.source)
+      assert_equal(:subclass, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_equal(my_class, si.source_subclass)
+      assert_equal(git_remote, si.git_remote)
+      assert_equal(git_file_path, si.git_path)
+      assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
+      assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit}) " \
+                   "(class MyToolClass)",
+                   si.source_name)
+    end
+
+    it "creates a subclass child of a gem root" do
+      spec = Toys::SourceSpec.gem(gem_name, path: "config-items/.toys.rb", toys_dir: gem_toys_dir)
+      parent = resolve_root(spec, gems_util: gems_util)
+      si = parent.subclass_child(my_class)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(my_class, si.source)
+      assert_equal(:subclass, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_equal(my_class, si.source_subclass)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_file_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path}) " \
+                   "(class MyToolClass)",
+                   si.source_name)
+    end
+
+    it "creates a subclass child of a subclass source" do
+      root = resolve_root(Toys::SourceSpec.path(file_path, context_directory: directory_path))
+      parent = root.subclass_child(my_class)
+      si = parent.subclass_child(my_class2)
+      assert_equal(root, si.root)
+      assert_equal(parent, si.parent)
+      assert_equal(priority, si.priority)
+      assert_equal(directory_path, si.context_directory)
+      assert_equal(my_class2, si.source)
+      assert_equal(:subclass, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_equal(my_class2, si.source_subclass)
+      assert_equal("#{file_path} (class MyToolClass::MyNestedToolClass)", si.source_name)
+    end
+
+    it "honors an explicit source name" do
+      parent = resolve_root(Toys::SourceSpec.path(file_path))
+      si = parent.subclass_child(my_class, source_name: custom_source_name)
+      assert_equal(custom_source_name, si.source_name)
+    end
+
+    it "errors when attempting to create a subclass child of a directory" do
+      parent = resolve_root(Toys::SourceSpec.path(directory_path))
+      assert_raises(::ArgumentError) do
+        parent.subclass_child(my_class)
+      end
+    end
+
+    it "errors when attempting to create a subclass child of a proc" do
+      parent = resolve_root(Toys::SourceSpec.block(source_name: custom_source_name, &my_proc))
+      assert_raises(::ArgumentError) do
+        parent.subclass_child(my_class)
+      end
     end
   end
 

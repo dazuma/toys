@@ -14,6 +14,7 @@ module Toys
   # * A file or directory loaded from a gem
   # * A block passed directly to the CLI
   # * A tool block within a toys file
+  # * A subclass of Toys::Tool
   #
   # The SourceInfo provides information such as the tool's context directory,
   # and locates data and lib directories appropriate to the tool. It also
@@ -94,10 +95,12 @@ module Toys
     attr_reader :context_directory
 
     ##
-    # The source, which may be a path or a proc depending on the {#source_type}.
+    # The source, which may be a path, a proc, or a class, depending on the
+    # {#source_type}.
     #
     # @return [String] Path to the source file or directory.
     # @return [Proc] The block serving as the source.
+    # @return [Class] The {Toys::Tool} subclass serving as the source.
     #
     attr_reader :source
 
@@ -111,8 +114,10 @@ module Toys
     # * `:proc`, representing a proc, which could be a toplevel block added
     #   directly to a CLI, a `tool` block within a toys file, or a block within
     #   another block. The {#source} will be the proc itself.
+    # * `:subclass`, representing a subclass of {Toys::Tool}. The {#source}
+    #   will be the class object.
     #
-    # @return [:file,:directory,:proc]
+    # @return [:file,:directory,:proc,:subclass]
     #
     attr_reader :source_type
 
@@ -135,6 +140,14 @@ module Toys
     # @return [nil] if this source has no proc.
     #
     attr_reader :source_proc
+
+    ##
+    # The source subclass. This is set if {#source_type} is `:subclass`.
+    #
+    # @return [Class] The source subclass
+    # @return [nil] if this source is not a subclass.
+    #
+    attr_reader :source_subclass
 
     ##
     # The git remote. This is set if the source, or one of its ancestors, comes
@@ -314,7 +327,7 @@ module Toys
         end
         source_path, type = check_path(spec.path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil,
+        new(parent, priority, context_directory, type, source_path, nil, nil,
             nil, nil, nil, nil, nil, nil,
             spec.source_name)
       end
@@ -327,7 +340,7 @@ module Toys
           resolve_git_info(git_cache, git_remote, spec.path, git_commit, spec.update)
         source_path, type = check_path(source_path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil,
+        new(parent, priority, context_directory, type, source_path, nil, nil,
             git_remote, git_path, git_commit, nil, nil, nil,
             spec.source_name)
       end
@@ -337,13 +350,13 @@ module Toys
           resolve_gem_info(gems_util, spec.name, spec.version, spec.path, spec.toys_dir)
         source_path, type = check_path(source_path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil,
+        new(parent, priority, context_directory, type, source_path, nil, nil,
             nil, nil, nil, spec.name, gem_version, gem_path,
             spec.source_name)
       end
 
       def resolve_block_spec(spec, priority)
-        new(nil, priority, spec.context_directory, :proc, nil, spec.block,
+        new(nil, priority, spec.context_directory, :proc, nil, spec.block, nil,
             nil, nil, nil, nil, nil, nil,
             spec.source_name)
       end
@@ -362,7 +375,7 @@ module Toys
       return nil unless child_path
       child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
       child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil, nil,
                      git_remote, child_git_path, git_commit, gem_name, gem_version, child_gem_path,
                      source_name)
     end
@@ -385,7 +398,21 @@ module Toys
     #
     def proc_child(child_proc, source_name: nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc,
+      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc, nil,
+                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+                     source_name)
+    end
+
+    ##
+    # Create a subclass child SourceInfo
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def subclass_child(subclass, source_name: nil)
+      unless [:file, :subclass].include?(source_type)
+        raise ::ArgumentError, "subclass_child is valid only on a file or subclass source"
+      end
+      SourceInfo.new(self, priority, context_directory, :subclass, source_path, nil, subclass,
                      git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
                      source_name)
     end
@@ -401,7 +428,7 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def initialize(parent, priority, context_directory,
-                   source_type, source_path, source_proc,
+                   source_type, source_path, source_proc, source_subclass,
                    git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
                    source_name)
       @parent = parent
@@ -409,9 +436,17 @@ module Toys
       @priority = priority
       @context_directory = context_directory
       @source_type = source_type
-      @source = source_type == :proc ? source_proc : source_path
+      @source = case source_type
+                when :proc
+                  source_proc
+                when :subclass
+                  source_subclass
+                else
+                  source_path
+                end
       @source_path = source_path
       @source_proc = source_proc
+      @source_subclass = source_subclass
       @git_remote = git_remote
       @git_path = git_path
       @git_commit = git_commit
@@ -515,15 +550,28 @@ module Toys
     private
 
     def default_source_name
-      if @git_remote
-        "git(remote=#{@git_remote} path=#{@git_path} commit=#{@git_commit})"
-      elsif @gem_name
-        "gem(name=#{@gem_name} version=#{@gem_version} path=#{@gem_path})"
-      elsif @source_type == :proc
-        "(code block #{@source_proc.object_id})"
+      if source_type == :proc
+        "(code block #{source_proc.object_id})"
+      elsif source_type == :subclass
+        default_subclass_source_name
+      elsif git_remote
+        "git(remote=#{git_remote} path=#{git_path} commit=#{git_commit})"
+      elsif gem_name
+        "gem(name=#{gem_name} version=#{gem_version} path=#{gem_path})"
       else
-        @source_path
+        source_path
       end
+    end
+
+    def default_subclass_source_name
+      name = source_subclass.name.split("::").last
+      walk = parent
+      while walk&.source_type == :subclass
+        name = "#{walk.source_subclass.name.split('::').last}::#{name}"
+        walk = walk.parent
+      end
+      name = "class #{name}"
+      walk ? "#{walk.source_name} (#{name})" : name
     end
   end
 end
