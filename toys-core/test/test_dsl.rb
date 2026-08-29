@@ -2320,6 +2320,7 @@ describe Toys::DSL::Tool do
 
   describe "load directive" do
     let(:config_items_dir) { File.join(cases_dir, "config-items") }
+    let(:load_restore_dir) { File.join(cases_dir, "load-source-restore") }
 
     it "loads a file into the current namespace" do
       file_to_load = File.join(config_items_dir, ".toys.rb")
@@ -2405,6 +2406,32 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["ns-1", "tool-1"])
       assert_equal(File.expand_path("loaded/dir"), tool.context_directory)
+    end
+
+    it "restores the enclosing source info afterward" do
+      file_to_load = File.join(config_items_dir, ".toys.rb")
+      t = self
+      cli.add_source(Toys::SourceSpec.block(source_name: "enclosing block") do
+        source_before = source_info
+        load(file_to_load)
+        t.assert_equal("enclosing block", source_info.source_name)
+        t.assert(source_before.equal?(source_info), "source_info object was not restored")
+      end)
+      loader.lookup([])
+    end
+
+    it "gives a tool defined afterward the enclosing source" do
+      cli.add_source(load_restore_dir)
+      after_load, _remaining = loader.lookup(["after-load"])
+      assert_equal(File.join(load_restore_dir, ".toys.rb"), after_load.source_info.source_name)
+      in_sub, _remaining = loader.lookup(["in-sub"])
+      assert_equal(File.join(load_restore_dir, ".toys", ".toys.rb"), in_sub.source_info.source_name)
+    end
+
+    it "finds data for a tool defined afterward relative to the enclosing source" do
+      cli.add_source(load_restore_dir)
+      assert_equal(0, cli.run("after-load"))
+      assert_equal(0, cli.run("in-sub"))
     end
   end
 
@@ -2997,10 +3024,10 @@ describe Toys::DSL::Tool do
       ex = assert_raises(Toys::ToolDefinitionError) do
         class Hello1 < Toys::Tool; end
       end
-      assert_match(/Toys::Tool can be subclassed only from the Toys DSL/, ex.message)
+      assert_match(/Toys::Tool can be subclassed only from a Toys tool file/, ex.message)
     end
 
-    it "is not allowed from a block" do
+    it "is not allowed from a toplevel block" do
       t = self
       cli.add_source do
         ex = t.assert_raises(Toys::ToolDefinitionError) do
@@ -3016,6 +3043,54 @@ describe Toys::DSL::Tool do
         loader.lookup(["foo"])
       end
       assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.cause.message)
+    end
+
+    it "is not allowed under a module that is not a tool" do
+      cli.add_source(File.join(cases_dir, "tool-subclass-under-module"))
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["thing"])
+      end
+      assert_match(/Toys::Tool can be subclassed only from the Toys DSL/, ex.cause.message)
+    end
+
+    describe "source info" do
+      let(:subclasses_dir) { File.join(cases_dir, "tool-subclasses") }
+      let(:subclasses_file) { File.join(subclasses_dir, ".toys.rb") }
+
+      it "creates a subclass source info" do
+        cli.add_source(subclasses_dir)
+        tool, _remaining = loader.lookup(["foo"])
+        source = tool.source_info
+        assert_equal(:subclass, source.source_type)
+        assert_equal("#{subclasses_file} (class Foo)", source.source_name)
+      end
+
+      it "creates a nested subclass source info" do
+        cli.add_source(subclasses_dir)
+        tool, _remaining = loader.lookup(["foo-bar", "baz"])
+        source = tool.source_info
+        assert_equal(:subclass, source.source_type)
+        assert_equal("#{subclasses_file} (class FooBar::Baz)", source.source_name)
+      end
+
+      it "reports the subclass as the source" do
+        cli.add_source(subclasses_dir)
+        tool, _remaining = loader.lookup(["foo"])
+        source = tool.source_info
+        assert_same(tool.tool_class, source.source)
+        assert_same(tool.tool_class, source.source_subclass)
+        assert_nil(source.source_proc)
+      end
+
+      it "retains the enclosing file path and priority" do
+        cli.add_source(subclasses_dir)
+        tool, _remaining = loader.lookup(["foo"])
+        source = tool.source_info
+        assert_equal(subclasses_file, source.source_path)
+        assert_equal(subclasses_file, source.parent.source_name)
+        assert_equal(subclasses_dir, source.root.source_path)
+        assert_equal(tool.priority, source.priority)
+      end
     end
   end
 end

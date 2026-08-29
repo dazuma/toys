@@ -19,7 +19,10 @@ module Toys
       class << self
         ##
         # Called by the Loader and InputFile to prepare a tool class for running
-        # the DSL.
+        # the DSL, notably setting the standard class instance variables.
+        # Also sets a thread-local that indicates whether the current source
+        # is a proc source, which is necessary because subclasses cannot live
+        # under a proc and need to detect that state.
         #
         # @private
         #
@@ -30,21 +33,24 @@ module Toys
             end
             tool_class.extend(DSL::Tool)
           end
-          unless tool_class.instance_variable_defined?(:@__words)
-            tool_class.instance_variable_set(:@__words, words)
-            tool_class.instance_variable_set(:@__priority, source.priority)
-            tool_class.instance_variable_set(:@__loader, loader)
-            tool_class.instance_variable_set(:@__source, [])
-          end
+          tool_class.instance_variable_set(:@__words, words)
+          tool_class.instance_variable_set(:@__loader, loader)
           tool_class.instance_variable_set(:@__remaining_words, remaining_words)
-          tool_class.instance_variable_get(:@__source).push(source)
-          old_source = ::Thread.current[:__toys_current_source]
+
+          old_source =
+            if tool_class.instance_variable_defined?(:@__source)
+              tool_class.instance_variable_get(:@__source)
+            end
+          old_is_proc_source = ::Thread.current[:__toys_is_proc_source]
           begin
-            ::Thread.current[:__toys_current_source] = source
+            tool_class.instance_variable_set(:@__source, source)
+            ::Thread.current[:__toys_is_proc_source] = source.source_type == :proc
             yield
           ensure
-            tool_class.instance_variable_get(:@__source).pop
-            ::Thread.current[:__toys_current_source] = old_source
+            # Leave the outermost source in place after the block to ensure
+            # access doesn't blow up after loading finishes.
+            tool_class.instance_variable_set(:@__source, old_source) if old_source
+            ::Thread.current[:__toys_is_proc_source] = old_is_proc_source
           end
         end
 
@@ -61,7 +67,7 @@ module Toys
           else
             loader = tool_class.instance_variable_get(:@__loader)
             words = tool_class.instance_variable_get(:@__words)
-            priority = tool_class.instance_variable_get(:@__priority)
+            priority = tool_class.instance_variable_get(:@__source).priority
             cur_tool =
               if activate
                 loader.activate_tool(words, priority)
@@ -69,7 +75,7 @@ module Toys
                 loader.get_tool(words, priority)
               end
             if cur_tool && activate
-              source = tool_class.instance_variable_get(:@__source).last
+              source = tool_class.instance_variable_get(:@__source)
               cur_tool.lock_source(source)
             end
             tool_class.instance_variable_set(memoize_var, cur_tool)
@@ -166,26 +172,24 @@ module Toys
         #
         def configure_class(tool_class, given_name = nil)
           return if tool_class.name.nil? || tool_class.instance_variable_defined?(:@__loader)
+          validate_parent_source
 
           mod_names = tool_class.name.split("::")
           class_name = mod_names.pop
-          parent = parent_from_mod_name_segments(mod_names)
-          loader = parent.instance_variable_get(:@__loader)
+          parent_class = parent_from_mod_name_segments(mod_names)
+          loader = parent_class.instance_variable_get(:@__loader)
           name = given_name ? loader.tool_name_splitter.split(given_name) : class_name_to_tool_name(class_name)
-
-          priority = parent.instance_variable_get(:@__priority)
-          words = parent.instance_variable_get(:@__words) + name
-          subtool = loader.get_tool(words, priority, tool_class)
-
-          remaining_words = parent.instance_variable_get(:@__remaining_words)
+          source = parent_class.instance_variable_get(:@__source).subclass_child(tool_class)
+          words = parent_class.instance_variable_get(:@__words) + name
+          subtool = loader.get_tool(words, source.priority, tool_class)
+          remaining_words = parent_class.instance_variable_get(:@__remaining_words)
           next_remaining = name.reduce(remaining_words) do |running_words, word|
             Loader.next_remaining_words(running_words, word)
           end
 
           tool_class.instance_variable_set(:@__words, words)
-          tool_class.instance_variable_set(:@__priority, priority)
           tool_class.instance_variable_set(:@__loader, loader)
-          tool_class.instance_variable_set(:@__source, [current_source_from_context])
+          tool_class.instance_variable_set(:@__source, source)
           tool_class.instance_variable_set(:@__remaining_words, next_remaining)
           tool_class.instance_variable_set(:@__cur_tool, subtool)
         end
@@ -224,15 +228,13 @@ module Toys
           parent
         end
 
-        def current_source_from_context
-          source = ::Thread.current[:__toys_current_source]
-          if source.nil?
+        def validate_parent_source
+          case ::Thread.current[:__toys_is_proc_source]
+          when nil
             raise ToolDefinitionError, "Toys::Tool can be subclassed only from a Toys tool file"
-          end
-          unless source.source_type == :file
+          when true
             raise ToolDefinitionError, "Toys::Tool cannot be subclassed inside a tool block"
           end
-          source
         end
       end
     end

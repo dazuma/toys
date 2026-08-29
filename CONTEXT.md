@@ -9,8 +9,9 @@ documentation, and discussion stay consistent.
 
 **Source**:
 A location from which tools are loaded: a filesystem path, a git repository, a
-Ruby gem, or a block of DSL code. A source may be added to a source list,
-declared from within a toys file, or found by a loader as it walks a directory.
+Ruby gem, a block of DSL code, or a subclass of Toys::Tool. A source may be
+added to a source list, declared from within a toys file, or found by a loader
+as it walks a directory.
 _Avoid_: Config, config file, config path, tool path
 
 **Source spec**:

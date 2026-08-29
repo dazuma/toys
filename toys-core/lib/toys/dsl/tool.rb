@@ -1825,7 +1825,7 @@ module Toys
       # @return [Toys::SourceInfo] Source info.
       #
       def source_info
-        @__source.last
+        @__source
       end
 
       ##
