@@ -284,7 +284,9 @@ module Toys
       def lookup_tool
         @tool, @tool_args =
           if @wrap_errors
-            ContextualError.capture(banner: "Error finding tool definition", final: true) do
+            ContextualError.capture(banner: "Error finding tool definition",
+                                    tool_verb: "loading",
+                                    final: true) do
               @loader.lookup(@args)
             end
           else
@@ -299,7 +301,9 @@ module Toys
         ContextualError.capture(
           banner: "Error during tool execution",
           path: @tool.source_info&.source_path,
-          tool_name: @tool.full_name, tool_args: @tool_args,
+          tool_verb: "running",
+          tool_name: @tool.full_name,
+          tool_args: @tool_args,
           final: true
         ) do
           execute_internal

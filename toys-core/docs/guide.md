@@ -817,9 +817,16 @@ If you want a nested run to leave errors to the caller, pass
 For normal exceptions, this standard handler displays the exception to STDERR,
 along with some contextual information such as the tool name and arguments and
 the location in the tool source where the error occurred, and returns an
-appropriate result code, typically 1. For signals, this standard handler
-displays a brief message noting the signal or interrupt, and returns the
-conventional result code of `128 + signo` (e.g. 130 for interrupts).
+appropriate result code, typically 1.
+
+A backtrace is also displayed, which can have "uninteresting" frames omitted by
+passing an array of library directories in the `backtrace_omit_prefixes`
+argument. It is often useful, for example, to pass `Toys.framework_lib_paths`
+to omit Toys framework files from the backtrace.
+
+For signals, this standard handler displays a brief message noting the signal
+or interrupt, and returns the conventional result code of `128 + signo` (e.g.
+130 for interrupts).
 
 You can use this error handler by passing the proc returned by
 {Toys::Utils::StandardUI#error_handler_proc} to the CLI constructor:
@@ -1365,8 +1372,9 @@ Exception classes are defined in `lib/errors.rb`.
     entrypoint. (In the `toys` gem, this is generally caught by the help system
     and redirected to display the usage screen.)
  *  {Toys::ToolDefinitionError} - Raised during tool definition in response to
-    semantic issues with the definition or failure to load files or other
-    resources involved in the definition.
+    semantic issues with the definition.
+ *  {Toys::ToolSourceError} - Raised during tool loading to indicate failure to
+    load files or other resources involved in tool definition.
 
 ### Support and utility classes
 

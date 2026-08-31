@@ -73,5 +73,6 @@ module Toys
 end
 
 ::Toys.executable_path = ::Toys::EXECUTABLE_PATH
+::Toys.framework_lib_paths << ::Toys::LIB_PATH
 
 require "toys/standard_cli"

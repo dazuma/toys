@@ -178,9 +178,9 @@ describe Toys::ContextualError do
       # A ContextualError constructed outside a rescue has no cause at all, so
       # there is no root cause to fall back on. The message must still be
       # built rather than raising on nil.
-      inner = Toys::ContextualError.new(::RuntimeError.new("orig"), "Inner", nil, nil, nil, true)
+      inner = Toys::ContextualError.new(::RuntimeError.new("orig"), "Inner", nil, nil, nil, nil, true)
       assert_nil inner.root_cause
-      outer = Toys::ContextualError.new(inner, "Outer", nil, nil, nil, true)
+      outer = Toys::ContextualError.new(inner, "Outer", nil, nil, nil, nil, true)
       assert_equal "Outer: Inner: orig (RuntimeError) (Toys::ContextualError)", outer.message
     end
 
@@ -210,6 +210,20 @@ describe Toys::ContextualError do
         Toys::ContextualError.capture { raise "oops" }
       end
       assert_nil error.tool_args
+    end
+
+    it "sets tool_verb from keyword argument" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(tool_verb: "loading") { raise "oops" }
+      end
+      assert_equal "loading", error.tool_verb
+    end
+
+    it "leaves tool_verb nil when not provided" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture { raise "oops" }
+      end
+      assert_nil error.tool_verb
     end
 
     it "leaves tool_file_path and tool_file_line nil when no path provided" do
@@ -400,6 +414,28 @@ describe Toys::ContextualError do
       assert_equal ["inner-arg"], error.tool_args
     end
 
+    it "outer capture fills in nil tool_verb from inner capture" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(tool_verb: "running") do
+          Toys::ContextualError.capture do
+            raise "oops"
+          end
+        end
+      end
+      assert_equal "running", error.tool_verb
+    end
+
+    it "inner tool_verb is preserved when outer capture also has tool_verb" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(tool_verb: "running") do
+          Toys::ContextualError.capture(tool_verb: "loading") do
+            raise "oops"
+          end
+        end
+      end
+      assert_equal "loading", error.tool_verb
+    end
+
     it "outer capture fills in nil tool_file_path when path matches backtrace" do
       # Inner capture has no path; outer capture provides the path.
       # The exception was raised in __FILE__, so the outer path lookup succeeds.
@@ -487,9 +523,11 @@ describe Toys::ContextualError do
     it "wraps a final error in a new error rather than merging" do
       inner_error = nil
       error = assert_raises(Toys::ContextualError) do
-        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"]) do
+        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"],
+                                      tool_verb: "running") do
           inner_error = assert_raises(Toys::ContextualError) do
-            Toys::ContextualError.capture(banner: "inner", tool_name: ["inner-tool"], final: true) do
+            Toys::ContextualError.capture(banner: "inner", tool_name: ["inner-tool"],
+                                          tool_verb: "loading", final: true) do
               raise "oops"
             end
           end
@@ -499,9 +537,11 @@ describe Toys::ContextualError do
       refute_same(inner_error, error)
       assert_equal("outer", error.banner)
       assert_equal(["outer-tool"], error.tool_name)
+      assert_equal("running", error.tool_verb)
       assert_same(inner_error, error.cause)
       assert_equal("inner", error.cause.banner)
       assert_equal(["inner-tool"], error.cause.tool_name)
+      assert_equal("loading", error.cause.tool_verb)
       assert_equal("oops", error.cause.cause.message)
     end
 

@@ -127,15 +127,23 @@ end
 #
 # All the flag values are parsed up front, in command line order, so that a
 # malformed value is reported before any source is added, and is reported
-# against the first offending flag rather than the last. Whether each source
-# actually resolves is determined later still, by the loader.
+# against the first offending flag rather than the last.
+#
+# All added sources are then proactively resolved and failures reported.
 def build_cli
   specs = sources.map { |kind, value| parse_source_request(kind, value) }
   return cli if specs.empty?
   require "toys/utils/gems" if specs.any? { |spec| spec.is_a?(::Toys::SourceSpec::Gem) }
-  cli.child(copy_sources: true) do |child_cli|
+  tool_cli = cli.child(copy_sources: true) do |child_cli|
     specs.reverse_each { |spec| child_cli.add_source(spec, high_priority: true) }
   end
+  begin
+    tool_cli.loader.resolve_sources
+  rescue ::Toys::ToolSourceError => e
+    logger.error("Unable to resolve the given tool sources: #{e.message}")
+    exit(1)
+  end
+  tool_cli
 end
 
 # Parses and checks a single source request, returning the source spec to add

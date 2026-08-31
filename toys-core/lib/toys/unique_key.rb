@@ -4,6 +4,9 @@ module Toys
   ##
   # A named unique key, useful for {Toys::Context} keys or sentinels.
   #
+  # Each individual instance of this class is unique and not equal to any other
+  # instance, even if they have the same user-visible name.
+  #
   class UniqueKey
     ##
     # Create a new UniqueKey.

@@ -1450,6 +1450,17 @@ pass `-q`, the verbosity is decremented to -1, and the logger level is set to
 `ERROR`. So by using the provided logger, a tool can easily provide command
 line based control of the output verbosity.
 
+### Exception reporting
+
+If an exception is raised, Toys will halt and display it, returning a nonzero
+error code. This could happen for an exception raised while _defining_ a tool
+(for example if the tool definition has problems, or if Toys is unable to load
+the tool) or while _running_ the tool. Normally Toys displays the exception in
+an abbreviated format that identifies the tool that was run and where in the
+tool file the error occurred, but doesn't give you the entire stack trace
+(which could include a number of frames internal to the Toys framework). If you
+want to see the full stack trace, set the `TOYS_TRACE` environment variable.
+
 ### Running tools from tools
 
 A common operation a tool might want to do is "call" another tool. This can be

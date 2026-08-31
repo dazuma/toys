@@ -179,7 +179,7 @@ describe Toys::SourceInfo do
     end
 
     it "errors when resolving a path spec with a nonexistent path" do
-      assert_raises(Toys::SourceResolutionError) do
+      assert_raises(Toys::ToolSourceError) do
         resolve_root(Toys::SourceSpec.path(bad_path))
       end
     end
@@ -250,7 +250,7 @@ describe Toys::SourceInfo do
     it "errors when the parent is a git source" do
       spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(spec, git_cache: git_cache)
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
       end
       assert_equal("Git source #{parent.source_name} tried to load from the local file system",
@@ -518,7 +518,7 @@ describe Toys::SourceInfo do
     end
 
     it "errors when a git spec has no remote and no parent" do
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         resolve_root(Toys::SourceSpec.git(nil, path: git_directory_path), git_cache: git_cache)
       end
       assert_equal("Git remote not specified", error.message)
@@ -526,7 +526,7 @@ describe Toys::SourceInfo do
 
     it "errors when a git spec has no remote and the parent has none either" do
       parent = resolve_root(Toys::SourceSpec.path(directory_path))
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.resolve(Toys::SourceSpec.git(nil), parent: parent, git_cache: git_cache)
       end
       assert_equal("Git remote not specified", error.message)
@@ -885,15 +885,15 @@ describe Toys::SourceInfo do
   end
 
   describe "resolution errors" do
-    it "raises SourceResolutionError for an unreadable path" do
-      error = assert_raises(Toys::SourceResolutionError) do
+    it "raises ToolSourceError for an unreadable path" do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.check_path(bad_path, false)
       end
       assert_equal("Cannot read: #{bad_path}", error.message)
     end
 
-    it "raises SourceResolutionError for a non-ruby file" do
-      error = assert_raises(Toys::SourceResolutionError) do
+    it "raises ToolSourceError for a non-ruby file" do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.check_path(non_ruby_file, false)
       end
       assert_equal("File is not a ruby file: #{non_ruby_file}", error.message)
@@ -904,11 +904,11 @@ describe Toys::SourceInfo do
     # "//./NUL", which Ruby 2.7 reports as a directory and which later Rubies
     # name differently in the message. Stub the two predicates so this checks
     # the branch itself rather than a platform quirk.
-    it "raises SourceResolutionError for a path that is neither a file nor a directory" do
+    it "raises ToolSourceError for a path that is neither a file nor a directory" do
       expanded = File.expand_path(File::NULL)
       error = File.stub(:file?, false) do
         File.stub(:directory?, false) do
-          assert_raises(Toys::SourceResolutionError) do
+          assert_raises(Toys::ToolSourceError) do
             Toys::SourceInfo.check_path(File::NULL, false)
           end
         end
@@ -916,39 +916,33 @@ describe Toys::SourceInfo do
       assert_equal("Not a ruby file or directory: #{expanded}", error.message)
     end
 
-    it "raises SourceResolutionError when a gem cannot be activated" do
+    it "raises ToolSourceError when a gem cannot be activated" do
       failing_gems_util = Object.new
       failing_gems_util.define_singleton_method(:activate) do |*_args|
         raise Toys::Utils::Gems::ActivationFailedError, "activation went wrong"
       end
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.resolve_gem_info(failing_gems_util, gem_name, [], nil, nil)
       end
       assert_equal("activation went wrong", error.message)
     end
 
-    it "raises SourceResolutionError when an activated gem cannot be found" do
-      error = assert_raises(Toys::SourceResolutionError) do
+    it "raises ToolSourceError when an activated gem cannot be found" do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.resolve_gem_info(gems_util, "nonexistent-gem", [], nil, nil)
       end
       assert_equal("Unable to find gem nonexistent-gem", error.message)
     end
 
-    it "raises SourceResolutionError when a git repo cannot be accessed" do
+    it "raises ToolSourceError when a git repo cannot be accessed" do
       failing_git_cache = Object.new
       failing_git_cache.define_singleton_method(:get) do |*_args, **_opts|
         raise Toys::Utils::GitCache::Error, "repo went wrong"
       end
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         Toys::SourceInfo.resolve_git_info(failing_git_cache, git_remote, nil, nil, false)
       end
       assert_equal("Unable to access git repo #{git_remote}: repo went wrong", error.message)
-    end
-
-    it "raises an error that existing rescues of ToolDefinitionError still catch" do
-      assert_raises(Toys::ToolDefinitionError) do
-        Toys::SourceInfo.check_path(bad_path, false)
-      end
     end
   end
 end
