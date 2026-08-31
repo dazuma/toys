@@ -18,12 +18,38 @@ describe "toys e2e" do
       assert_equal("hello world\n", result.captured_out)
     end
 
-    it "displays exception message and source location on failure" do
+    it "displays exception message and source location on runtime failure" do
       toys_rb = File.join(e2e_cases_dir, "exception", ".toys.rb")
       result = run_toys("boom", chdir: "#{e2e_cases_dir}/exception", out: :capture, err: :capture)
       refute(result.success?)
-      assert_includes(result.captured_err, "RuntimeError: something went wrong")
-      assert_includes(result.captured_err, "in tool file: #{toys_rb}:5")
+      assert_includes(result.captured_err, "Error during tool execution: something went wrong (RuntimeError)")
+      assert_includes(result.captured_err, "(#{toys_rb}:5)")
+      assert_match(/\d+: #{::Regexp.escape(toys_rb)}:5/, result.captured_err)
+      refute_match(%r{/toys-core/lib/}, result.captured_err)
+      assert_match(/\.\.\.\d+ internal framework frame/, result.captured_err)
+    end
+
+    it "honors TOYS_TRACE" do
+      toys_rb = File.join(e2e_cases_dir, "exception", ".toys.rb")
+      result = run_toys("boom",
+                        chdir: "#{e2e_cases_dir}/exception",
+                        env: {"TOYS_TRACE" => "1"},
+                        out: :capture, err: :capture)
+      refute(result.success?)
+      assert_includes(result.captured_err, "Error during tool execution: something went wrong (RuntimeError)")
+      assert_includes(result.captured_err, "(#{toys_rb}:5)")
+      assert_match(/\d+: #{::Regexp.escape(toys_rb)}:5/, result.captured_err)
+      assert_match(%r{/toys-core/lib/}, result.captured_err)
+      refute_match(/\.\.\.\d+ internal framework frame/, result.captured_err)
+    end
+
+    it "displays exception message and source location on definition-time failure" do
+      toys_rb = File.join(e2e_cases_dir, "exception", ".toys.rb")
+      result = run_toys("defboom", chdir: "#{e2e_cases_dir}/exception", out: :capture, err: :capture)
+      refute(result.success?)
+      assert_includes(result.captured_err,
+                      "Error while evaluating tool definition: something went wrong (RuntimeError)")
+      assert_includes(result.captured_err, "(#{toys_rb}:10)")
     end
 
     it "reports tool not found with exit code 2" do

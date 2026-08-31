@@ -542,7 +542,7 @@ describe Toys::CLI do
 
     it "supports a custom handler that receives definition errors" do
       my_handler = proc do |error|
-        assert_nil(error.tool_name)
+        assert_equal(["definition", "hello"], error.tool_name)
         assert_includes(error.tool_file_path, "/errors/definition.rb")
         assert_kind_of(NameError, error.cause)
         9

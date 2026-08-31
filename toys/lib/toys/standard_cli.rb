@@ -94,7 +94,10 @@ module Toys
                    git_cache: nil,
                    gems_util: nil)
       require "toys/utils/standard_ui"
-      ui = Utils::StandardUI.new
+      ui = Utils::StandardUI.new(
+        backtrace_omit_prefixes: ::ENV["TOYS_TRACE"].to_s.empty? ? ::Toys.framework_lib_paths : nil,
+        incomplete_backtrace_message: "(Set the TOYS_TRACE envvar to a nonempty value to see the full trace.)"
+      )
       super(
         executable_name: EXECUTABLE_NAME,
         toplevel_tool_dir_name: TOPLEVEL_TOOL_DIR_NAME,

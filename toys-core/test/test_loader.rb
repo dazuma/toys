@@ -105,6 +105,15 @@ describe Toys::Loader do
     end
   end
 
+  describe "resolve_sources" do
+    it "raises ToolSourceError if a starting source has an error" do
+      source_list.add(Toys::SourceSpec.path(File.join(cases_dir, "zzz-nonexistent")))
+      assert_raises(Toys::ToolSourceError) do
+        loader.resolve_sources
+      end
+    end
+  end
+
   describe "configuration block" do
     it "loads tools" do
       spec = Toys::SourceSpec.block(source_name: "test block") do
@@ -468,7 +477,7 @@ describe Toys::Loader do
     it "raises at load time if a member of a set does not exist" do
       root_path = File.join(cases_dir, "config-items")
       source_list.add(Toys::SourceSpec.path(root_path, relative_paths: [".toys", ".nonexistent"]))
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         loader.lookup(["tool-1"])
       end
       assert_equal("Cannot read: #{File.join(root_path, '.nonexistent')}", error.message)
@@ -477,7 +486,7 @@ describe Toys::Loader do
     it "raises at load time if a member of a set is not a ruby file" do
       root_path = File.join(cases_dir, "normal-file-hierarchy")
       source_list.add(Toys::SourceSpec.path(root_path, relative_paths: ["hello.txt"]))
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         loader.lookup(["tool-1"])
       end
       assert_equal("File is not a ruby file: #{File.join(root_path, 'hello.txt')}", error.message)
@@ -487,7 +496,7 @@ describe Toys::Loader do
       root_path = File.join(cases_dir, "config-items")
       source_list.add(Toys::SourceSpec.path(root_path, relative_paths: [".toys", ".nonexistent"]))
       assert_equal(1, source_list.size)
-      assert_raises(Toys::SourceResolutionError) do
+      assert_raises(Toys::ToolSourceError) do
         loader.lookup(["tool-2"])
       end
       # The good member defines tool-2, and was not loaded either.
@@ -497,7 +506,7 @@ describe Toys::Loader do
     it "raises at load time if the root of a path set is not a directory" do
       root_path = File.join(cases_dir, "config-items", ".toys.rb")
       source_list.add(Toys::SourceSpec.path(root_path, relative_paths: []))
-      error = assert_raises(Toys::SourceResolutionError) do
+      error = assert_raises(Toys::ToolSourceError) do
         loader.lookup(["tool-1"])
       end
       assert_equal("Root of a source path set is not a directory: #{root_path}", error.message)
@@ -916,7 +925,7 @@ describe Toys::Loader do
     it "reports a source failure at first lookup rather than at construction" do
       bad_path = File.join(cases_dir, "doesnotexist")
       source_list.add(Toys::SourceSpec.path(bad_path))
-      error = assert_raises(Toys::SourceResolutionError) { deferring_loader.lookup(["tool-1"]) }
+      error = assert_raises(Toys::ToolSourceError) { deferring_loader.lookup(["tool-1"]) }
       assert_equal("Cannot read: #{bad_path}", error.message)
     end
 

@@ -33,7 +33,10 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     if str
       const_set(name, namespace)
       ::Toys::DSL::Internal.prepare(tool_class, words, remaining_words, source, loader) do
-        ::Toys::ContextualError.capture(banner: "Error while loading tool file", path: path) do
+        ::Toys::ContextualError.capture(banner: "Error while loading tool file",
+                                        path: path,
+                                        tool_verb: "loading",
+                                        tool_name: words) do
           eval(str, __binding, path) # rubocop:disable Security/Eval
         end
       end

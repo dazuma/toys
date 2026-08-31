@@ -5,3 +5,7 @@ tool "boom" do
     raise "something went wrong"
   end
 end
+
+tool "defboom" do
+  raise "something went wrong"
+end

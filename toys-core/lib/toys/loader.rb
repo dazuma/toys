@@ -93,6 +93,8 @@ module Toys
     # @param args [Array<String>] Command line arguments. The first argument
     #     may be a full tool name with delimiters.
     # @return [Array(Toys::ToolDefinition,Array<String>)]
+    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def lookup(args)
       orig_prefix, args = find_orig_prefix(args)
@@ -119,6 +121,8 @@ module Toys
     #     an array of strings; it cannot be a single string with delimiters.
     # @return [Toys::ToolDefinition] if the tool was found
     # @return [nil] if no such tool exists
+    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def lookup_specific(words)
       load_for_prefix(words)
@@ -143,6 +147,8 @@ module Toys
     # @param include_non_runnable [boolean] If true, include tools that have
     #     no children and are not runnable. Defaults to false.
     # @return [Array<Toys::ToolDefinition>] An array of subtools.
+    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def list_subtools(words,
                       recursive: false,
@@ -169,6 +175,8 @@ module Toys
     # @param words [Array<String>] The name of the parent tool. It must be an
     #     array of strings; it cannot be a single string with delimiters.
     # @return [boolean]
+    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
       load_for_prefix(words)
@@ -177,6 +185,20 @@ module Toys
         name = tool.full_name
         name.length > len && name.slice(0, len) == words
       end
+    end
+
+    ##
+    # Ensures all root sources are resolved. Does not actually load any tools.
+    #
+    # Can be called pre-emptively prior to other methods to prevent them from
+    # raising {Toys::ToolSourceError} directly. (It is still possible for them
+    # to raise {Toys::ToolSourceError} wrapped in a {Toys::ContextualError} if
+    # a tool invokes another source via one of the `load` directives.)
+    #
+    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    #
+    def resolve_sources
+      load_for_prefix(nil)
     end
 
     #### INTERNAL METHODS ####
@@ -246,6 +268,8 @@ module Toys
 
     ##
     # Loads the subtree under the given prefix.
+    # If the prefix is nil, does no loading but does ensure that all sources
+    # are resolved.
     #
     # @private This interface is internal and subject to change without warning.
     #
@@ -371,8 +395,11 @@ module Toys
 
       ##
       # Ensure there is a tool definition of the given priority, creating it if
-      # needed, and return it. A tool class may be provided, but only if the
-      # tool definition has not yet been created.
+      # needed, and return it.
+      #
+      # A tool class is provided when the tool is being defined via subclass of
+      # Toys::Tool. In this case, we check that the definition has not already
+      # been created via a normal tool block or other means.
       #
       # @private
       #
@@ -501,7 +528,7 @@ module Toys
         return
       end
       unless root_source.source_type == :directory
-        raise SourceResolutionError, "Root of a source path set is not a directory: #{root_source.source_path}"
+        raise ToolSourceError, "Root of a source path set is not a directory: #{root_source.source_path}"
       end
       resolved_sources = relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
       resolved_sources.each { |source| handle_resolved_worklist_item(prefix, source, []) }
@@ -514,6 +541,10 @@ module Toys
     #
     def handle_resolved_worklist_item(prefix, source_info, words)
       return if source_info.priority < @stop_priority
+      if prefix.nil?
+        @worklist << [source_info, words]
+        return
+      end
       remaining_words = calc_remaining_words(prefix, words)
       if source_info.source_proc
         load_proc(source_info, words, remaining_words)
@@ -531,7 +562,10 @@ module Toys
         update_min_loaded_priority(source.priority)
         tool_class = get_tool(words, source.priority).tool_class
         DSL::Internal.prepare(tool_class, words, remaining_words, source, self) do
-          ContextualError.capture(banner: "Error while evaluating tool definition") do
+          ContextualError.capture(banner: "Error while evaluating tool definition",
+                                  path: source.source_path,
+                                  tool_verb: "loading",
+                                  tool_name: words) do
             tool_class.class_eval(&source.source_proc)
           end
         end

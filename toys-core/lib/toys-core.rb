@@ -139,6 +139,8 @@ module Toys
   module Utils
   end
 
+  @framework_lib_paths = []
+
   class << self
     ##
     # Path to the executable. This can, for example, be invoked to run a subtool
@@ -148,6 +150,14 @@ module Toys
     # @return [nil] if there is no such executable
     #
     attr_accessor :executable_path
+
+    ##
+    # Array of directory absolute paths within which Ruby files for the
+    # toys-core (and toys, if present) gems live.
+    #
+    # @return [Array<String>] Array of directory paths
+    #
+    attr_reader :framework_lib_paths
   end
 
   ##
@@ -155,6 +165,8 @@ module Toys
   #
   CORE_LIB_PATH = __dir__
 end
+
+::Toys.framework_lib_paths << ::Toys::CORE_LIB_PATH
 
 require "toys/compat"
 require "toys/unique_key"

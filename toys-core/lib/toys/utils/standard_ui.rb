@@ -28,11 +28,21 @@ module Toys
       # @param output [IO,Toys::Utils::Terminal] Where to write output. You can
       #     pass a terminal object, or an IO stream that will be wrapped in a
       #     terminal output. Default is `$stderr`.
+      # @param backtrace_omit_prefixes [Array<String>] An array of directories
+      #     under which Ruby files should be elided from backtraces. Optional.
+      #     To elide internal Toys framework files, you can pass
+      #     {Toys.framework_lib_paths}.
+      # @param incomplete_backtrace_message [String] A message to display when
+      #     the backtrace has been elided. Optional.
       #
-      def initialize(output: nil)
+      def initialize(output: nil, backtrace_omit_prefixes: nil, incomplete_backtrace_message: nil)
         require "toys/utils/terminal"
         @terminal = output || $stderr
         @terminal = Terminal.new(output: @terminal) unless @terminal.is_a?(Terminal)
+        @backtrace_omit_prefixes = backtrace_omit_prefixes&.map do |dir|
+          dir.end_with?(::File::SEPARATOR) ? dir : "#{dir}#{::File::SEPARATOR}"
+        end
+        @incomplete_backtrace_message = incomplete_backtrace_message
         @log_header_severity_styles = {
           "FATAL" => [:bright_magenta, :bold, :underline],
           "ERROR" => [:bright_red, :bold],
@@ -193,32 +203,26 @@ module Toys
       end
 
       ##
-      # Displays a default output for an error. Displays the error, the
-      # backtrace, and contextual information regarding what tool was run and
-      # where in its code the error occurred.
+      # Displays a default output for an error.
       #
-      # When one tool invokes another, the {Toys::ContextualError} wrappers
-      # nest, one per tool. Each is displayed as a block, innermost first, led
-      # by the line naming its tool with the rest of its lines indented under
-      # that. Information that would simply repeat the block within it is
-      # omitted.
+      # The output format includes the error message itself, a backtrace
+      # (possibly with some entries omitted), and the stack of tool calls if
+      # available (i.e. if the error is a ContextualError).
       #
       # This method is used by {#handle_error} and can be overridden to change
-      # its behavior.
+      # the rendering.
       #
       # @param error [Toys::ContextualError,StandardError,ScriptError] The
       #     error to display. An error that is not a {Toys::ContextualError}
       #     is displayed by itself, with no context blocks.
       #
       def display_error_notice(error)
-        frames, origin = error_frames(error)
         @terminal.puts
-        @terminal.puts(cause_string(origin))
-        previous = nil
-        frames.each_with_index do |frame, index|
-          block = context_string(frame, previous)
-          @terminal.puts(block, *(index.zero? ? [:bold] : [])) unless block.empty?
-          previous = frame
+        origin, banner, frames = error_frames(error)
+        render_backtrace(origin)
+        render_banner(banner)
+        frames.each do |frame|
+          render_tool_line(frame)
         end
       end
 
@@ -255,20 +259,14 @@ module Toys
 
       private
 
-      def cause_string(cause)
-        lines = []
-        (cause.backtrace || []).each_with_index do |bt, i|
-          lines << "    #{(i + 1).to_s.rjust(3)}: #{bt}"
-        end
-        lines << "#{cause.class}: #{cause.message}"
-        lines.reverse.join("\n")
-      end
-
       # Walks the chain of nested ContextualErrors starting from the given
-      # error. Returns the frames ordered innermost first, along with the error
-      # at the bottom of the chain, which is the one that actually failed. A
-      # ContextualError constructed outside a rescue has no cause, in which
-      # case the innermost frame stands in as the origin.
+      # error, to determine which errors to use for which purposes. Returns,
+      # in order:
+      #  1. The error to use for backtraces, usually the original cause (the
+      #     first non-ContextualError in the chain)
+      #  2. The error to use for the banner, usually the first ContextualError
+      #     in the chain
+      #  3. The full chain of ContextualErrors, to use for the tool call stack
       def error_frames(error)
         frames = []
         current = error
@@ -276,48 +274,67 @@ module Toys
           frames << current
           current = current.cause
         end
-        [frames.reverse, current || frames.last]
+        frames.reverse!
+        first_frame = frames.first
+        [current || first_frame, first_frame || current, frames]
       end
 
-      # Renders one frame of the error chain. The innermost frame, for which
-      # `previous` is nil, says where the error happened; each subsequent frame
-      # names the tool that invoked the frame before it. The banner, the tool
-      # definition location, and the arguments are omitted when they would
-      # merely repeat that frame, which they usually do for a delegation.
-      #
-      # A frame leads with the line naming its tool, and indents the rest of
-      # its lines under that, so that the frames stay visually separable even
-      # though the omissions above mean a frame has no fixed set of lines. A
-      # frame with no tool to name has nothing to lead with, so its lines stay
-      # at the outer indent.
-      def context_string(error, previous = nil)
-        banner = error.banner || "Unexpected error!"
-        lines = []
-        lines << banner unless previous && banner == (previous.banner || "Unexpected error!")
-        indent = "    "
-        if error.tool_name
-          verb = previous ? "called from tool" : "while executing tool"
-          lines << "#{indent}#{verb}: #{error.tool_name.join(' ').inspect}"
-          indent = "      "
-          unless error.tool_args.nil? || (previous && error.tool_args == previous.tool_args)
-            lines << "#{indent}with arguments: #{error.tool_args.inspect}"
+      # Renders a stack trace, if appropriate
+      def render_backtrace(error)
+        internals_count = 0
+        frames_hidden = false
+        backtrace = error.backtrace_locations || error.backtrace || []
+        @terminal.puts("Backtrace (outermost to innermost)") unless backtrace.empty?
+        backtrace.each_with_index.reverse_each do |loc, i|
+          if omit_frame?(loc)
+            internals_count += 1
+            frames_hidden = true
+          else
+            render_internal_frames(internals_count)
+            internals_count = 0
+            @terminal.puts("  #{(i + 1).to_s.rjust(3)}: #{loc}")
           end
         end
-        if show_definition_location?(error, previous)
-          lines << "#{indent}in tool file: #{error.tool_file_path}:#{error.tool_file_line}"
-        end
-        lines.join("\n")
+        render_internal_frames(internals_count)
+        @terminal.puts("    #{@incomplete_backtrace_message}") if frames_hidden && @incomplete_backtrace_message
       end
 
-      # Returns whether a frame's definition location should be shown. It is
-      # suppressed when it points at the same place as the frame within it,
-      # which happens whenever both tools are defined in the same file, because
-      # every frame resolves its location from the original error's backtrace
-      # and so lands on the innermost tool's line.
-      def show_definition_location?(error, previous)
-        return false if error.tool_file_path.nil?
-        return true if previous.nil?
-        error.tool_file_path != previous.tool_file_path || error.tool_file_line != previous.tool_file_line
+      def omit_frame?(loc)
+        return false unless @backtrace_omit_prefixes
+        loc_str = loc.respond_to?(:absolute_path) ? (loc.absolute_path || loc.path).to_s : loc.strip
+        @backtrace_omit_prefixes.any? { |pre| loc_str.start_with?(pre) }
+      end
+
+      def render_internal_frames(count)
+        return unless count.positive?
+        frame_text = count == 1 ? "frame" : "frames"
+        @terminal.puts("    (...#{count} internal framework #{frame_text}...)")
+      end
+
+      # Renders the headline of the error: the message and the calculated
+      # source location.
+      def render_banner(error)
+        if error.is_a?(::Toys::ContextualError)
+          @terminal.puts(error.message, :bold)
+          unless error.tool_file_path.nil?
+            @terminal.puts("    (#{error.tool_file_path}:#{error.tool_file_line})", :bold)
+          end
+        else
+          @terminal.puts("#{error.message} (#{error.class})", :bold)
+        end
+      end
+
+      # Renders the tool name and arguments for one frame.
+      def render_tool_line(error)
+        return unless error.tool_verb
+        tool_desc =
+          if error.tool_name.nil?
+            "tools"
+          else
+            desc1 = error.tool_name.empty? ? "the root tool" : "tool: #{error.tool_name.join(' ').inspect}"
+            error.tool_args.nil? ? desc1 : "#{desc1}, with arguments: #{error.tool_args.inspect}"
+          end
+        @terminal.puts("while #{error.tool_verb} #{tool_desc}")
       end
     end
   end

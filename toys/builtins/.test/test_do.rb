@@ -741,4 +741,11 @@ describe "toys do source ordering" do
     refute(Gem.loaded_specs.key?("fake-tools-two"))
     refute(File.exist?(cache_dir))
   end
+
+  it "reports an error when a source fails to resolve" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, run_do("--path=zzz-nonexistent", "shared-tool"))
+    end
+    assert_match(/ERROR\]  Unable to resolve the given tool sources:/, err)
+  end
 end
