@@ -150,57 +150,22 @@ module Toys
     attr_reader :source_subclass
 
     ##
-    # The git remote. This is set if the source, or one of its ancestors, comes
-    # from git.
+    # The origin of this source, describing where its content came from: the
+    # local file system, a git repository, a Ruby gem, or a block of code.
     #
-    # @return [String] The git remote
-    # @return [nil] if this source is not from git.
+    # An origin is fixed when a source spec is resolved. A source created by
+    # descending from another, whether by walking a directory or by entering a
+    # block or a subclass, shares its parent origin object.
     #
-    attr_reader :git_remote
-
-    ##
-    # The git path. This is set if the source, or one of its ancestors, comes
-    # from git.
+    # Origins are one of the following types:
+    # * {Toys::SourceInfo::Origin::Local} for a local file or directory
+    # * {Toys::SourceInfo::Origin::Git} for a git repository
+    # * {Toys::SourceInfo::Origin::Gem} for a RubyGem
+    # * {Toys::SourceInfo::Origin::Block} for a bare Ruby code block
     #
-    # @return [String] The git path. This could be the empty string.
-    # @return [nil] if this source is not from git.
+    # @return [Toys::SourceInfo::Origin::Base]
     #
-    attr_reader :git_path
-
-    ##
-    # The git commit. This is set if the source, or one of its ancestors, comes
-    # from git.
-    #
-    # @return [String] The git commit.
-    # @return [nil] if this source is not from git.
-    #
-    attr_reader :git_commit
-
-    ##
-    # The gem name. This is set if the source, or one of its ancestors, comes
-    # from a gem.
-    #
-    # @return [String] The gem name.
-    # @return [nil] if this source is not from a gem.
-    #
-    attr_reader :gem_name
-
-    ##
-    # The gem version. This is set if the source, or one of its ancestors,
-    # comes from a gem.
-    #
-    # @return [Gem::Version] The gem version.
-    # @return [nil] if this source is not from a gem.
-    #
-    attr_reader :gem_version
-
-    ##
-    # The path within the gem, including the toys root directory in the gem.
-    #
-    # @return [String] The path.
-    # @return [nil] if this source is not from a gem.
-    #
-    attr_reader :gem_path
+    attr_reader :origin
 
     ##
     # A user-visible name of this source.
@@ -320,28 +285,34 @@ module Toys
           if spec.relative_paths
             raise ::ArgumentError, "A path spec with relative paths cannot be resolved as a child"
           end
-          if parent.git_remote
+          case parent.origin
+          when Origin::Git
             raise ToolSourceError, "Git source #{parent.source_name} tried to load from the local file system"
+          when Origin::Gem
+            raise ToolSourceError, "Gem source #{parent.source_name} tried to load from the local file system"
           end
         end
         source_path, type = check_path(spec.path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil, nil,
-            nil, nil, nil, nil, nil, nil,
-            spec.source_name)
+        origin = Origin::Local.new(source_path)
+        new(parent, priority, context_directory, type, origin, ".", nil, nil, spec.source_name)
       end
 
       def resolve_git_spec(spec, parent, priority, git_cache)
-        git_remote = spec.remote || parent&.git_remote
+        parent_origin = parent&.origin
+        git_remote = spec.remote
+        git_commit = spec.commit
+        if parent_origin.is_a?(Origin::Git)
+          git_remote ||= parent_origin.remote
+          git_commit ||= parent_origin.commit
+        end
         raise ToolSourceError, "Git remote not specified" unless git_remote
-        git_commit = spec.commit || parent&.git_commit
         git_commit, git_path, source_path =
           resolve_git_info(git_cache, git_remote, spec.path, git_commit, spec.update)
         source_path, type = check_path(source_path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil, nil,
-            git_remote, git_path, git_commit, nil, nil, nil,
-            spec.source_name)
+        origin = Origin::Git.new(source_path, git_remote, git_commit, git_path)
+        new(parent, priority, context_directory, type, origin, ".", nil, nil, spec.source_name)
       end
 
       def resolve_gem_spec(spec, parent, priority, gems_util)
@@ -349,15 +320,12 @@ module Toys
           resolve_gem_info(gems_util, spec.name, spec.version, spec.path, spec.toys_dir)
         source_path, type = check_path(source_path, false)
         context_directory = spec.context_directory || parent&.context_directory
-        new(parent, priority, context_directory, type, source_path, nil, nil,
-            nil, nil, nil, spec.name, gem_version, gem_path,
-            spec.source_name)
+        origin = Origin::Gem.new(source_path, spec.name, gem_version, gem_path)
+        new(parent, priority, context_directory, type, origin, ".", nil, nil, spec.source_name)
       end
 
       def resolve_block_spec(spec, priority)
-        new(nil, priority, spec.context_directory, :proc, nil, spec.block, nil,
-            nil, nil, nil, nil, nil, nil,
-            spec.source_name)
+        new(nil, priority, spec.context_directory, :proc, Origin::Block.new, ".", spec.block, nil, spec.source_name)
       end
     end
 
@@ -372,10 +340,9 @@ module Toys
       raise ::ArgumentError, "relative_child is valid only on a directory source" unless source_type == :directory
       child_path, type = SourceInfo.check_path(::File.join(source_path, filename), lenient)
       return nil unless child_path
-      child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
-      child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil, nil,
-                     git_remote, child_git_path, git_commit, gem_name, gem_version, child_gem_path,
+      child_relative_path = Origin.join_relative(@relative_path, filename)
+      SourceInfo.new(self, priority, context_directory, type,
+                     @origin, child_relative_path, nil, nil,
                      source_name)
     end
 
@@ -397,8 +364,8 @@ module Toys
     #
     def proc_child(child_proc, source_name: nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc, nil,
-                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+      SourceInfo.new(self, priority, context_directory, :proc,
+                     @origin, @relative_path, child_proc, nil,
                      source_name)
     end
 
@@ -411,8 +378,8 @@ module Toys
       unless [:file, :subclass].include?(source_type)
         raise ::ArgumentError, "subclass_child is valid only on a file or subclass source"
       end
-      SourceInfo.new(self, priority, context_directory, :subclass, source_path, nil, subclass,
-                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+      SourceInfo.new(self, priority, context_directory, :subclass,
+                     @origin, @relative_path, nil, subclass,
                      source_name)
     end
 
@@ -427,31 +394,26 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def initialize(parent, priority, context_directory,
-                   source_type, source_path, source_proc, source_subclass,
-                   git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+                   source_type, origin, relative_path, source_proc, source_subclass,
                    source_name)
       @parent = parent
       @root = parent&.root || self
       @priority = priority
       @context_directory = context_directory
       @source_type = source_type
+      @origin = origin
+      @relative_path = relative_path
+      @source_path = origin.joined_path(relative_path)
       @source = case source_type
                 when :proc
                   source_proc
                 when :subclass
                   source_subclass
                 else
-                  source_path
+                  @source_path
                 end
-      @source_path = source_path
       @source_proc = source_proc
       @source_subclass = source_subclass
-      @git_remote = git_remote
-      @git_path = git_path
-      @git_commit = git_commit
-      @gem_name = gem_name
-      @gem_version = gem_version
-      @gem_path = gem_path
       @source_name = source_name || default_source_name
     end
 
@@ -549,16 +511,13 @@ module Toys
     private
 
     def default_source_name
-      if source_type == :proc
+      case source_type
+      when :proc
         "(code block #{source_proc.object_id})"
-      elsif source_type == :subclass
+      when :subclass
         default_subclass_source_name
-      elsif git_remote
-        "git(remote=#{git_remote} path=#{git_path} commit=#{git_commit})"
-      elsif gem_name
-        "gem(name=#{gem_name} version=#{gem_version} path=#{gem_path})"
       else
-        source_path
+        @origin.describe(@relative_path)
       end
     end
 
