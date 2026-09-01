@@ -3053,6 +3053,14 @@ describe Toys::DSL::Tool do
       assert_match(/Toys::Tool can be subclassed only from the Toys DSL/, ex.cause.message)
     end
 
+    it "cannot be reset by a later definition" do
+      cli.add_source(File.join(cases_dir, "tool-subclass-reset"))
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo"])
+      end
+      assert_equal('Cannot reset tool "foo" because it uses a fixed subclass', ex.cause.message)
+    end
+
     describe "source info" do
       let(:subclasses_dir) { File.join(cases_dir, "tool-subclasses") }
       let(:subclasses_file) { File.join(subclasses_dir, ".toys.rb") }

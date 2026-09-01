@@ -1340,6 +1340,104 @@ describe Toys::ToolDefinition do
     end
   end
 
+  describe "reset_definition" do
+    it "clears a definition made through the DSL" do
+      tool.desc = "hi"
+      tool.reset_definition
+      assert_equal("", tool.desc.to_s)
+    end
+
+    it "refuses to clear a definition backed by a fixed subclass" do
+      fixed_tool = loader.get_tool([tool2_name], 0, ::Class.new(Toys::Context))
+      fixed_tool.desc = "hi"
+      error = assert_raises(Toys::ToolDefinitionError) do
+        fixed_tool.reset_definition
+      end
+      assert_equal("Cannot reset tool #{tool2_name.inspect} because it uses a fixed subclass", error.message)
+      assert_equal("hi", fixed_tool.desc.to_s)
+    end
+  end
+
+  describe "definition finished guard" do
+    let(:finished_tool) {
+      tool.finish_definition(loader)
+      tool
+    }
+
+    def assert_finished_error(&block)
+      error = assert_raises(Toys::ToolDefinitionError, &block)
+      assert_match(/is already finished/, error.message)
+    end
+
+    it "prevents including a mixin" do
+      assert_finished_error { finished_tool.include_mixin(MyMixin) }
+    end
+
+    it "prevents setting the long description" do
+      assert_finished_error { finished_tool.long_desc = ["hi"] }
+    end
+
+    it "prevents appending to the long description" do
+      assert_finished_error { finished_tool.append_long_desc(["hi"]) }
+    end
+
+    it "prevents disabling argument parsing" do
+      assert_finished_error { finished_tool.disable_argument_parsing }
+    end
+
+    it "prevents enforcing flags before args" do
+      assert_finished_error { finished_tool.enforce_flags_before_args }
+    end
+
+    it "prevents requiring exact flag match" do
+      assert_finished_error { finished_tool.require_exact_flag_match }
+    end
+
+    it "prevents adding a flag" do
+      assert_finished_error { finished_tool.add_flag(:a, ["-a"]) }
+    end
+
+    it "prevents disabling a flag" do
+      assert_finished_error { finished_tool.disable_flag("-a") }
+    end
+
+    it "prevents adding a required arg" do
+      assert_finished_error { finished_tool.add_required_arg(:a) }
+    end
+
+    it "prevents setting the run handler" do
+      assert_finished_error { finished_tool.run_handler = proc {} }
+    end
+
+    it "prevents setting a signal handler" do
+      assert_finished_error { finished_tool.set_signal_handler("INT", proc {}) }
+    end
+
+    it "prevents setting the usage error handler" do
+      assert_finished_error { finished_tool.usage_error_handler = proc {} }
+    end
+
+    it "prevents adding an initializer" do
+      assert_finished_error { finished_tool.add_initializer(proc {}) }
+    end
+
+    it "prevents setting the custom context directory" do
+      assert_finished_error { finished_tool.custom_context_directory = __dir__ }
+    end
+
+    it "prevents setting inheritable helper methods" do
+      assert_finished_error { finished_tool.inheritable_helper_methods = true }
+    end
+
+    it "prevents delegating to another tool" do
+      assert_finished_error { finished_tool.delegate_to(["bar"]) }
+    end
+
+    it "prevents marking that modules are included" do
+      assert_finished_error { finished_tool.mark_includes_modules }
+    end
+  end
+
   describe "context directory" do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:default_context_dir) { File.expand_path(__dir__) }
