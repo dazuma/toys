@@ -8,11 +8,20 @@ documentation, and discussion stay consistent.
 ## Language
 
 **Source**:
-A location from which tools are loaded: a filesystem path, a git repository, a
-Ruby gem, a block of DSL code, or a subclass of Toys::Tool. A source may be
+A location from which tools are loaded. Every source has an origin, saying
+where its content came from, and a type, saying what the thing is: a file, a
+directory, a block of DSL code, or a subclass of Toys::Tool. A source may be
 added to a source list, declared from within a toys file, or found by a loader
 as it walks a directory.
 _Avoid_: Config, config file, config path, tool path
+
+**Origin**:
+Where a source's content came from: the local file system, a git repository, a
+Ruby gem, or a block of code. A source's origin is fixed when its source spec
+is resolved, and every source descending from it shares it. Distinct from a
+source's type, which says what the thing is rather than where it came from, and
+which varies from one source to the next down the tree.
+_Avoid_: Provenance, location, source kind
 
 **Source spec**:
 An unresolved description of a source: its kind, and the information needed to

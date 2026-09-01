@@ -72,6 +72,33 @@ describe Toys::SourceInfo do
     Toys::SourceInfo.resolve(spec, priority: priority, git_cache: git_cache, gems_util: gems_util)
   end
 
+  # Asserts the origin kind, and for git and gem origins the fields fixed when
+  # the source spec was resolved. The path is the origin path of the *root*
+  # source, which does not change as children descend below it.
+  def assert_local_origin(source_info)
+    assert_instance_of(Toys::SourceInfo::Origin::Local, source_info.origin)
+  end
+
+  def assert_block_origin(source_info)
+    assert_instance_of(Toys::SourceInfo::Origin::Block, source_info.origin)
+  end
+
+  def assert_git_origin(source_info, path)
+    origin = source_info.origin
+    assert_instance_of(Toys::SourceInfo::Origin::Git, origin)
+    assert_equal(git_remote, origin.remote)
+    assert_equal(git_commit, origin.commit)
+    assert_equal(path, origin.path)
+  end
+
+  def assert_gem_origin(source_info, path)
+    origin = source_info.origin
+    assert_instance_of(Toys::SourceInfo::Origin::Gem, origin)
+    assert_equal(gem_name, origin.name)
+    assert_equal(gem_version, origin.version)
+    assert_equal(path, origin.path)
+  end
+
   describe "resolving a root" do
     it "resolves a path spec pointing to a directory" do
       si = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: directory_path))
@@ -83,12 +110,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(directory_path, si.source_name)
     end
 
@@ -102,12 +124,7 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(file_path, si.source_name)
     end
 
@@ -121,12 +138,7 @@ describe Toys::SourceInfo do
       assert_equal(:proc, si.source_type)
       assert_nil(si.source_path)
       assert_equal(my_proc, si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_block_origin(si)
       assert_equal(custom_source_name, si.source_name)
     end
 
@@ -141,12 +153,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_directory_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -162,12 +169,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_directory_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
@@ -209,12 +211,7 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(file_path, si.source_name)
     end
 
@@ -229,25 +226,11 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(file_path, si.source_name)
     end
 
-    it "drops the gem fields of a gem parent" do
-      spec = Toys::SourceSpec.gem(gem_name, path: "data-finder", toys_dir: gem_toys_dir)
-      parent = resolve_root(spec, gems_util: gems_util)
-      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
-    end
-
-    it "errors when the parent is a git source" do
+    it "errors when resolving when the parent is a git source" do
       spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(spec, git_cache: git_cache)
       error = assert_raises(Toys::ToolSourceError) do
@@ -257,7 +240,17 @@ describe Toys::SourceInfo do
                    error.message)
     end
 
-    it "errors when the spec carries relative paths" do
+    it "errors when resolving when the parent is a gem source" do
+      spec = Toys::SourceSpec.gem(gem_name, path: "data-finder", toys_dir: gem_toys_dir)
+      parent = resolve_root(spec, gems_util: gems_util)
+      error = assert_raises(Toys::ToolSourceError) do
+        Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+      end
+      assert_equal("Gem source #{parent.source_name} tried to load from the local file system",
+                   error.message)
+    end
+
+    it "errors when resolving a spec that carries relative paths" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data))
       spec = Toys::SourceSpec.path(directory_path, relative_paths: [".toys.rb"])
       assert_raises(::ArgumentError) do
@@ -279,12 +272,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_directory_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -302,12 +290,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_directory_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -325,12 +308,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_directory_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -347,12 +325,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_directory_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -371,12 +344,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_directory_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
@@ -394,12 +362,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_directory_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
@@ -417,12 +380,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_directory_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
@@ -439,12 +397,7 @@ describe Toys::SourceInfo do
       assert_equal(:directory, si.source_type)
       assert_equal(directory_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_directory_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
@@ -500,7 +453,7 @@ describe Toys::SourceInfo do
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(nil, path: git_directory_path, commit: git_commit)
       si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
-      assert_equal(git_remote, si.git_remote)
+      assert_equal(git_remote, si.origin.remote)
     end
 
     it "inherits the git commit when the spec does not give one" do
@@ -508,13 +461,13 @@ describe Toys::SourceInfo do
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(nil, path: git_directory_path)
       si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
-      assert_equal(git_commit, si.git_commit)
+      assert_equal(git_commit, si.origin.commit)
     end
 
     it "falls back to HEAD when neither the spec nor the parent gives a commit" do
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path)
       si = resolve_root(spec, git_cache: git_cache)
-      assert_equal("HEAD", si.git_commit)
+      assert_equal("HEAD", si.origin.commit)
     end
 
     it "errors when a git spec has no remote and no parent" do
@@ -533,6 +486,70 @@ describe Toys::SourceInfo do
     end
   end
 
+  describe "origin identity" do
+    it "shares the parent origin object with a relative child" do
+      spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
+      parent = resolve_root(spec, git_cache: git_cache)
+      si = parent.relative_child(".toys.rb")
+      assert_same(parent.origin, si.origin)
+    end
+
+    it "shares the parent origin object with a proc child" do
+      spec = Toys::SourceSpec.gem(gem_name, path: "config-items/.toys.rb", toys_dir: gem_toys_dir)
+      parent = resolve_root(spec, gems_util: gems_util)
+      si = parent.proc_child(my_proc)
+      assert_same(parent.origin, si.origin)
+    end
+
+    it "shares the parent origin object with a subclass child" do
+      parent = resolve_root(Toys::SourceSpec.path(file_path))
+      si = parent.subclass_child(my_class)
+      assert_same(parent.origin, si.origin)
+    end
+
+    it "gives a resolved child its own origin rather than the parent one" do
+      parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
+      parent = resolve_root(parent_spec, git_cache: git_cache)
+      spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
+      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      refute_same(parent.origin, si.origin)
+      assert_equal(git_path_with_data, parent.origin.path)
+      assert_equal(git_directory_path, si.origin.path)
+    end
+
+    it "keeps the origin path fixed while the source path descends" do
+      spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
+      parent = resolve_root(spec, git_cache: git_cache)
+      si = parent.relative_child(".toys.rb")
+      assert_equal(git_directory_path, si.origin.path)
+      assert_equal(file_path, si.source_path)
+    end
+
+    it "accumulates the relative path across multiple levels of children" do
+      spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
+      parent = resolve_root(spec, git_cache: git_cache)
+      si = parent.relative_child("ns-1").relative_child("ns-1a")
+      child_git_path = File.join(git_path_with_data, "ns-1", "ns-1a")
+      assert_git_origin(si, git_path_with_data)
+      assert_equal(File.join(path_with_data, "ns-1", "ns-1a"), si.source_path)
+      assert_equal("git(remote=#{git_remote} path=#{child_git_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "does not expose the derivation of the source path" do
+      si = resolve_root(Toys::SourceSpec.path(directory_path))
+      refute_respond_to(si, :relative_path)
+      refute_respond_to(si, :initial_path)
+    end
+
+    it "no longer exposes the flattened git and gem readers" do
+      si = resolve_root(Toys::SourceSpec.path(directory_path))
+      [:git_remote, :git_path, :git_commit, :gem_name, :gem_version, :gem_path].each do |reader|
+        refute_respond_to(si, reader)
+      end
+    end
+  end
+
   describe "#relative_child" do
     it "creates a relative child of a file system root" do
       parent = resolve_root(Toys::SourceSpec.path(directory_path, context_directory: lookup_cases_dir))
@@ -545,12 +562,7 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(file_path, si.source_name)
     end
 
@@ -566,13 +578,20 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_file_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_directory_path)
       assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "creates a relative child of a git root covering the entire repository" do
+      spec = Toys::SourceSpec.git(git_remote, commit: git_commit)
+      parent = resolve_root(spec, git_cache: git_cache)
+      assert_git_origin(parent, "")
+      assert_equal("git(remote=#{git_remote} path= commit=#{git_commit})", parent.source_name)
+      si = parent.relative_child("toys-core")
+      assert_equal(:directory, si.source_type)
+      assert_git_origin(si, "")
+      assert_equal("git(remote=#{git_remote} path=toys-core commit=#{git_commit})",
                    si.source_name)
     end
 
@@ -588,12 +607,7 @@ describe Toys::SourceInfo do
       assert_equal(:file, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_file_path, si.gem_path)
+      assert_gem_origin(si, gem_directory_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path})",
                    si.source_name)
     end
@@ -625,12 +639,7 @@ describe Toys::SourceInfo do
       assert_equal(:proc, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_equal(my_proc, si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal(file_path, si.source_name)
     end
 
@@ -646,12 +655,7 @@ describe Toys::SourceInfo do
       assert_equal(:proc, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_equal(my_proc, si.source_proc)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_file_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_file_path)
       assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -668,12 +672,7 @@ describe Toys::SourceInfo do
       assert_equal(:proc, si.source_type)
       assert_equal(file_path, si.source_path)
       assert_equal(my_proc, si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_file_path, si.gem_path)
+      assert_gem_origin(si, gem_file_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path})",
                    si.source_name)
     end
@@ -689,12 +688,7 @@ describe Toys::SourceInfo do
       assert_equal(:proc, si.source_type)
       assert_nil(si.source_path)
       assert_equal(my_proc2, si.source_proc)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_block_origin(si)
       assert_equal(custom_source_name, si.source_name)
     end
   end
@@ -712,12 +706,7 @@ describe Toys::SourceInfo do
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
       assert_equal(my_class, si.source_subclass)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_local_origin(si)
       assert_equal("#{file_path} (class MyToolClass)", si.source_name)
     end
 
@@ -734,12 +723,7 @@ describe Toys::SourceInfo do
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
       assert_equal(my_class, si.source_subclass)
-      assert_equal(git_remote, si.git_remote)
-      assert_equal(git_file_path, si.git_path)
-      assert_equal(git_commit, si.git_commit)
-      assert_nil(si.gem_name)
-      assert_nil(si.gem_version)
-      assert_nil(si.gem_path)
+      assert_git_origin(si, git_file_path)
       assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit}) " \
                    "(class MyToolClass)",
                    si.source_name)
@@ -758,12 +742,7 @@ describe Toys::SourceInfo do
       assert_equal(file_path, si.source_path)
       assert_nil(si.source_proc)
       assert_equal(my_class, si.source_subclass)
-      assert_nil(si.git_remote)
-      assert_nil(si.git_path)
-      assert_nil(si.git_commit)
-      assert_equal(gem_name, si.gem_name)
-      assert_equal(gem_version, si.gem_version)
-      assert_equal(gem_file_path, si.gem_path)
+      assert_gem_origin(si, gem_file_path)
       assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path}) " \
                    "(class MyToolClass)",
                    si.source_name)
