@@ -279,6 +279,7 @@ module Toys
       @completions = {}
 
       @precreated_class = tool_class
+      @tool_class = nil
 
       reset_definition
     end
@@ -291,6 +292,9 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def reset_definition # rubocop:disable Metrics/MethodLength
+      if @tool_class && @precreated_class
+        raise ToolDefinitionError, "Cannot reset tool #{display_name.inspect} because it uses a fixed subclass"
+      end
       @tool_class = @precreated_class || create_class
 
       @source_info = nil
@@ -1497,7 +1501,6 @@ module Toys
       end
       target = target.map { |word| word.to_s.dup.freeze }.freeze
       disable_argument_parsing
-      check_definition_state(is_method: true)
       @run_handler = target
       self.completion = DefaultCompletion.new(delegation_target: target)
       @delegate_target = target
