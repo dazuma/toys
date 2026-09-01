@@ -8,6 +8,19 @@ module Toys
   # command line arguments supported, and a block that gets run when the
   # tool is executed.
   #
+  # This object has a two stage lifecycle:
+  # * During the loading process, it is editable and its mutation methods are
+  #   available.
+  # * After loading is done, which is triggered by the {#finish_definition}
+  #   method, the mutation methods will raise exceptions. At that point, the
+  #   object is immutable and only getter methods will function.
+  #
+  # As a result, the method list is fairly long, comprising both mutation
+  # methods and immutable getters. Note that in Aug 2026, we studied the
+  # possibility of splitting this class into an immutable definition and a
+  # mutable builder. This plan was rejected mostly because the full interface
+  # is useful to {Middleware#config}.
+  #
   class ToolDefinition
     ##
     # A Completion that implements the default algorithm for a tool.
