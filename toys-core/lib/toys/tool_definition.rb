@@ -11,9 +11,10 @@ module Toys
   # This object has a two stage lifecycle:
   # * During the loading process, it is editable and its mutation methods are
   #   available.
-  # * After loading is done, which is triggered by the {#finish_definition}
-  #   method, the mutation methods will raise exceptions. At that point, the
-  #   object is immutable and only getter methods will function.
+  # * After loading is done, which is triggered by the internal
+  #   `finish_definition` method, the mutation methods will raise exceptions.
+  #   At that point, the object is immutable and only getter methods will
+  #   function.
   #
   # As a result, the method list is fairly long, comprising both mutation
   # methods and immutable getters. Note that in Aug 2026, we studied the
