@@ -85,14 +85,9 @@ module Toys
         #
         def analyze_name(tool_class, words)
           loader = tool_class.instance_variable_get(:@__loader)
-          subtool_words = tool_class.instance_variable_get(:@__words).dup
-          next_remaining = tool_class.instance_variable_get(:@__remaining_words)
-          loader.tool_name_splitter.split(words).each do |word|
-            word = word.to_s
-            subtool_words << word
-            next_remaining = Loader.next_remaining_words(next_remaining, word)
-          end
-          [subtool_words, next_remaining]
+          loader.descend_name(tool_class.instance_variable_get(:@__words),
+                              tool_class.instance_variable_get(:@__remaining_words),
+                              loader.tool_name_splitter.split(words))
         end
 
         ##
@@ -166,6 +161,8 @@ module Toys
         # @private
         #
         def configure_class(tool_class, given_name = nil)
+          # The name.nil? check is important to guard against this being run on
+          # normal block-based tool classes where it shouldn't apply.
           return if tool_class.name.nil? || tool_class.instance_variable_defined?(:@__loader)
           validate_parent_source
 
@@ -175,12 +172,11 @@ module Toys
           loader = parent_class.instance_variable_get(:@__loader)
           name = given_name ? loader.tool_name_splitter.split(given_name) : class_name_to_tool_name(class_name)
           source = parent_class.instance_variable_get(:@__source).subclass_child(tool_class)
-          words = parent_class.instance_variable_get(:@__words) + name
+          words, next_remaining =
+            loader.descend_name(parent_class.instance_variable_get(:@__words),
+                                parent_class.instance_variable_get(:@__remaining_words),
+                                name)
           subtool = loader.get_tool(words, source.priority, tool_class: tool_class)
-          remaining_words = parent_class.instance_variable_get(:@__remaining_words)
-          next_remaining = name.reduce(remaining_words) do |running_words, word|
-            Loader.next_remaining_words(running_words, word)
-          end
 
           tool_class.instance_variable_set(:@__words, words)
           tool_class.instance_variable_set(:@__loader, loader)
@@ -195,6 +191,8 @@ module Toys
         # @private
         #
         def setup_class_dsl(tool_class)
+          # The name.nil? check is important to guard against this being run on
+          # normal block-based tool classes where it shouldn't apply.
           return if tool_class.name.nil? || tool_class.is_a?(DSL::Tool)
           class << tool_class
             alias_method :include_module, :include
@@ -214,7 +212,7 @@ module Toys
           parent = mod_names.reduce(::Object) do |running_mod, seg|
             running_mod.const_get(seg)
           end
-          if !parent.is_a?(::Toys::Tool) && parent.instance_variable_defined?(:@__tool_class)
+          if parent.instance_variable_defined?(:@__tool_class)
             parent = parent.instance_variable_get(:@__tool_class)
           end
           unless parent.ancestors.include?(::Toys::Context)

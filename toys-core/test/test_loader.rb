@@ -177,6 +177,56 @@ describe Toys::Loader do
     end
   end
 
+  describe "descend_name" do
+    it "returns the inputs unchanged given no new words" do
+      assert_equal([["foo"], ["bar"]], loader.descend_name(["foo"], ["bar"], []))
+    end
+
+    it "appends new words to the tool name" do
+      words, = loader.descend_name(["foo"], [], ["bar", "baz"])
+      assert_equal(["foo", "bar", "baz"], words)
+    end
+
+    it "converts new words to strings" do
+      words, = loader.descend_name([], [], [:foo, :bar])
+      assert_equal(["foo", "bar"], words)
+    end
+
+    it "consumes matching words from the remaining words" do
+      _words, remaining = loader.descend_name([], ["foo", "bar", "baz"], ["foo", "bar"])
+      assert_equal(["baz"], remaining)
+    end
+
+    it "keeps the remaining words empty once they are exhausted" do
+      _words, remaining = loader.descend_name(["foo"], [], ["bar", "baz"])
+      assert_equal([], remaining)
+    end
+
+    it "prunes when a word does not match the remaining words" do
+      _words, remaining = loader.descend_name([], ["foo", "bar"], ["foo", "nope"])
+      assert_nil(remaining)
+    end
+
+    it "stays pruned once the remaining words are nil" do
+      _words, remaining = loader.descend_name(["foo"], nil, ["bar"])
+      assert_nil(remaining)
+    end
+
+    it "builds the tool name even when pruning" do
+      words, remaining = loader.descend_name(["foo"], nil, ["bar", "baz"])
+      assert_equal(["foo", "bar", "baz"], words)
+      assert_nil(remaining)
+    end
+
+    it "does not mutate its arguments" do
+      words = ["foo"]
+      remaining = ["bar", "baz"]
+      loader.descend_name(words, remaining, ["bar"])
+      assert_equal(["foo"], words)
+      assert_equal(["bar", "baz"], remaining)
+    end
+  end
+
   describe "path with config items" do
     before do
       source_list.add(Toys::SourceSpec.path(File.join(cases_dir, "config-items", ".toys")))
