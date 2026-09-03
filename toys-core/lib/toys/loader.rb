@@ -368,18 +368,38 @@ module Toys
     end
 
     ##
-    # Determine the next setting for remaining_words, given a word.
+    # Descend from the given tool name through the given additional name
+    # segments, tracking how much of the name being looked up is still
+    # outstanding. Returns the resulting tool name along with the resulting
+    # remaining words, which are nil if the resulting name is not on the path
+    # to the name being looked up. No argument is modified, and the returned
+    # arrays must be treated as read-only because they may alias the arguments.
+    #
+    # Called from the DSL as well as from within Loader.
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def self.next_remaining_words(remaining_words, word)
-      if remaining_words.nil?
-        nil
-      elsif remaining_words.empty?
-        remaining_words
-      elsif remaining_words.first == word
-        remaining_words.slice(1..-1)
+    # @param words [Array<String>] The current tool name
+    # @param remaining_words [Array<String>,nil] Remaining name segments still
+    #     outstanding in the current lookup
+    # @param new_words [Array<String>] Name segments to descend
+    # @return [Array(Array<String>,(Array<String>|nil))] The tool name with the
+    #     new segments appended, and either the remaining name segments in the
+    #     lookup if the descent followed it, or nil if the descent strayed from
+    #     the lookup.
+    #
+    def descend_name(words, remaining_words, new_words)
+      new_words = new_words.map(&:to_s)
+      next_remaining = new_words.reduce(remaining_words) do |cur_remaining, word|
+        if cur_remaining.nil?
+          nil
+        elsif cur_remaining.empty?
+          cur_remaining
+        elsif cur_remaining.first == word
+          cur_remaining.slice(1..-1)
+        end
       end
+      [words + new_words, next_remaining]
     end
 
     private
@@ -557,8 +577,7 @@ module Toys
       child_source = source.relative_child(child)
       return unless child_source
       child_word = ::File.basename(child, ".rb")
-      next_words = words + [child_word]
-      next_remaining = Loader.next_remaining_words(remaining_words, child_word)
+      next_words, next_remaining = descend_name(words, remaining_words, [child_word])
       load_validated_path(child_source, next_words, next_remaining)
     end
 
