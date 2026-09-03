@@ -12,75 +12,77 @@ describe Toys::Utils::HelpText do
   let(:subtool_two_name) { tool_name + ["two"] }
   let(:hidden_subtool_name) { tool_name + ["_three"] }
   let(:runnable) { proc {} }
+  let(:source_list) { Toys::SourceList.new.add(Toys::SourceSpec::EMPTY) }
+  let(:priority) { source_list.each_with_priority.first.last }
 
   let(:single_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0).run_handler = runnable
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true).run_handler = runnable
     loader
   }
   let(:namespace_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0)
-    loader.activate_tool(subtool_one_name, 0).run_handler = runnable
-    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
-    loader.activate_tool(hidden_subtool_name, 0).run_handler = runnable
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true)
+    loader.get_tool(subtool_one_name, priority, activate: true).run_handler = runnable
+    loader.get_tool(subtool_two_name, priority, activate: true).run_handler = runnable
+    loader.get_tool(hidden_subtool_name, priority, activate: true).run_handler = runnable
     loader
   }
   let(:runnable_namespace_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0).run_handler = runnable
-    loader.activate_tool(subtool_one_name, 0).run_handler = runnable
-    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true).run_handler = runnable
+    loader.get_tool(subtool_one_name, priority, activate: true).run_handler = runnable
+    loader.get_tool(subtool_two_name, priority, activate: true).run_handler = runnable
     loader
   }
   let(:recursive_namespace_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0)
-    loader.activate_tool(subtool_one_name, 0)
-    loader.activate_tool(subtool_one_name + ["a"], 0).run_handler = runnable
-    loader.activate_tool(subtool_one_name + ["b"], 0).run_handler = runnable
-    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true)
+    loader.get_tool(subtool_one_name, priority, activate: true)
+    loader.get_tool(subtool_one_name + ["a"], priority, activate: true).run_handler = runnable
+    loader.get_tool(subtool_one_name + ["b"], priority, activate: true).run_handler = runnable
+    loader.get_tool(subtool_two_name, priority, activate: true).run_handler = runnable
     loader
   }
   let(:long_namespace_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0)
-    loader.activate_tool(tool_name + [long_tool_name], 0).run_handler = runnable
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true)
+    loader.get_tool(tool_name + [long_tool_name], priority, activate: true).run_handler = runnable
     loader
   }
   let(:delegation_loader) {
-    loader = Toys::Loader.new(Toys::SourceList.new)
-    loader.activate_tool(tool_name, 0).run_handler = runnable
-    loader.activate_tool(tool2_name, 0).delegate_to(tool_name)
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool(tool_name, priority, activate: true).run_handler = runnable
+    loader.get_tool(tool2_name, priority, activate: true).delegate_to(tool_name)
     loader
   }
 
   let(:normal_tool) do
-    single_loader.get_tool(tool_name, 0)
+    single_loader.get_tool(tool_name, priority)
   end
   let(:runnable_namespace_tool) do
-    runnable_namespace_loader.get_tool(tool_name, 0)
+    runnable_namespace_loader.get_tool(tool_name, priority)
   end
   let(:namespace_tool) do
-    namespace_loader.get_tool(tool_name, 0)
+    namespace_loader.get_tool(tool_name, priority)
   end
   let(:subtool_one) do
-    namespace_loader.get_tool(subtool_one_name, 0)
+    namespace_loader.get_tool(subtool_one_name, priority)
   end
   let(:subtool_two) do
-    namespace_loader.get_tool(subtool_two_name, 0)
+    namespace_loader.get_tool(subtool_two_name, priority)
   end
   let(:recursive_namespace_tool) do
-    recursive_namespace_loader.get_tool(tool_name, 0)
+    recursive_namespace_loader.get_tool(tool_name, priority)
   end
   let(:long_namespace_tool) do
-    long_namespace_loader.get_tool(tool_name, 0)
+    long_namespace_loader.get_tool(tool_name, priority)
   end
   let(:subtool_long) do
-    long_namespace_loader.get_tool(tool_name + [long_tool_name], 0)
+    long_namespace_loader.get_tool(tool_name + [long_tool_name], priority)
   end
   let(:delegating_tool) do
-    delegation_loader.get_tool(tool2_name, 0)
+    delegation_loader.get_tool(tool2_name, priority)
   end
 
   describe "help text" do

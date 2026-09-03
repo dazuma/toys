@@ -68,12 +68,7 @@ module Toys
             loader = tool_class.instance_variable_get(:@__loader)
             words = tool_class.instance_variable_get(:@__words)
             priority = tool_class.instance_variable_get(:@__source).priority
-            cur_tool =
-              if activate
-                loader.activate_tool(words, priority)
-              else
-                loader.get_tool(words, priority)
-              end
+            cur_tool = loader.get_tool(words, priority, activate: activate)
             if cur_tool && activate
               source = tool_class.instance_variable_get(:@__source)
               cur_tool.lock_source(source)
@@ -181,7 +176,7 @@ module Toys
           name = given_name ? loader.tool_name_splitter.split(given_name) : class_name_to_tool_name(class_name)
           source = parent_class.instance_variable_get(:@__source).subclass_child(tool_class)
           words = parent_class.instance_variable_get(:@__words) + name
-          subtool = loader.get_tool(words, source.priority, tool_class)
+          subtool = loader.get_tool(words, source.priority, tool_class: tool_class)
           remaining_words = parent_class.instance_variable_get(:@__remaining_words)
           next_remaining = name.reduce(remaining_words) do |running_words, word|
             Loader.next_remaining_words(running_words, word)

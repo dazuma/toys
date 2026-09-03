@@ -7,11 +7,26 @@ module Toys
   #
   class Loader
     ##
-    # Create a Loader.
+    # The priority of the always-present fallback root tool.
+    # This is the priority of the root tool that will be returned from lookups
+    # if no sources have been added. If any source is added, it will have a
+    # higher priority than this, and its tools will supersede this fallback.
     #
-    # Note that the middleware stack and lookup objects are needed only for
-    # building ToolDefinition objects, and are necessary because the Loader is
-    # the factory for these objects.
+    # @return [Integer]
+    #
+    FALLBACK_ROOT_PRIORITY = -999_999_999
+
+    ##
+    # Starting point for `@min_loaded_priority`. Should be higher than any
+    # actual priority.
+    #
+    # @return [Integer]
+    #
+    HIGHEST_PRIORITY = 999_999_999
+    private_constant :HIGHEST_PRIORITY
+
+    ##
+    # Create a Loader.
     #
     # @param source_list [Toys::SourceList] The list of sources to use. The
     #     source specs are snapshotted from the SourceList on construction, so
@@ -26,10 +41,10 @@ module Toys
     #     loader.
     # @param mixin_lookup [Toys::ModuleLookup] A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
-    # @param middleware_lookup [Toys::ModuleLookup] A lookup for
-    #     well-known middleware classes. Defaults to an empty lookup.
-    # @param template_lookup [Toys::ModuleLookup] A lookup for
-    #     well-known template classes. Defaults to an empty lookup.
+    # @param middleware_lookup [Toys::ModuleLookup] A lookup for well-known
+    #     middleware classes. Defaults to an empty lookup.
+    # @param template_lookup [Toys::ModuleLookup] A lookup for well-known
+    #     template classes. Defaults to an empty lookup.
     # @param git_cache [Toys::Utils::GitCache,nil] A custom GitCache instance
     #     to use when resolving git sources. Optional. If nil or not specified,
     #     uses a process-wide default GitCache.
@@ -45,31 +60,37 @@ module Toys
                    template_lookup: nil,
                    git_cache: nil,
                    gems_util: nil)
-      require "monitor"
       # This mutex serializes all loading. It could be held for arbitrary
       # amounts of time because it surrounds the loading of tools files.
+      # Note that ToolRegistry does not have its own lock, so this mutex should
+      # protect calls to @tool_registry.
+      require "monitor"
       @mutex = ::Monitor.new
+
+      # General references
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
-      @middleware_lookup = middleware_lookup || ModuleLookup.new
-      @tool_data = {}
-      @stop_priority = -999_999
-      @min_loaded_priority = 999_999
-      @middleware_stack = Middleware.stack(middleware_stack)
       @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
       @git_cache = git_cache
       @gems_util = gems_util
+
+      # Set up the registry and priorities
+      @stop_priority = FALLBACK_ROOT_PRIORITY
+      @min_loaded_priority = HIGHEST_PRIORITY
+      @tool_registry = ToolRegistry.new(middleware_stack: middleware_stack,
+                                        middleware_lookup: middleware_lookup)
+      # A root tool must always exist, at the lowest possible priority.
+      @tool_registry.record_root(FALLBACK_ROOT_PRIORITY)
+      @tool_registry.get_tool([], FALLBACK_ROOT_PRIORITY)
+
       # Worklist entries are pairs of either [source_spec, priority] or
       # [source_info, words]. The entries seeded here hold unresolved source
       # specs; the entries pushed back during a directory walk hold resolved
       # SourceInfo objects.
       @worklist = []
-      # Populated as each priority level is resolved.
-      @roots_by_priority = {}
       source_list.each_with_priority do |spec, priority|
         @worklist << [spec, priority]
       end
-      get_tool([], -999_999)
     end
 
     ##
@@ -125,8 +146,13 @@ module Toys
     # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def lookup_specific(words)
-      load_for_prefix(words)
-      tool = @mutex.synchronize { get_tool_data(words, false)&.cur_definition }
+      # The load and the registry read happen under one hold of the monitor, so
+      # the definition read is not taken mid-walk, when arbitration for this
+      # name may not yet have settled.
+      tool = @mutex.synchronize do
+        load_for_prefix(words)
+        @tool_registry.cur_definition(words)
+      end
       finish_definitions_in_tree(words) if tool
       tool
     end
@@ -155,16 +181,14 @@ module Toys
                       include_hidden: false,
                       include_namespaces: false,
                       include_non_runnable: false)
-      load_for_prefix(words)
-      len = words.length
-      found_tools = all_cur_definitions.find_all do |tool|
-        name = tool.full_name
-        name.length > len && name.slice(0, len) == words &&
-          (include_hidden || name[len..].none? { |word| word.start_with?("_") })
+      words_len = words.length
+      found_tools = []
+      each_definition_in_subtree(words) do |tool|
+        found_tools << tool if include_hidden || tool.full_name[words_len..].none? { |word| word.start_with?("_") }
       end
       found_tools.sort_by!(&:full_name)
       found_tools = filter_non_runnable_tools(found_tools, include_namespaces, include_non_runnable)
-      found_tools.select! { |tool| tool.full_name.length == len + 1 } unless recursive
+      found_tools.select! { |tool| tool.full_name.length == words_len + 1 } unless recursive
       found_tools
     end
 
@@ -179,23 +203,20 @@ module Toys
     # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
-      load_for_prefix(words)
-      len = words.length
-      all_cur_definitions.any? do |tool|
-        name = tool.full_name
-        name.length > len && name.slice(0, len) == words
-      end
+      each_definition_in_subtree(words) { |_tool| break :found } == :found # rubocop:disable Lint/UnreachableLoop
     end
 
     ##
-    # Ensures all root sources are resolved. Does not actually load any tools.
+    # Ensures all root sources get resolved eagerly.
+    # Does not actually load any tools.
     #
     # Can be called pre-emptively prior to other methods to prevent them from
     # raising {Toys::ToolSourceError} directly. (It is still possible for them
     # to raise {Toys::ToolSourceError} wrapped in a {Toys::ContextualError} if
     # a tool invokes another source via one of the `load` directives.)
     #
-    # @raise [Toys::ToolSourceError] if a root tool source failed to load
+    # @return [self]
+    # @raise [Toys::ToolSourceError] if a root source failed to resolve or load
     #
     def resolve_sources
       load_for_prefix(nil)
@@ -204,52 +225,54 @@ module Toys
     #### INTERNAL METHODS ####
 
     ##
-    # Get or create the tool definition for the given name and priority.
+    # Determines whether any tool has been defined so far with the given name.
+    #
+    # Called from the Runner to ensure that a delegation target exists.
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def get_tool(words, priority, tool_class = nil)
-      @mutex.synchronize do
-        get_tool_data(words, true).get_tool(priority, self, tool_class)
-      end
-    end
-
-    ##
-    # Returns the active tool specified by the given words, with the given
-    # priority, without doing any loading. If the given priority matches the
-    # currently active tool, returns it. If the given priority is lower than
-    # the active priority, returns `nil`. If the given priority is higher than
-    # the active priority, returns and activates a new tool.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def activate_tool(words, priority)
-      @mutex.synchronize do
-        get_tool_data(words, true).activate_tool(priority, self)
-      end
-    end
-
-    ##
-    # Returns true if the given tool name currently exists in the loader.
-    # Does not load the tool if not found.
-    #
-    # @private This interface is internal and subject to change without warning.
+    # @param words [Array<String>] The tool name
+    # @return [boolean]
     #
     def tool_defined?(words)
-      @tool_data.key?(words)
+      @mutex.synchronize do
+        @tool_registry.tool_defined?(words)
+      end
     end
 
     ##
-    # Build a new tool.
-    # Called only from ToolData.
+    # Get a specific tool definition with the given name and priority.
+    #
+    # If a `tool_class` argument is provided, it is an assertion of the tool's
+    # class. If the tool needs to be newly constructed, the given class will
+    # be used. If the tool exists, and its class is not the same as the given
+    # class, an error will be raised. (This could happen if the tool is being
+    # defined using a Toys::Tool subclass, where it had already previously been
+    # defined through some other means.)
+    #
+    # If `activate` is set to true, it is an assertion that the returned tool
+    # is the active one, of the given priority or higher. Thus, if there is no
+    # currently active tool, or the active tool has a lower priority than given,
+    # the current priority tool is activated and returned. If the currently
+    # active tool has a higher priority than given, *nil is returned*, i.e. you
+    # cannot activate a lower-priority tool than what is already active.
+    #
+    # Called from the DSL to get or activate the current ToolDefinition.
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def build_tool(words, priority, tool_class = nil)
-      parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
-      middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      root_source = @roots_by_priority[priority] ||= SourceInfo.resolve(SourceSpec::EMPTY, priority: priority)
-      ToolDefinition.new(parent, words, root_source, middleware_stack, @middleware_lookup, tool_class)
+    # @param words [Array<String>] The tool name
+    # @param priority [Integer] The priority to get
+    # @param activate [boolean] Whether to return an activated tool
+    # @param tool_class [Class] Tool class to assert
+    # @return [Toys::ToolDefinition] The specified tool definition
+    # @return [nil] if `:activate` has been requested but a higher-priority
+    #     tool has already been activated
+    #
+    def get_tool(words, priority, activate: false, tool_class: nil)
+      @mutex.synchronize do
+        @tool_registry.get_tool(words, priority, activate: activate, tool_class: tool_class)
+      end
     end
 
     ##
@@ -257,6 +280,9 @@ module Toys
     # Called only from the DSL.
     #
     # @private This interface is internal and subject to change without warning.
+    #
+    # @param priority [Integer] The priority to stop at
+    # @return [boolean] Whether the search could be stopped there.
     #
     def stop_loading_at_priority(priority)
       @mutex.synchronize do
@@ -272,6 +298,8 @@ module Toys
     # are resolved.
     #
     # @private This interface is internal and subject to change without warning.
+    #
+    # @param prefix [Array<String>] The tool name prefix
     #
     def load_for_prefix(prefix)
       @mutex.synchronize do
@@ -354,103 +382,28 @@ module Toys
       end
     end
 
+    private
+
     ##
-    # An internal object managing the various definitions for a specific tool
-    # tool name and their priorities, and tracking which, if any, has been
-    # activated.
+    # Ensure loading is complete for tools under the given words, then iterate
+    # over all current (activated or highest priority) tool definitions under
+    # under that point.
     #
-    # This class is not thread-safe by itself. The caller must protect access
-    # with a mutex.
+    # @param words [Array<String>] The tool name to start from
+    # @param include_base [boolean] Whether to include the starting point tool
     #
-    # @private
-    #
-    class ToolData
-      ##
-      # Create an empty tool data with no definitions.
-      #
-      # @private
-      #
-      def initialize(words)
-        @words = validate_words(words)
-        @definitions = {}
-        @top_priority = @active_priority = nil
-      end
-
-      ##
-      # Return the current "best" definition, which is either the active
-      # definition, or, if none, the current highest-priority definition.
-      #
-      # @private
-      #
-      def cur_definition
-        active_definition || top_definition
-      end
-
-      ##
-      # @private
-      #
-      def empty?
-        @definitions.empty?
-      end
-
-      ##
-      # Ensure there is a tool definition of the given priority, creating it if
-      # needed, and return it.
-      #
-      # A tool class is provided when the tool is being defined via subclass of
-      # Toys::Tool. In this case, we check that the definition has not already
-      # been created via a normal tool block or other means.
-      #
-      # @private
-      #
-      def get_tool(priority, loader, tool_class = nil)
-        if @top_priority.nil? || @top_priority < priority
-          @top_priority = priority
+    def each_definition_in_subtree(words, include_base: false)
+      # Get the mutex to ensure that we don't snapshot definitions mid-walk
+      @mutex.synchronize do
+        load_for_prefix(words)
+        words_len = words.length
+        min_len = words_len + (include_base ? 0 : 1)
+        @tool_registry.each_cur_definition do |tool|
+          name = tool.full_name
+          yield tool if name.length >= min_len && name.slice(0, words_len) == words
         end
-        if tool_class && @definitions.include?(priority)
-          raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
-        end
-        @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
-      end
-
-      ##
-      # Attempt to activate the tool with the given priority, and return it.
-      # If the given priority tool is already active, returns it.
-      # If a lower priority tool is already active, activates the given higher
-      # priority tool and returns it.
-      # If a higher priority tool is already active, does nothing and returns
-      # nil.
-      #
-      # @private
-      #
-      def activate_tool(priority, loader)
-        return active_definition if @active_priority == priority
-        return nil if @active_priority && @active_priority > priority
-        @active_priority = priority
-        get_tool(priority, loader)
-      end
-
-      private
-
-      def validate_words(words)
-        words.each do |word|
-          if /[[:cntrl:] #"$&'()*;<>\[\\\]\^`{|}]/.match(word)
-            raise ToolDefinitionError, "Illegal characters in name #{word.inspect}"
-          end
-        end
-        words
-      end
-
-      def top_definition
-        @top_priority ? @definitions[@top_priority] : nil
-      end
-
-      def active_definition
-        @active_priority ? @definitions[@active_priority] : nil
       end
     end
-
-    private
 
     ##
     # Determine the longest prefix of the given command line arguments that
@@ -472,41 +425,16 @@ module Toys
     end
 
     ##
-    # Return a snapshot of all the current tool definitions that have been
-    # loaded. No additional loading is done. The returned array is not in any
-    # particular order.
-    #
-    def all_cur_definitions
-      result = []
-      @mutex.synchronize do
-        @tool_data.each_value do |td|
-          tool = td.cur_definition
-          result << tool unless tool.nil?
-        end
-      end
-      result
-    end
-
-    ##
-    # Get or create the ToolData for the given name.
-    # Caller must own the mutex.
-    #
-    def get_tool_data(words, create)
-      create ? (@tool_data[words] ||= ToolData.new(words)) : @tool_data[words]
-    end
-
-    ##
     # Finishes all tool definitions under the given path. This generally means
     # installing middleware.
     #
     def finish_definitions_in_tree(words)
-      load_for_prefix(words)
-      len = words.length
-      all_cur_definitions.each do |tool|
-        name = tool.full_name
-        next if name.length < len || name.slice(0, len) != words
-        tool.finish_definition(self)
-      end
+      # Snapshot the list of tools first so that finish_definition doesn't
+      # get called mid-iteration (inside the mutex) where it could modify the
+      # list.
+      tools = []
+      each_definition_in_subtree(words, include_base: true) { |tool| tools << tool }
+      tools.each { |tool| tool.finish_definition(self) }
     end
 
     ##
@@ -519,9 +447,9 @@ module Toys
       return if priority < @stop_priority
       root_source = SourceInfo.resolve(source_spec, priority: priority,
                                        git_cache: @git_cache, gems_util: @gems_util)
-      # Recorded before anything is loaded, because build_tool passes it to
-      # each ToolDefinition as the source root.
-      @roots_by_priority[priority] = root_source
+      # Recorded before anything is loaded, because the registry passes it to
+      # each ToolDefinition it builds as the source root.
+      @tool_registry.record_root(priority, root_source)
       relative_paths = source_spec.relative_paths if source_spec.is_a?(SourceSpec::Path)
       if relative_paths.nil?
         handle_resolved_worklist_item(prefix, root_source, [])
@@ -559,8 +487,9 @@ module Toys
     #
     def load_proc(source, words, remaining_words)
       if remaining_words
-        update_min_loaded_priority(source.priority)
-        tool_class = get_tool(words, source.priority).tool_class
+        priority = source.priority
+        update_min_loaded_priority(priority)
+        tool_class = @tool_registry.get_tool(words, priority).tool_class
         DSL::Internal.prepare(tool_class, words, remaining_words, source, self) do
           ContextualError.capture(banner: "Error while evaluating tool definition",
                                   path: source.source_path,
@@ -595,7 +524,7 @@ module Toys
       if source.source_type == :file
         priority = source.priority
         update_min_loaded_priority(priority)
-        tool_class = get_tool(words, priority).tool_class
+        tool_class = @tool_registry.get_tool(words, priority).tool_class
         InputFile.evaluate(tool_class, words, remaining_words, source, self)
       else
         source.find_preload_files.each do |file|

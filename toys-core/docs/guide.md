@@ -157,8 +157,9 @@ loader object is configured with a set of _tool sources_ representing ways to
 define a tool. These sources may be blocks passed directly to the CLI, or
 directories and files loaded from the file system, from gems, or even from
 remote git repositories. When a tool is requested by name, the loader is
-responsible for locating the tool definition in those sources, and constructing
-the tool definition object, represented by {Toys::ToolDefinition}.
+responsible for locating the tool definition in those sources, and arbitrating
+which definition wins when more than one source defines the same tool name. A
+tool definition is represented by {Toys::ToolDefinition}.
 
 One important property of the loader is that it is _lazy_. It queries tool
 sources only when it has reason to believe that a tool it is looking for may be

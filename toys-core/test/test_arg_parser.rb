@@ -4,14 +4,14 @@ require "helper"
 
 describe Toys::ArgParser do
   let(:supports_suggestions?) { ::Toys::Compat.supports_suggestions? }
-  let(:executable_name) { "toys" }
-  let(:cli) {
-    Toys::CLI.new(executable_name: executable_name, middleware_stack: [])
-  }
-  let(:loader) { cli.loader }
+  # ArgParser takes a loader as well, and uses it for subtool suggestions, so
+  # the loader shares the registry the tools below are defined in.
+  let(:source_list) { Toys::SourceList.new.add(Toys::SourceSpec::EMPTY) }
+  let(:loader) { Toys::Loader.new(source_list).resolve_sources }
+  let(:priority) { source_list.each_with_priority.first.last }
   let(:tool_name) { "foo" }
-  let(:root_tool) { loader.activate_tool([], 0) }
-  let(:tool) { loader.activate_tool([tool_name], 0) }
+  let(:root_tool) { loader.get_tool([], priority, activate: true) }
+  let(:tool) { loader.get_tool([tool_name], priority, activate: true) }
   let(:arg_parser) { Toys::ArgParser.new(tool, loader) }
   let(:root_arg_parser) { Toys::ArgParser.new(root_tool, loader) }
 

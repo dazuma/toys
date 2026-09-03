@@ -23,26 +23,28 @@ describe Toys::ToolDefinition do
     end
   }
   let(:executable_name) { "toys" }
+  let(:source_list) { Toys::SourceList.new.add(Toys::SourceSpec::EMPTY) }
+  let(:priority) { source_list.each_with_priority.first.last }
   let(:cli) {
-    Toys::CLI.new(executable_name: executable_name, logger: logger,
-                  middleware_stack: [])
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [], source_list: source_list)
   }
   let(:full_cli) {
-    Toys::CLI.new(executable_name: executable_name, logger: logger)
+    Toys::CLI.new(executable_name: executable_name, logger: logger, source_list: source_list)
   }
-  let(:loader) { cli.loader }
-  let(:full_loader) { full_cli.loader }
+  let(:loader) { cli.loader.resolve_sources }
+  let(:full_loader) { full_cli.loader.resolve_sources }
   let(:tool_name) { "foo" }
   let(:tool2_name) { "boo" }
   let(:full_tool_name) { "fool" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
-  let(:root_tool) { loader.activate_tool([], 0) }
-  let(:tool) { loader.activate_tool([tool_name], 0) }
-  let(:tool2) { loader.activate_tool([tool2_name], 0) }
-  let(:subtool) { loader.activate_tool([tool_name, subtool_name], 0) }
-  let(:subtool2) { loader.activate_tool([tool_name, subtool2_name], 0) }
-  let(:full_tool) { full_loader.activate_tool([full_tool_name], 0) }
+  let(:root_tool) { loader.get_tool([], priority, activate: true) }
+  let(:tool) { loader.get_tool([tool_name], priority, activate: true) }
+  let(:tool2) { loader.get_tool([tool2_name], priority, activate: true) }
+  let(:subtool) { loader.get_tool([tool_name, subtool_name], priority, activate: true) }
+  let(:subtool2) { loader.get_tool([tool_name, subtool2_name], priority, activate: true) }
+  let(:full_tool) { full_loader.get_tool([full_tool_name], priority, activate: true) }
+
   def wrappable(str)
     Toys::WrappableString.new(str)
   end
@@ -1348,7 +1350,7 @@ describe Toys::ToolDefinition do
     end
 
     it "refuses to clear a definition backed by a fixed subclass" do
-      fixed_tool = loader.get_tool([tool2_name], 0, ::Class.new(Toys::Context))
+      fixed_tool = loader.get_tool([tool2_name], priority, tool_class: ::Class.new(Toys::Context))
       fixed_tool.desc = "hi"
       error = assert_raises(Toys::ToolDefinitionError) do
         fixed_tool.reset_definition

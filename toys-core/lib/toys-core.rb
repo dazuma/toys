@@ -40,14 +40,12 @@
 #   carries out each run, {Toys::ArgParser} parses the command line, and
 #   {Toys::Context} is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
-#   discovers and loads Toys files, {Toys::SourceInfo} tracks their
-#   provenance, and {Toys::InputFile} evaluates them. A source is described
+#   discovers and loads tool definitions, {Toys::SourceInfo} tracks their
+#   provenance, and {Toys::InputFile} reads tool files. A source is described
 #   unresolved by a {Toys::SourceSpec}; {Toys::SourceList} is the ordered
-#   collection of root sources that a loader reads tools from, and assigns
-#   each a priority. The loader resolves each spec into a {Toys::SourceInfo}
-#   when it first needs that priority level. Note that {Toys::Loader} is the
-#   factory for Definition objects (described below) and thus holds onto
-#   several objects that are necessary for constructing tool definitions.
+#   collection of root sources that a loader reads tools from. The loader
+#   resolves each spec into a {Toys::SourceInfo} when it first needs that
+#   priority level.
 # * **Definition** — models a tool. {Toys::ToolDefinition} is the central
 #   class, with {Toys::Flag}, {Toys::FlagGroup}, and {Toys::PositionalArg} as
 #   its components, along with the pluggable {Toys::Acceptor} and
@@ -188,6 +186,7 @@ require "toys/flag"
 require "toys/flag_group"
 require "toys/input_file"
 require "toys/loader"
+require "toys/loader/tool_registry"
 require "toys/middleware"
 require "toys/mixin"
 require "toys/module_lookup"
