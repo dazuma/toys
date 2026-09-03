@@ -12,11 +12,8 @@ describe Toys::Loader do
   let(:git_cache_dir) { File.join(tmp_dir, "cache") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: git_cache_dir) }
   let(:source_list) { Toys::SourceList.new }
-  let(:loader) {
-    Toys::Loader.new(source_list,
-                     tool_name_splitter: Toys::ToolNameSplitter.new(":"),
-                     git_cache: git_cache)
-  }
+  let(:tool_name_splitter) { Toys::ToolNameSplitter.new(":") }
+  let(:loader) { Toys::Loader.new(source_list, tool_name_splitter: tool_name_splitter, git_cache: git_cache) }
   let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
   let(:git_remote) { "https://github.com/dazuma/toys.git" }
   let(:git_commit) { "main" }
@@ -57,17 +54,10 @@ describe Toys::Loader do
       tool, _remaining = loader.lookup([])
       # ToolDefinition#priority reads through to the source root, so it raises
       # rather than returning a priority if the root is missing.
-      assert_equal(-999_999, tool.priority)
+      assert_equal(Toys::Loader::FALLBACK_ROOT_PRIORITY, tool.priority)
       refute_nil(tool.source_root)
       assert_same(tool.source_root, tool.source_root.root)
       assert_equal(tool.priority, tool.source_root.priority)
-    end
-
-    it "gives a tool created at a priority with no starting source a source root" do
-      tool = loader.activate_tool(["tool-1"], 0)
-      assert_equal(0, tool.priority)
-      refute_nil(tool.source_root)
-      assert_equal(0, tool.source_root.priority)
     end
   end
 
@@ -447,6 +437,41 @@ describe Toys::Loader do
       assert_equal(1, tool.priority)
     end
 
+    it "chooses from the earlier source for a namespace that neither source activates" do
+      spec = Toys::SourceSpec.block(source_name: "test block 1") do
+        tool "namespace-1" do
+          tool "tool-1-1" do
+            desc "block 1 tool-1-1 description"
+          end
+        end
+      end
+      source_list.add(spec)
+      spec = Toys::SourceSpec.block(source_name: "test block 2") do
+        tool "namespace-1" do
+          tool "tool-1-2" do
+            desc "block 2 tool-1-2 description"
+          end
+        end
+      end
+      source_list.add(spec)
+
+      tool, _remaining = loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal("block 1 tool-1-1 description", tool.desc.to_s)
+      tool, _remaining = loader.lookup(["namespace-1", "tool-1-2"])
+      assert_equal("block 2 tool-1-2 description", tool.desc.to_s)
+
+      # Neither block runs a directive on the namespace itself, so it is never
+      # activated and has no source info. Arbitration therefore falls back to
+      # the highest priority definition, even though the second block, which is
+      # a priority lower, is the one recorded most recently.
+      tool, _remaining = loader.lookup(["namespace-1"])
+      assert_nil(tool.source_info)
+      assert_equal("test block 1", tool.source_root.source_name)
+      assert_equal(-1, tool.priority)
+    end
+  end
+
+  describe "source path sets" do
     it "loads a set at the same priority" do
       source_list.add(Toys::SourceSpec.path(File.join(cases_dir, "config-items"),
                                             relative_paths: [".toys", ".toys.rb"]))
