@@ -213,7 +213,7 @@ module Toys
         gemfile_names ||= DEFAULT_GEMFILE_NAMES
         Array(gemfile_names).each do |file|
           gemfile_path = ::File.join(search_dir, file)
-          return gemfile_path if ::File.readable?(gemfile_path)
+          return gemfile_path if ::File.readable?(gemfile_path) && ::File.file?(gemfile_path)
         end
         nil
       end
@@ -423,15 +423,28 @@ module Toys
         modified_gemfile_path
       end
 
-      def modified_gemfile_content(gemfile_path)
+      # The keyword arguments exist so tests can supply these inputs directly;
+      # production always uses the defaults. Each removes an ambient read that
+      # would otherwise make a test's result depend on its environment:
+      # loaded_gems, on which gems happen to be activated; omit_gem_names, whose
+      # default is empty except on TruffleRuby, so the reject is unreachable
+      # elsewhere; and lib_paths, on TOYS_DEV, which the toys harness sets but a
+      # bare "bundle exec ruby -Ilib -Itest" run does not. The content tests
+      # pass lib_paths: {} for that last reason, so their exact-string
+      # assertions cannot pass under one invocation and fail under the other.
+      def modified_gemfile_content(gemfile_path,
+                                   loaded_gems: nil,
+                                   omit_gem_names: nil,
+                                   lib_paths: nil)
+        loaded_gems ||= ::Gem.loaded_specs.values
+        omit_gem_names ||= ::Toys::Compat.gems_to_omit_from_bundles
+        lib_paths ||= custom_lib_paths
         content = [::File.read(gemfile_path)]
-        loaded_gems = ::Gem.loaded_specs.values.sort_by(&:name)
-        omit_list = ::Toys::Compat.gems_to_omit_from_bundles
-        loaded_gems.delete_if { |spec| omit_list.include?(spec.name) } unless omit_list.empty?
+        loaded_gems = loaded_gems.sort_by(&:name).reject { |spec| omit_gem_names.include?(spec.name) }
         content << "toys_loaded_gems = #{loaded_gems.map(&:name).inspect}"
         content << "dependencies.delete_if { |dep| toys_loaded_gems.include?(dep.name) }"
         loaded_gems.each do |spec|
-          path = custom_lib_paths[spec.name]
+          path = lib_paths[spec.name]
           path_suffix = path ? ", path: #{path.inspect}" : ""
           content << "gem #{spec.name.inspect}, '= #{spec.version}'#{path_suffix}"
         end
