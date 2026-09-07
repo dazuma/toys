@@ -39,7 +39,10 @@ module Toys
     #         corresponding mixin parameters. The `bundler_setup?` method can
     #         be queried to determine whether the bundle has been set up yet.
     #
-    #  *  `:groups` (Array\<String\>) The groups to include in setup.
+    #  *  `:groups` (Array\<String\>) The groups to include in setup. Note
+    #     that gems already loaded in the Toys process are always included,
+    #     whatever groups are requested, because excluding one would remove
+    #     it from the load path of the running process.
     #
     #  *  `:gemfile_path` (String) The path to the Gemfile to use. If `nil` or
     #     not given, the `:search_dirs` will be searched for a Gemfile.
