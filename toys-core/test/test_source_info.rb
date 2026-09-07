@@ -69,7 +69,7 @@ describe Toys::SourceInfo do
 
   # Resolves a root at the standard test priority.
   def resolve_root(spec, git_cache: nil, gems_util: nil)
-    Toys::SourceInfo.resolve(spec, priority: priority, git_cache: git_cache, gems_util: gems_util)
+    Toys::SourceInfo.resolve_loading_root(spec, priority, git_cache: git_cache, gems_util: gems_util).first
   end
 
   # Asserts the origin kind, and for git and gem origins the fields fixed when
@@ -186,23 +186,71 @@ describe Toys::SourceInfo do
       end
     end
 
-    it "errors when neither a priority nor a parent is given" do
+    it "errors when given something that is not a source spec" do
       assert_raises(::ArgumentError) do
-        Toys::SourceInfo.resolve(Toys::SourceSpec.path(directory_path))
+        resolve_root(directory_path)
+      end
+    end
+  end
+
+  describe "resolving a loading root" do
+    it "loads the root itself when the spec has no relative paths" do
+      spec = Toys::SourceSpec.path(directory_path)
+      root, sources = Toys::SourceInfo.resolve_loading_root(spec, priority)
+      assert_equal(directory_path, root.source_path)
+      assert_equal([root], sources)
+    end
+
+    it "loads each member of a path set, in order" do
+      spec = Toys::SourceSpec.path(directory_path, relative_paths: [".toys", ".toys.rb"])
+      root, sources = Toys::SourceInfo.resolve_loading_root(spec, priority)
+      assert_equal(directory_path, root.source_path)
+      assert_equal(:directory, root.source_type)
+      assert_equal([File.join(directory_path, ".toys"), File.join(directory_path, ".toys.rb")],
+                   sources.map(&:source_path))
+      assert_equal([:directory, :file], sources.map(&:source_type))
+    end
+
+    it "makes each member of a path set a child sharing the root" do
+      spec = Toys::SourceSpec.path(directory_path, relative_paths: [".toys", ".toys.rb"])
+      root, sources = Toys::SourceInfo.resolve_loading_root(spec, priority)
+      refute_empty(sources)
+      sources.each do |source|
+        assert_equal(root, source.parent)
+        assert_equal(root, source.root)
+        assert_equal(priority, source.priority)
+        assert_same(root.origin, source.origin)
       end
     end
 
-    it "errors when given something that is not a source spec" do
-      assert_raises(::ArgumentError) do
-        Toys::SourceInfo.resolve(directory_path, priority: priority)
+    it "loads nothing from an empty path set, but still returns the root" do
+      spec = Toys::SourceSpec.path(directory_path, relative_paths: [])
+      root, sources = Toys::SourceInfo.resolve_loading_root(spec, priority)
+      assert_equal(directory_path, root.source_path)
+      assert_equal([], sources)
+    end
+
+    it "errors when a member of a path set cannot be read" do
+      spec = Toys::SourceSpec.path(directory_path, relative_paths: [".nonexistent"])
+      error = assert_raises(Toys::ToolSourceError) do
+        Toys::SourceInfo.resolve_loading_root(spec, priority)
       end
+      assert_equal("Cannot read: #{File.join(directory_path, '.nonexistent')}", error.message)
+    end
+
+    it "errors when the root of a path set is not a directory" do
+      spec = Toys::SourceSpec.path(file_path, relative_paths: [])
+      error = assert_raises(Toys::ToolSourceError) do
+        Toys::SourceInfo.resolve_loading_root(spec, priority)
+      end
+      assert_equal("Root of a source path set is not a directory: #{file_path}", error.message)
     end
   end
 
   describe "resolving a path child" do
     it "resolves a path spec under a path parent" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
-      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+      si = Toys::SourceInfo.resolve_child(Toys::SourceSpec.path(file_path), parent)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -217,7 +265,7 @@ describe Toys::SourceInfo do
 
     it "resolves a path spec under a block parent" do
       parent = resolve_root(Toys::SourceSpec.block(source_name: custom_source_name, &my_proc))
-      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+      si = Toys::SourceInfo.resolve_child(Toys::SourceSpec.path(file_path), parent)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -234,7 +282,7 @@ describe Toys::SourceInfo do
       spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(spec, git_cache: git_cache)
       error = assert_raises(Toys::ToolSourceError) do
-        Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+        Toys::SourceInfo.resolve_child(Toys::SourceSpec.path(file_path), parent)
       end
       assert_equal("Git source #{parent.source_name} tried to load from the local file system",
                    error.message)
@@ -244,7 +292,7 @@ describe Toys::SourceInfo do
       spec = Toys::SourceSpec.gem(gem_name, path: "data-finder", toys_dir: gem_toys_dir)
       parent = resolve_root(spec, gems_util: gems_util)
       error = assert_raises(Toys::ToolSourceError) do
-        Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+        Toys::SourceInfo.resolve_child(Toys::SourceSpec.path(file_path), parent)
       end
       assert_equal("Gem source #{parent.source_name} tried to load from the local file system",
                    error.message)
@@ -254,7 +302,7 @@ describe Toys::SourceInfo do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data))
       spec = Toys::SourceSpec.path(directory_path, relative_paths: [".toys.rb"])
       assert_raises(::ArgumentError) do
-        Toys::SourceInfo.resolve(spec, parent: parent)
+        Toys::SourceInfo.resolve_child(spec, parent)
       end
     end
   end
@@ -263,7 +311,7 @@ describe Toys::SourceInfo do
     it "resolves a git spec under a path parent" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -281,7 +329,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -299,7 +347,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.gem(gem_name, path: "data-finder", toys_dir: gem_toys_dir)
       parent = resolve_root(parent_spec, gems_util: gems_util)
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -316,7 +364,7 @@ describe Toys::SourceInfo do
     it "resolves a git spec under a block parent" do
       parent = resolve_root(Toys::SourceSpec.block(source_name: custom_source_name, &my_proc))
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -335,7 +383,7 @@ describe Toys::SourceInfo do
     it "resolves a gem spec under a path parent" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      si = Toys::SourceInfo.resolve_child(spec, parent, gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -353,7 +401,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      si = Toys::SourceInfo.resolve_child(spec, parent, gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -371,7 +419,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.gem(gem_name, path: "data-finder", toys_dir: gem_toys_dir)
       parent = resolve_root(parent_spec, gems_util: gems_util)
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      si = Toys::SourceInfo.resolve_child(spec, parent, gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -388,7 +436,7 @@ describe Toys::SourceInfo do
     it "resolves a gem spec under a block parent" do
       parent = resolve_root(Toys::SourceSpec.block(source_name: custom_source_name, &my_proc))
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      si = Toys::SourceInfo.resolve_child(spec, parent, gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -407,22 +455,16 @@ describe Toys::SourceInfo do
     it "errors, because block sources are always roots" do
       parent = resolve_root(Toys::SourceSpec.path(directory_path))
       assert_raises(::ArgumentError) do
-        Toys::SourceInfo.resolve(Toys::SourceSpec.block(&my_proc), parent: parent)
+        Toys::SourceInfo.resolve_child(Toys::SourceSpec.block(&my_proc), parent)
       end
     end
   end
 
   describe "child inheritance rules" do
-    it "takes the priority from the parent, ignoring an explicit priority" do
-      parent = resolve_root(Toys::SourceSpec.path(directory_path))
-      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent, priority: 100)
-      assert_equal(priority, si.priority)
-    end
-
     it "takes the context directory from the spec, overriding the parent" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.path(file_path, context_directory: "/somewhere/else")
-      si = Toys::SourceInfo.resolve(spec, parent: parent)
+      si = Toys::SourceInfo.resolve_child(spec, parent)
       assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
@@ -430,7 +472,7 @@ describe Toys::SourceInfo do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit,
                                   context_directory: "/somewhere/else")
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
@@ -438,13 +480,13 @@ describe Toys::SourceInfo do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
       spec = Toys::SourceSpec.gem(gem_name, path: "config-items", toys_dir: gem_toys_dir,
                                   context_directory: "/somewhere/else")
-      si = Toys::SourceInfo.resolve(spec, parent: parent, gems_util: gems_util)
+      si = Toys::SourceInfo.resolve_child(spec, parent, gems_util: gems_util)
       assert_expanded_path("/somewhere/else", si.context_directory)
     end
 
     it "inherits the context directory when the spec does not give one" do
       parent = resolve_root(Toys::SourceSpec.path(path_with_data, context_directory: lookup_cases_dir))
-      si = Toys::SourceInfo.resolve(Toys::SourceSpec.path(file_path), parent: parent)
+      si = Toys::SourceInfo.resolve_child(Toys::SourceSpec.path(file_path), parent)
       assert_equal(lookup_cases_dir, si.context_directory)
     end
 
@@ -452,7 +494,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(nil, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(git_remote, si.origin.remote)
     end
 
@@ -460,7 +502,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(nil, path: git_directory_path)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       assert_equal(git_commit, si.origin.commit)
     end
 
@@ -480,7 +522,7 @@ describe Toys::SourceInfo do
     it "errors when a git spec has no remote and the parent has none either" do
       parent = resolve_root(Toys::SourceSpec.path(directory_path))
       error = assert_raises(Toys::ToolSourceError) do
-        Toys::SourceInfo.resolve(Toys::SourceSpec.git(nil), parent: parent, git_cache: git_cache)
+        Toys::SourceInfo.resolve_child(Toys::SourceSpec.git(nil), parent, git_cache: git_cache)
       end
       assert_equal("Git remote not specified", error.message)
     end
@@ -511,7 +553,7 @@ describe Toys::SourceInfo do
       parent_spec = Toys::SourceSpec.git(git_remote, path: git_path_with_data, commit: git_commit)
       parent = resolve_root(parent_spec, git_cache: git_cache)
       spec = Toys::SourceSpec.git(git_remote, path: git_directory_path, commit: git_commit)
-      si = Toys::SourceInfo.resolve(spec, parent: parent, git_cache: git_cache)
+      si = Toys::SourceInfo.resolve_child(spec, parent, git_cache: git_cache)
       refute_same(parent.origin, si.origin)
       assert_equal(git_path_with_data, parent.origin.path)
       assert_equal(git_directory_path, si.origin.path)

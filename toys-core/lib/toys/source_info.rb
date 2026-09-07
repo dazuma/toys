@@ -244,25 +244,56 @@ module Toys
 
     class << self
       ##
-      # Resolve a source spec into a SourceInfo, performing the file system
-      # access, git fetch, or gem activation that the spec describes.
+      # Resolve a root source spec into a root SourceInfo and an array of
+      # starting points for loading. This is called from a loader to resolve
+      # a root source and populate its initial worklist.
       #
-      # If a parent source is given, the result is a child of it, and inherits
-      # the parent's priority and context directory; the spec's own context
-      # directory and any explicit priority are ignored. If no parent is given,
-      # the result is a root, and a priority is required.
-      #
-      # Each kind of spec drops the fields it does not own, so for example a
-      # path source resolved under a git parent carries no git information.
+      # Performs the file system access, git fetch, or gem activation that the
+      # spec describes, and raises if the resolution process fails.
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def resolve(spec, parent: nil, priority: nil, git_cache: nil, gems_util: nil)
-        if parent
-          priority = parent.priority
-        elsif priority.nil?
-          raise ::ArgumentError, "A priority is required when resolving a root source"
-        end
+      def resolve_loading_root(spec, priority, git_cache: nil, gems_util: nil)
+        root_source = resolve_spec(spec, nil, priority, git_cache, gems_util)
+        relative_paths = spec.relative_paths if spec.is_a?(SourceSpec::Path)
+        loading_sources =
+          if relative_paths.nil?
+            [root_source]
+          else
+            unless root_source.source_type == :directory
+              raise ToolSourceError, "Root of a source path set is not a directory: #{root_source.source_path}"
+            end
+            relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
+          end
+        [root_source, loading_sources]
+      end
+
+      ##
+      # Resolve a child source spec into a SourceInfo. The child inherits the
+      # parent's priority, and the parent's context directory if the spec
+      # itself doesn't provide one.
+      #
+      # Performs the file system access, git fetch, or gem activation that the
+      # spec describes, and raises if the resolution process fails.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def resolve_child(spec, parent, git_cache: nil, gems_util: nil)
+        resolve_spec(spec, parent, parent.priority, git_cache, gems_util)
+      end
+
+      ##
+      # Returns an empty source with the given priority.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def create_empty_root(priority)
+        resolve_block_spec(SourceSpec::EMPTY, priority)
+      end
+
+      private
+
+      def resolve_spec(spec, parent, priority, git_cache, gems_util)
         case spec
         when SourceSpec::Path
           resolve_path_spec(spec, parent, priority)
@@ -277,8 +308,6 @@ module Toys
           raise ::ArgumentError, "Unrecognized source spec: #{spec.inspect}"
         end
       end
-
-      private
 
       def resolve_path_spec(spec, parent, priority)
         if parent

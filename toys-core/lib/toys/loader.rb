@@ -348,8 +348,9 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def load_source(parent_source, spec, words, remaining_words)
-      source = SourceInfo.resolve(spec, parent: parent_source,
-                                  git_cache: @git_cache, gems_util: @gems_util)
+      source = SourceInfo.resolve_child(spec, parent_source,
+                                        git_cache: @git_cache,
+                                        gems_util: @gems_util)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words)
       end
@@ -461,21 +462,10 @@ module Toys
     #
     def handle_unresolved_worklist_item(prefix, source_spec, priority)
       return if priority < @stop_priority
-      root_source = SourceInfo.resolve(source_spec, priority: priority,
-                                       git_cache: @git_cache, gems_util: @gems_util)
-      # Recorded before anything is loaded, because the registry passes it to
-      # each ToolDefinition it builds as the source root.
+      root_source, resolved_sources = SourceInfo.resolve_loading_root(source_spec, priority,
+                                                                      git_cache: @git_cache,
+                                                                      gems_util: @gems_util)
       @tool_registry.record_root(priority, root_source)
-      relative_paths = source_spec.relative_paths if source_spec.is_a?(SourceSpec::Path)
-      resolved_sources =
-        if relative_paths.nil?
-          [root_source]
-        else
-          unless root_source.source_type == :directory
-            raise ToolSourceError, "Root of a source path set is not a directory: #{root_source.source_path}"
-          end
-          relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
-        end
       resolved_sources.each do |source|
         handle_resolved_worklist_item(prefix, source, [])
       end

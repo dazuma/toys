@@ -1227,10 +1227,12 @@ describe Toys::ToolDefinition do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:source_path2) { File.expand_path(__dir__) }
     let(:source_info) {
-      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path, context_directory: nil), priority: -1)
+      source_spec = Toys::SourceSpec.path(source_path, context_directory: nil)
+      Toys::SourceInfo.resolve_loading_root(source_spec, -1).first
     }
     let(:source_info2) {
-      Toys::SourceInfo.resolve(Toys::SourceSpec.path(source_path2, context_directory: nil), priority: -1)
+      source_spec = Toys::SourceSpec.path(source_path2, context_directory: nil)
+      Toys::SourceInfo.resolve_loading_root(source_spec, -1).first
     }
 
     it "starts at nil" do
@@ -1455,7 +1457,7 @@ describe Toys::ToolDefinition do
     let(:default_context_dir) { File.expand_path(__dir__) }
     let(:source_info) {
       source_spec = Toys::SourceSpec.path(source_path, context_directory: default_context_dir)
-      Toys::SourceInfo.resolve(source_spec, priority: -1)
+      Toys::SourceInfo.resolve_loading_root(source_spec, -1).first
     }
 
     it "defaults to nil when the source is not locked" do
