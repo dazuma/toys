@@ -114,7 +114,7 @@ module Toys
         if @roots_by_priority.key?(priority)
           raise ToolDefinitionError, "Tool source root already recorded for priority #{priority}"
         end
-        @roots_by_priority[priority] = source || SourceInfo.resolve(SourceSpec::EMPTY, priority: priority)
+        @roots_by_priority[priority] = source || SourceInfo.create_empty_root(priority)
         self
       end
 

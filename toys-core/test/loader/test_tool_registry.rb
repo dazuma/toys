@@ -7,7 +7,7 @@ describe Toys::Loader::ToolRegistry do
   let(:tool_name) { ["foo", "bar"] }
 
   def source_at(priority)
-    Toys::SourceInfo.resolve(Toys::SourceSpec::EMPTY, priority: priority)
+    Toys::SourceInfo.create_empty_root(priority)
   end
 
   describe "record_root" do
