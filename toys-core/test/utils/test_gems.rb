@@ -124,10 +124,15 @@ describe Toys::Utils::Gems do
 
     it "honors BUNDLE_LOCKFILE over the gemfile name" do
       gems = Toys::Utils::Gems.new
+      # Expanded rather than written out literally, because on Windows a rooted
+      # path carrying no drive letter picks up the current drive: the value
+      # below comes back as "D:/b/custom.lock" there. What this pins is that the
+      # answer came from the variable and not from either gemfile name.
+      expected = File.expand_path("/b/custom.lock")
       with_bundle_lockfile("/b/custom.lock") do
         # The gemfile name is not consulted at all, including its gems.rb branch.
-        assert_equal("/b/custom.lock", gems.send(:find_original_lockfile_path, "/a/gems.rb"))
-        assert_equal("/b/custom.lock", gems.send(:find_original_lockfile_path, "/a/Gemfile"))
+        assert_equal(expected, gems.send(:find_original_lockfile_path, "/a/gems.rb"))
+        assert_equal(expected, gems.send(:find_original_lockfile_path, "/a/Gemfile"))
       end
     end
 
