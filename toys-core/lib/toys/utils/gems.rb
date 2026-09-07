@@ -72,10 +72,65 @@ module Toys
       end
 
       ##
+      # The bundle declared a gem from a source other than the one the copy
+      # already loaded in this process came from.
+      #
+      class IncompatibleGemSourceError < BundlerFailedError
+      end
+
+      ##
       # The gemfile names that are searched by default.
       # @return [Array<String>]
       #
       DEFAULT_GEMFILE_NAMES = [".gems.rb", "gems.rb", "Gemfile"].freeze
+
+      ##
+      # @private
+      #
+      # The bundler group that every gem already loaded in this process is tagged
+      # with. Toys adds it to the groups it asks Bundler to set up, so that a
+      # caller requesting a restricted group set still gets those gems. It is not
+      # enough to tag them `:default`: a caller may request groups that exclude
+      # `:default`, and gems this process loaded that the user's gemfile never
+      # declared would have no other group to be found under.
+      #
+      PINNED_GEMS_GROUP = :"toys.loaded"
+
+      ##
+      # @private
+      #
+      # Ruby source appended to the modified gemfile, and evaluated in the context
+      # of the Bundler::Dsl that parses it. It pins each gem already loaded in this
+      # process to its loaded version, by mutating the parsed dependency rather
+      # than replacing it, so that everything else the user declared survives.
+      #
+      # Three kinds of attribute get different treatment:
+      #
+      #  *  Inclusion filters (`group`, `platforms`, `install_if`, and an enclosing
+      #     `env` block) decide *whether* a dependency participates, and are
+      #     neutralized. Bundler removes an already-loaded gem from the `$LOAD_PATH`
+      #     unless the bundle sets it up, so a gem this process has activated but
+      #     not yet required would become unloadable if a filter excluded it.
+      #  *  Provenance (`source`, `path`, `git`, `force_ruby_platform`, and the rest)
+      #     decides *which gem* this is, and is preserved. Discarding it would point
+      #     the bundle at a different gem of the same name and version.
+      #  *  The `require` option governs a later `Bundler.require` and is preserved.
+      #
+      PIN_DEPENDENCIES_CODE = <<~PINS
+        toys_declared_gems = dependencies.map(&:name)
+        dependencies.each do |toys_dep|
+          toys_version = toys_pinned_gems[toys_dep.name]
+          next unless toys_version
+          toys_dep.requirement.requirements.replace([["=", ::Gem::Version.new(toys_version)]])
+          toys_dep.groups << #{PINNED_GEMS_GROUP.inspect}
+          toys_dep.platforms.clear
+          toys_dep.define_singleton_method(:should_include?) { true }
+        end
+        toys_pinned_gems.each do |toys_name, toys_version|
+          next if toys_declared_gems.include?(toys_name)
+          gem(toys_name, "= \#{toys_version}", require: false, group: #{PINNED_GEMS_GROUP.inspect})
+        end
+      PINS
 
       ##
       # Activate the given gem. If it is not present, attempt to install it (or
@@ -172,7 +227,10 @@ module Toys
       ##
       # Search for an appropriate Gemfile, and set up the bundle.
       #
-      # @param groups [Array<String>] The groups to include in setup.
+      # @param groups [Array<String>] The groups to include in setup. Gems
+      #     already loaded in this process are always included, whatever
+      #     groups are requested, because excluding one would remove it from
+      #     the load path of the running process.
       # @param gemfile_path [String] The path to the Gemfile to use. If `nil`
       #     or not given, the `:search_dirs` will be searched for a Gemfile.
       # @param search_dirs [String,Array<String>] Directories in which to
@@ -361,9 +419,9 @@ module Toys
       def activate_bundler
         bundler_version_requirements =
           if ::RUBY_VERSION < "3"
-            [">= 2.2", "< 2.5"]
+            [">= 2.4", "< 2.5"]
           else
-            [">= 2.2", "< 5"]
+            [">= 2.4", "< 5"]
           end
         activate("bundler", *bundler_version_requirements)
         require "bundler"
@@ -388,6 +446,7 @@ module Toys
         builder.eval_gemfile(gemfile_path)
         check_gemfile_gem_compatibility(builder, "toys-core")
         check_gemfile_gem_compatibility(builder, "toys")
+        check_gemfile_source_compatibility(builder, gemfile_path)
       ensure
         ::Bundler.reset!
       end
@@ -399,6 +458,79 @@ module Toys
                 "The bundle lists #{name} #{existing_dep.requirement} as a dependency, which is" \
                 " incompatible with the current toys version #{::Toys::Core::VERSION}."
         end
+      end
+
+      # The modified gemfile preserves each dependency's source, so a gem this
+      # process already loaded from somewhere else will fail to resolve. Bundler
+      # reports that clearly, but as a Bundler::GemNotFound, which setup_bundle
+      # catches and buries under two failed install attempts. Detect it first.
+      def check_gemfile_source_compatibility(builder, gemfile_path,
+                                             loaded_gems: nil,
+                                             omit_gem_names: nil,
+                                             lib_paths: nil)
+        lib_paths ||= custom_lib_paths
+        gemfile_dir = ::File.dirname(gemfile_path)
+        # Both exemptions below are the rewrite's: a gem it never pins keeps the
+        # source the user declared, so there is nothing for toys to contradict, and
+        # a gem whose lib path it overrides is meant to overrule that declaration.
+        # Sharing selected_loaded_gems keeps the omit list from drifting away from
+        # the one modified_gemfile_content applies.
+        selected = selected_loaded_gems(loaded_gems, omit_gem_names)
+        loaded_paths = selected.each_with_object({}) do |spec, paths|
+          paths[spec.name] = spec.full_gem_path
+        end
+        builder.dependencies.each do |dep|
+          next if lib_paths.key?(dep.name)
+          loaded_path = loaded_paths[dep.name]
+          next if loaded_path.nil?
+          declared = conflicting_source_description(dep, loaded_path, gemfile_dir)
+          next if declared.nil?
+          raise IncompatibleGemSourceError,
+                "The bundle lists #{dep.name} from #{declared}, which is incompatible with the" \
+                " copy already loaded from #{loaded_path.inspect}."
+        end
+      end
+
+      # Describes the source the gemfile declares for a dependency, if a gem loaded
+      # from the given directory contradicts it, or returns nil if there is no
+      # conflict. A dependency with no explicit source makes no claim about where its
+      # gem comes from, so it never conflicts.
+      #
+      # Nothing here may run a git operation, and that includes building the
+      # description. These sources come straight from a Bundler::Dsl, which leaves
+      # both allow_remote and allow_cached false, so Source::Git#install_path raises
+      # GitError whether or not a checkout exists, and Source::Git#to_s resolves a
+      # branch, which announces "Fetching <uri>" before the guard rejects it. Only
+      # #uri is safe to read.
+      def conflicting_source_description(dep, loaded_path, gemfile_dir)
+        # Source::Git is a subclass of Source::Path, so it must be matched first.
+        case dep.source
+        when ::Bundler::Source::Git
+          # The checkout's directory name embeds a revision we cannot resolve here,
+          # so compare only the root such checkouts live under. This does not
+          # distinguish two git sources for the same gem, but it does catch the case
+          # that matters: a gem loaded from rubygems while the gemfile names git.
+          unless under_directory?(loaded_path, ::Bundler.install_path.to_s)
+            # Source::Git#uri is the unfiltered URI. Bundler renders a git source
+            # from a credential-filtered copy it keeps privately, so filter it the
+            # same way rather than putting a password or token in an error message.
+            "the git source #{::Bundler::URICredentialsFilter.credential_filtered_uri(dep.source.uri)}"
+          end
+        when ::Bundler::Source::Path
+          declared = ::File.expand_path(dep.source.path.to_s, gemfile_dir)
+          "the path #{declared.inspect}" unless resolved_path(loaded_path) == resolved_path(declared)
+        end
+      end
+
+      def under_directory?(path, dir)
+        resolved_path(path).start_with?("#{resolved_path(dir)}#{::File::SEPARATOR}")
+      end
+
+      # Mirrors Bundler::SharedHelpers#resolve_path, so that a path reached through
+      # a symlink is not mistaken for a different location.
+      def resolved_path(path)
+        expanded = ::File.expand_path(path)
+        ::File.exist?(expanded) ? ::File.realpath(expanded) : expanded
       end
 
       def create_modified_gemfile(gemfile_path)
@@ -436,19 +568,32 @@ module Toys
                                    loaded_gems: nil,
                                    omit_gem_names: nil,
                                    lib_paths: nil)
+        lib_paths ||= custom_lib_paths
+        # A dependency's source cannot be changed in place, so a gem whose lib path
+        # we override has to be deleted and redeclared. Its original declaration is
+        # discarded deliberately: the override exists to overrule it.
+        overridden, pinned = selected_loaded_gems(loaded_gems, omit_gem_names)
+                             .partition { |spec| lib_paths.key?(spec.name) }
+        pin_table = pinned.each_with_object({}) { |spec, hash| hash[spec.name] = spec.version.to_s }
+        [
+          ::File.read(gemfile_path),
+          "toys_overridden_gems = #{overridden.map(&:name).inspect}",
+          "dependencies.delete_if { |dep| toys_overridden_gems.include?(dep.name) }",
+          "toys_pinned_gems = #{pin_table.inspect}",
+          PIN_DEPENDENCIES_CODE,
+          *overridden.map { |spec| overridden_gem_line(spec, lib_paths[spec.name]) },
+        ]
+      end
+
+      def selected_loaded_gems(loaded_gems, omit_gem_names)
         loaded_gems ||= ::Gem.loaded_specs.values
         omit_gem_names ||= ::Toys::Compat.gems_to_omit_from_bundles
-        lib_paths ||= custom_lib_paths
-        content = [::File.read(gemfile_path)]
-        loaded_gems = loaded_gems.sort_by(&:name).reject { |spec| omit_gem_names.include?(spec.name) }
-        content << "toys_loaded_gems = #{loaded_gems.map(&:name).inspect}"
-        content << "dependencies.delete_if { |dep| toys_loaded_gems.include?(dep.name) }"
-        loaded_gems.each do |spec|
-          path = lib_paths[spec.name]
-          path_suffix = path ? ", path: #{path.inspect}" : ""
-          content << "gem #{spec.name.inspect}, '= #{spec.version}'#{path_suffix}"
-        end
-        content
+        loaded_gems.sort_by(&:name).reject { |spec| omit_gem_names.include?(spec.name) }
+      end
+
+      def overridden_gem_line(spec, path)
+        "gem #{spec.name.inspect}, '= #{spec.version}', path: #{path.inspect}, " \
+          "require: false, group: #{PINNED_GEMS_GROUP.inspect}"
       end
 
       def custom_lib_paths
@@ -484,9 +629,16 @@ module Toys
         ::Bundler.configure
         ::Bundler.settings.temporary({gemfile: modified_gemfile_path}) do
           ::Bundler.ui.silence do
-            ::Bundler.setup(*groups)
+            ::Bundler.setup(*setup_groups(groups))
           end
         end
+      end
+
+      # Bundler treats an empty group list as "every group", so the sentinel is
+      # added only to a restricted request; adding it to an empty one would narrow
+      # the setup to the pinned gems alone.
+      def setup_groups(groups)
+        groups.empty? ? groups : groups + [PINNED_GEMS_GROUP]
       end
 
       def bundler_exceptions
