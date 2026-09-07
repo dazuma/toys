@@ -103,10 +103,11 @@ module Toys
 
     ##
     # Given a list of command line arguments, find the appropriate tool to
-    # handle the command, loading it from its source if necessary.
+    # handle the command, loading it from its source if necessary and ensuring
+    # it has been finished.
     # This always returns a tool. If the specific tool path is not defined and
     # cannot be found in any source, it finds the nearest namespace that
-    # *would* contain that tool, up to the root tool.
+    # *would* contain that tool, up to the root tool (which always exists.)
     #
     # Returns a tuple of the found tool, and the array of remaining arguments
     # that are not part of the tool name and should be passed as tool args.
@@ -132,7 +133,7 @@ module Toys
 
     ##
     # Given a tool name, looks up the specific tool, loading it from its source
-    # if necessary.
+    # if necessary and ensuring it has been finished.
     #
     # If there is an active tool, returns it; otherwise, returns the highest
     # priority tool that has been defined. If no tool has been defined with
@@ -146,20 +147,15 @@ module Toys
     # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def lookup_specific(words)
-      # The load and the registry read happen under one hold of the monitor, so
-      # the definition read is not taken mid-walk, when arbitration for this
-      # name may not yet have settled.
-      tool = @mutex.synchronize do
-        load_for_prefix(words)
-        @tool_registry.cur_definition(words)
+      load_for_prefix(words)
+      @mutex.synchronize do
+        @tool_registry.cur_definition(words)&.finish_definition(self)
       end
-      finish_definitions_in_tree(words) if tool
-      tool
     end
 
     ##
     # Returns a list of subtools for the given path, loading from their sources
-    # if necessary. The list will be sorted by name.
+    # and ensuring they are finished. The list will be sorted by name.
     #
     # @param words [Array<String>] The name of the parent tool. It must be an
     #     array of strings; it cannot be a single string with delimiters.
@@ -183,8 +179,15 @@ module Toys
                       include_non_runnable: false)
       words_len = words.length
       found_tools = []
-      each_definition_in_subtree(words) do |tool|
-        found_tools << tool if include_hidden || tool.full_name[words_len..].none? { |word| word.start_with?("_") }
+      load_for_prefix(words)
+      # We need to pull the entire subtree recursively even if we're not
+      # returning recursive descendants, because we need the deeper data to
+      # filter immediate children. If not returning recursive data, we'll
+      # post-filter below.
+      each_definition_in_subtree(words, recursive: true) do |tool|
+        if include_hidden || tool.full_name[words_len..].none? { |word| word.start_with?("_") }
+          found_tools << tool.finish_definition(self)
+        end
       end
       found_tools.sort_by!(&:full_name)
       found_tools = filter_non_runnable_tools(found_tools, include_namespaces, include_non_runnable)
@@ -203,6 +206,7 @@ module Toys
     # @raise [Toys::ContextualError] for errors in tool loading or definition
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
+      load_for_prefix(words)
       each_definition_in_subtree(words) { |_tool| break :found } == :found # rubocop:disable Lint/UnreachableLoop
     end
 
@@ -241,7 +245,8 @@ module Toys
     end
 
     ##
-    # Get a specific tool definition with the given name and priority.
+    # Get a specific tool definition with the given name and priority. The
+    # returned definition may not be finished.
     #
     # If a `tool_class` argument is provided, it is an assertion of the tool's
     # class. If the tool needs to be newly constructed, the given class will
@@ -293,7 +298,8 @@ module Toys
     end
 
     ##
-    # Loads the subtree under the given prefix.
+    # Loads the subtree under the given prefix. Does not finish tools.
+    #
     # If the prefix is nil, does no loading but does ensure that all sources
     # are resolved.
     #
@@ -405,22 +411,25 @@ module Toys
     private
 
     ##
-    # Ensure loading is complete for tools under the given words, then iterate
-    # over all current (activated or highest priority) tool definitions under
-    # under that point.
+    # Iterate over all current (activated or highest priority) tool definitions
+    # under a particular tool name.
+    #
+    # Caller should normally ensure that loading is complete prior to iteration,
+    # e.g. by calling load_for_prefix. Yielded tools may not be finished.
     #
     # @param words [Array<String>] The tool name to start from
-    # @param include_base [boolean] Whether to include the starting point tool
+    # @param recursive [boolean] Whether to include tools below the immediate
+    #     children
     #
-    def each_definition_in_subtree(words, include_base: false)
+    def each_definition_in_subtree(words, recursive: false)
       # Get the mutex to ensure that we don't snapshot definitions mid-walk
       @mutex.synchronize do
-        load_for_prefix(words)
         words_len = words.length
-        min_len = words_len + (include_base ? 0 : 1)
+        min_len = words_len + 1
+        max_len = recursive ? 999_999_999 : min_len
         @tool_registry.each_cur_definition do |tool|
           name = tool.full_name
-          yield tool if name.length >= min_len && name.slice(0, words_len) == words
+          yield tool if name.length.between?(min_len, max_len) && name.slice(0, words_len) == words
         end
       end
     end
@@ -445,19 +454,6 @@ module Toys
     end
 
     ##
-    # Finishes all tool definitions under the given path. This generally means
-    # installing middleware.
-    #
-    def finish_definitions_in_tree(words)
-      # Snapshot the list of tools first so that finish_definition doesn't
-      # get called mid-iteration (inside the mutex) where it could modify the
-      # list.
-      tools = []
-      each_definition_in_subtree(words, include_base: true) { |tool| tools << tool }
-      tools.each { |tool| tool.finish_definition(self) }
-    end
-
-    ##
     # Resolve a root SourceSpec from the worklist, and handle the resulting
     # source or sources.
     #
@@ -471,15 +467,18 @@ module Toys
       # each ToolDefinition it builds as the source root.
       @tool_registry.record_root(priority, root_source)
       relative_paths = source_spec.relative_paths if source_spec.is_a?(SourceSpec::Path)
-      if relative_paths.nil?
-        handle_resolved_worklist_item(prefix, root_source, [])
-        return
+      resolved_sources =
+        if relative_paths.nil?
+          [root_source]
+        else
+          unless root_source.source_type == :directory
+            raise ToolSourceError, "Root of a source path set is not a directory: #{root_source.source_path}"
+          end
+          relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
+        end
+      resolved_sources.each do |source|
+        handle_resolved_worklist_item(prefix, source, [])
       end
-      unless root_source.source_type == :directory
-        raise ToolSourceError, "Root of a source path set is not a directory: #{root_source.source_path}"
-      end
-      resolved_sources = relative_paths.map { |path| root_source.relative_child(path, lenient: false) }
-      resolved_sources.each { |source| handle_resolved_worklist_item(prefix, source, []) }
     end
 
     ##
