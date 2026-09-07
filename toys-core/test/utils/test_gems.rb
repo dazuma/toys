@@ -44,6 +44,19 @@ describe Toys::Utils::Gems do
     end
   end
 
+  # BUNDLE_LOCKFILE is process-global and this suite is one randomized process,
+  # so every test that touches it restores it. Passing nil deletes the key,
+  # which is the state a user who has never heard of the variable is in.
+  def with_bundle_lockfile(value)
+    old_value = ENV["BUNDLE_LOCKFILE"]
+    ENV["BUNDLE_LOCKFILE"] = value
+    begin
+      yield
+    ensure
+      ENV["BUNDLE_LOCKFILE"] = old_value
+    end
+  end
+
   describe ".find_gemfile" do
     it "searches default gemfile name list" do
       names = Toys::Utils::Gems::DEFAULT_GEMFILE_NAMES
@@ -85,12 +98,95 @@ describe Toys::Utils::Gems do
   describe "#find_lockfile_path" do
     it "locates the lockfile next to the gemfile" do
       gems = Toys::Utils::Gems.new
-      # These two mirror Bundler.default_lockfile.
+      # These two mirror the gemfile-name half of Bundler.default_lockfile. The
+      # BUNDLE_LOCKFILE half belongs to find_original_lockfile_path.
       assert_equal("/a/gems.locked", gems.send(:find_lockfile_path, "/a/gems.rb"))
       assert_equal("/a/Gemfile.lock", gems.send(:find_lockfile_path, "/a/Gemfile"))
       # This one does not: bundler's discovery never yields .gems.rb, so this
       # row is toys-only policy.
       assert_equal("/a/.gems.rb.lock", gems.send(:find_lockfile_path, "/a/.gems.rb"))
+    end
+  end
+
+  describe "#find_original_lockfile_path" do
+    it "falls back to the derived path when BUNDLE_LOCKFILE is unset or empty" do
+      gems = Toys::Utils::Gems.new
+      # Bundler treats an empty value as absent (`given && !given.empty?`), so
+      # both passes below have to reproduce find_lockfile_path exactly.
+      [nil, ""].each do |value|
+        with_bundle_lockfile(value) do
+          assert_equal("/a/gems.locked", gems.send(:find_original_lockfile_path, "/a/gems.rb"))
+          assert_equal("/a/Gemfile.lock", gems.send(:find_original_lockfile_path, "/a/Gemfile"))
+          assert_equal("/a/.gems.rb.lock", gems.send(:find_original_lockfile_path, "/a/.gems.rb"))
+        end
+      end
+    end
+
+    it "honors BUNDLE_LOCKFILE over the gemfile name" do
+      gems = Toys::Utils::Gems.new
+      with_bundle_lockfile("/b/custom.lock") do
+        # The gemfile name is not consulted at all, including its gems.rb branch.
+        assert_equal("/b/custom.lock", gems.send(:find_original_lockfile_path, "/a/gems.rb"))
+        assert_equal("/b/custom.lock", gems.send(:find_original_lockfile_path, "/a/Gemfile"))
+      end
+    end
+
+    it "expands a relative BUNDLE_LOCKFILE" do
+      gems = Toys::Utils::Gems.new
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          with_bundle_lockfile("custom.lock") do
+            # Bundler::CLI expands this value but SharedHelpers does not. Toys
+            # does, because install_bundle shells out and the value has to keep
+            # naming the same file across a change of working directory.
+            assert_equal(File.expand_path("custom.lock"),
+                         gems.send(:find_original_lockfile_path, "/a/Gemfile"))
+          end
+        end
+      end
+    end
+  end
+
+  describe "#configure_lockfile" do
+    it "points BUNDLE_LOCKFILE at the modified lockfile and restores it after" do
+      gems = Toys::Utils::Gems.new
+      with_bundle_lockfile("/b/custom.lock") do
+        inside = nil
+        result = gems.send(:configure_lockfile, "/a/.toys-tmp-gemfile-1-2") do
+          inside = ENV["BUNDLE_LOCKFILE"]
+          :block_result
+        end
+        # Derived from the modified gemfile, so bundler writes the temp lockfile
+        # rather than the user's, on both the setup and the install paths.
+        assert_equal("/a/.toys-tmp-gemfile-1-2.lock", inside)
+        assert_equal(:block_result, result)
+        assert_equal("/b/custom.lock", ENV["BUNDLE_LOCKFILE"])
+      end
+    end
+
+    it "deletes BUNDLE_LOCKFILE rather than emptying it when it was unset" do
+      gems = Toys::Utils::Gems.new
+      with_bundle_lockfile(nil) do
+        inside = nil
+        gems.send(:configure_lockfile, "/a/.toys-tmp-gemfile-1-2") do
+          inside = ENV["BUNDLE_LOCKFILE"]
+        end
+        assert_equal("/a/.toys-tmp-gemfile-1-2.lock", inside)
+        # Unset is not the same as set-to-empty: an empty value would still be
+        # inherited by a subprocess. This is the case bundler itself creates, by
+        # setting the variable during setup for a user who never touched it.
+        refute(ENV.key?("BUNDLE_LOCKFILE"))
+      end
+    end
+
+    it "restores BUNDLE_LOCKFILE when the block raises" do
+      gems = Toys::Utils::Gems.new
+      with_bundle_lockfile("/b/custom.lock") do
+        assert_raises(RuntimeError) do
+          gems.send(:configure_lockfile, "/a/.toys-tmp-gemfile-1-2") { raise "nope" }
+        end
+        assert_equal("/b/custom.lock", ENV["BUNDLE_LOCKFILE"])
+      end
     end
   end
 
@@ -557,30 +653,59 @@ describe Toys::Utils::Gems do
   describe "#create_modified_gemfile" do
     it "writes a uniquely named gemfile beside the original and copies the lockfile" do
       gems = Toys::Utils::Gems.new
-      Dir.mktmpdir do |dir|
-        original = "source \"https://rubygems.org\"\ngem \"nonesuch-unrelated\"\n"
-        path = File.join(dir, "Gemfile")
-        File.write(path, original)
-        File.write("#{path}.lock", "LOCK CONTENT\n")
-        modified_path = gems.send(:create_modified_gemfile, path)
-        # Deliberately beside the user's gemfile, not in a tmpdir, so relative
-        # path: and gemspec directives still resolve.
-        assert_equal(dir, File.dirname(modified_path))
-        assert_match(/\A\.toys-tmp-gemfile-\d{14}-[0-9a-z]{1,10}\z/, File.basename(modified_path))
-        written = File.read(modified_path)
-        assert(written.start_with?(original))
-        # puts does not add a second newline to a string already ending in one.
-        refute(written.start_with?("#{original}\n"))
-        assert_equal("LOCK CONTENT\n", File.read("#{modified_path}.lock"))
+      # Pinned unset rather than left ambient. The suite itself runs under a
+      # bundler that sets BUNDLE_LOCKFILE, which would otherwise seed these
+      # fixtures from this repo's own lockfile and make the result depend on
+      # which runner invoked the test. The honoring case is the test below.
+      with_bundle_lockfile(nil) do
+        Dir.mktmpdir do |dir|
+          original = "source \"https://rubygems.org\"\ngem \"nonesuch-unrelated\"\n"
+          path = File.join(dir, "Gemfile")
+          File.write(path, original)
+          File.write("#{path}.lock", "LOCK CONTENT\n")
+          modified_path = gems.send(:create_modified_gemfile, path)
+          # Deliberately beside the user's gemfile, not in a tmpdir, so relative
+          # path: and gemspec directives still resolve.
+          assert_equal(dir, File.dirname(modified_path))
+          assert_match(/\A\.toys-tmp-gemfile-\d{14}-[0-9a-z]{1,10}\z/, File.basename(modified_path))
+          written = File.read(modified_path)
+          assert(written.start_with?(original))
+          # puts does not add a second newline to a string already ending in one.
+          refute(written.start_with?("#{original}\n"))
+          assert_equal("LOCK CONTENT\n", File.read("#{modified_path}.lock"))
+        end
+        Dir.mktmpdir do |dir|
+          path = File.join(dir, "gems.rb")
+          File.write(path, "source \"https://rubygems.org\"\n")
+          File.write(File.join(dir, "gems.locked"), "LOCK CONTENT\n")
+          modified_path = gems.send(:create_modified_gemfile, path)
+          # The gems.locked branch fires for the source but never for the
+          # destination, whose name can never be gems.rb.
+          assert_equal("LOCK CONTENT\n", File.read("#{modified_path}.lock"))
+        end
       end
+    end
+
+    it "seeds the modified lockfile from BUNDLE_LOCKFILE when it is set" do
+      gems = Toys::Utils::Gems.new
       Dir.mktmpdir do |dir|
-        path = File.join(dir, "gems.rb")
+        path = File.join(dir, "Gemfile")
         File.write(path, "source \"https://rubygems.org\"\n")
-        File.write(File.join(dir, "gems.locked"), "LOCK CONTENT\n")
-        modified_path = gems.send(:create_modified_gemfile, path)
-        # find_lockfile_path's gems.locked branch fires for the source but never
-        # for the destination, whose name can never be gems.rb.
-        assert_equal("LOCK CONTENT\n", File.read("#{modified_path}.lock"))
+        # Both files exist, so this distinguishes honoring the variable from
+        # merely finding some lockfile beside the gemfile.
+        File.write("#{path}.lock", "BESIDE THE GEMFILE\n")
+        custom_path = File.join(dir, "custom.lock")
+        File.write(custom_path, "NAMED BY BUNDLE_LOCKFILE\n")
+        modified_path = with_bundle_lockfile(custom_path) do
+          gems.send(:create_modified_gemfile, path)
+        end
+        assert_equal("NAMED BY BUNDLE_LOCKFILE\n", File.read("#{modified_path}.lock"))
+        # The destination stays beside the modified gemfile even though the
+        # source was elsewhere. Letting the override reach the destination too
+        # would seed the user's lockfile from itself and then delete it during
+        # cleanup, turning this issue's corruption into destruction.
+        assert_equal(dir, File.dirname(modified_path))
+        assert_equal("NAMED BY BUNDLE_LOCKFILE\n", File.read(custom_path))
       end
     end
 
@@ -813,6 +938,25 @@ describe Toys::Utils::Gems do
         cur_lockfile = File.read("Gemfile.lock")
         orig_lockfile = File.read("Gemfile.lock.orig")
         assert_equal(orig_lockfile, cur_lockfile)
+      end
+    end
+
+    it "leaves a lockfile named by BUNDLE_LOCKFILE untouched" do
+      # BUNDLE_LOCKFILE does not exist before bundler 4: default_lockfile there
+      # derives from the gemfile name and nothing else, so there is no
+      # divergence for this case to catch.
+      if Gem::Version.new(Bundler::VERSION) < Gem::Version.new("4")
+        skip "Skipped test on bundler < 4, which has no BUNDLE_LOCKFILE"
+      end
+      setup_case("bundle-with-custom-lockfile", timeout: 120) do
+        FileUtils.cp("custom.lock.orig", "custom.lock")
+        # No warming "bundle install" here, unlike the case above. The empty
+        # vendor directory forces the install path, which is the only one that
+        # used to write the user's lockfile.
+        result = run_script
+        assert(result.success?, result.captured_err)
+        assert_match(/result: :\w+/, result.captured_out)
+        assert_equal(File.read("custom.lock.orig"), File.read("custom.lock"))
       end
     end
 

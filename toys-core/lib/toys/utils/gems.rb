@@ -373,24 +373,33 @@ module Toys
         configure_gemfile(gemfile_path) do
           activate_bundler
           check_gemfile_compatibility(gemfile_path)
+          # The lockfile redirect is opened only once the modified gemfile exists,
+          # because create_modified_gemfile has to read the user's lockfile from
+          # wherever BUNDLE_LOCKFILE points, before that variable is pointed elsewhere.
           modified_gemfile_path = create_modified_gemfile(gemfile_path)
-          result = nil
-          begin
-            attempt_setup_bundle(modified_gemfile_path, groups)
-            result = :setup
-          rescue *bundler_exceptions
-            ::Bundler.reset!
-            restore_toys_libs
-            install_result = install_bundle(modified_gemfile_path, retries: retries)
-            attempt_setup_bundle(modified_gemfile_path, groups)
-            result = install_result
-          ensure
-            delete_modified_gemfile(modified_gemfile_path)
-            ::Bundler.reset! if result.nil?
-            restore_toys_libs
+          configure_lockfile(modified_gemfile_path) do
+            attempt_or_install_bundle(modified_gemfile_path, groups, retries)
           end
-          result
         end
+      end
+
+      def attempt_or_install_bundle(modified_gemfile_path, groups, retries)
+        result = nil
+        begin
+          attempt_setup_bundle(modified_gemfile_path, groups)
+          result = :setup
+        rescue *bundler_exceptions
+          ::Bundler.reset!
+          restore_toys_libs
+          install_result = install_bundle(modified_gemfile_path, retries: retries)
+          attempt_setup_bundle(modified_gemfile_path, groups)
+          result = install_result
+        ensure
+          delete_modified_gemfile(modified_gemfile_path)
+          ::Bundler.reset! if result.nil?
+          restore_toys_libs
+        end
+        result
       end
 
       def configure_gemfile(gemfile_path)
@@ -414,6 +423,30 @@ module Toys
           ::ENV["BUNDLE_GEMFILE"] = success ? gemfile_path : old_path
         end
         result
+      end
+
+      # Points BUNDLE_LOCKFILE at the modified bundle's lockfile for the duration
+      # of the block, so bundler resolves and writes there instead of against the
+      # user's lockfile. Bundler reads this variable from the environment only:
+      # Bundler.default_lockfile delegates to SharedHelpers.default_lockfile, which
+      # never consults Bundler.settings. So the settings.temporary mechanism that
+      # attempt_setup_bundle uses for the gemfile has no analogue here, and neither
+      # does the CLI's --lockfile flag, which does not exist before bundler 4.
+      #
+      # Restoring matters even when the user never set the variable, because
+      # bundler sets it itself during setup, in
+      # SharedHelpers.set_bundle_environment. Without this, the process and
+      # everything it spawns would be left naming a temp lockfile that
+      # delete_modified_gemfile has since removed. Assigning nil deletes the key,
+      # which is what restores the unset case.
+      def configure_lockfile(modified_gemfile_path)
+        old_path = ::ENV["BUNDLE_LOCKFILE"]
+        ::ENV["BUNDLE_LOCKFILE"] = find_lockfile_path(modified_gemfile_path)
+        begin
+          yield
+        ensure
+          ::ENV["BUNDLE_LOCKFILE"] = old_path
+        end
       end
 
       def activate_bundler
@@ -546,7 +579,7 @@ module Toys
             file.puts(line)
           end
         end
-        lockfile_path = find_lockfile_path(gemfile_path)
+        lockfile_path = find_original_lockfile_path(gemfile_path)
         modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
         if ::File.readable?(lockfile_path)
           lockfile_content = ::File.read(lockfile_path)
@@ -616,12 +649,31 @@ module Toys
         Gems.delete_at_exit(modified_lockfile_path)
       end
 
+      # Derives the lockfile bundler keeps beside a gemfile, from the gemfile's
+      # name alone. Every caller passes a modified gemfile path, whose lockfile is
+      # toys' own to create and delete. For the user's gemfile the question is a
+      # different one, and find_original_lockfile_path answers that.
       def find_lockfile_path(gemfile_path)
         if ::File.basename(gemfile_path) == "gems.rb"
           ::File.join(::File.dirname(gemfile_path), "gems.locked")
         else
           "#{gemfile_path}.lock"
         end
+      end
+
+      # Locates the user's lockfile, mirroring Bundler.default_lockfile in full:
+      # BUNDLE_LOCKFILE wins over the gemfile name, and an empty value counts as
+      # unset, matching bundler's own guard. The variable exists only in bundler 4
+      # and later, and is simply absent from the environment on earlier ones.
+      #
+      # The value is expanded, which bundler's CLI does but SharedHelpers does not.
+      # Toys needs the expanded form because install_bundle shells out, so a
+      # relative value has to keep naming the same file regardless of the working
+      # directory in effect when it is used.
+      def find_original_lockfile_path(gemfile_path)
+        given = ::ENV["BUNDLE_LOCKFILE"]
+        return ::File.expand_path(given) if given && !given.empty?
+        find_lockfile_path(gemfile_path)
       end
 
       def attempt_setup_bundle(modified_gemfile_path, groups)
