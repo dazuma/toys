@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# highline is deliberately unpinned, so the version that ends up loaded proves
+# whether the lockfile named by BUNDLE_LOCKFILE reached the bundle rather than
+# proving what this file says. The newest highline is 3.x, so a bundle that
+# resolved without that lockfile would look nothing like the pinned one.
+gem "highline"
+
+# highline 2.0.2 requires abbrev, which stopped being a default gem in Ruby 3.4.
+gem "abbrev"
