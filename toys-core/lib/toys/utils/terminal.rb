@@ -403,7 +403,7 @@ module Toys
             when ::Symbol
               @named_styles[style]
             end
-          raise ::ArgumentError, "Unknown style code: #{s.inspect}" unless codes
+          raise ::ArgumentError, "Unknown style code: #{style.inspect}" unless codes
           result.concat(codes)
         end
         result

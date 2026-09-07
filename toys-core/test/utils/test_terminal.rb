@@ -46,6 +46,13 @@ describe Toys::Utils::Terminal do
       str = terminal.apply_styles(:hello, :yellow)
       assert_equal("\e[33mhello\e[0m", str)
     end
+
+    it "errors on an unknown style" do
+      err = assert_raises(::ArgumentError) do
+        terminal.apply_styles(:hello, :blah)
+      end
+      assert_equal("Unknown style code: :blah", err.message)
+    end
   end
 
   describe "styled output" do

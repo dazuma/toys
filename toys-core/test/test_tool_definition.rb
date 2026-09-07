@@ -629,6 +629,11 @@ describe Toys::ToolDefinition do
       flag = tool.flags.first
       assert_equal(:mygroup, flag.group.name)
     end
+
+    it "errors if definition is finished" do
+      tool.finish_definition(loader)
+      assert_raises(Toys::ToolDefinitionError) { tool.add_flag_group(type: :required) }
+    end
   end
 
   describe "used_flags" do
@@ -1148,6 +1153,11 @@ describe Toys::ToolDefinition do
         tool.completion = completion_name
         refute(tool.completion.complete_subtools?)
         assert(tool.completion.complete_args?)
+      end
+
+      it "errors if definition is finished" do
+        tool.finish_definition(loader)
+        assert_raises(Toys::ToolDefinitionError) { tool.completion = {complete_subtools: false} }
       end
     end
 

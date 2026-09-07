@@ -300,7 +300,7 @@ module Toys
 
     ##
     # Reset the definition of this tool, deleting all definition data but
-    # leaving named acceptors, mixins, and templates intact.
+    # leaving named acceptors, mixins, templates, and completions intact.
     # Should be called only from the DSL.
     #
     # @private This interface is internal and subject to change without warning.
@@ -1093,6 +1093,7 @@ module Toys
     #
     def add_flag_group(type: :optional, desc: nil, long_desc: nil,
                        name: nil, report_collisions: true, prepend: false)
+      check_definition_state
       if !name.nil? && @flag_group_names.key?(name)
         return self unless report_collisions
         raise ToolDefinitionError, "Flag group #{name} already exists"
@@ -1436,6 +1437,7 @@ module Toys
     # @param spec [Object]
     #
     def completion=(spec)
+      check_definition_state
       options = {}
       block = nil
       spec, options, block = spec.expand if spec.is_a?(ScalarSpec)

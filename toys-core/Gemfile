@@ -21,7 +21,7 @@ gem "minitest-mock", "~> 5.27" unless ::RUBY_VERSION < "3.1"
 gem "minitest-rg", "~> 5.3"
 # Workaround for OpenSSL 3.6.0 issue (see https://github.com/ruby/openssl/issues/949)
 gem "openssl"
-gem "rdoc", "~> 6.15"
+gem "rdoc", ">= 7.0", "< 9.0"
 gem "redcarpet", "~> 3.6" unless ::RUBY_PLATFORM == "java"
 gem "rubocop", "~> 1.81"
 gem "yard", "~> 0.9.38"
