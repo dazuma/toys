@@ -50,3 +50,16 @@ but if unset it falls back to the current working directory. So unlike a
 tool's context directory, the effective context directory at runtime is never
 nil.
 _Avoid_: Base directory, project directory, source directory
+
+**Tool definition**:
+The accumulated configuration for one tool name at one priority. At most one
+definition of a name is *active* — the one that will actually run — and a
+source that tries to activate a name already active at a higher priority is
+silently ignored rather than merged.
+_Avoid_: Tool object, tool config, tool instance
+
+**Tool class**:
+The Ruby class a tool's definition is evaluated against, and which is
+instantiated to run it. Every tool definition has one, whether the definition
+came from a DSL block, a toys file, or an explicit subclass of Toys::Tool.
+_Avoid_: Tool module, tool namespace, DSL class
