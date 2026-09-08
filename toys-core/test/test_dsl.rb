@@ -2961,6 +2961,14 @@ describe Toys::DSL::Tool do
     end
   end
 
+  # Removes a top-level constant left behind by a tool class whose definition
+  # raised. Ruby binds the constant before calling inherited, and the raise does
+  # not unbind it; since the suite runs as a single randomized process, such a
+  # name would otherwise be visible to every other test file.
+  def remove_leaked_tool_constant(name)
+    ::Object.send(:remove_const, name) if ::Object.const_defined?(name, false)
+  end
+
   describe "Toys::Tool subclassing" do
     it "creates a tool" do
       cli.add_source(File.join(cases_dir, "tool-subclasses"))
@@ -3022,19 +3030,26 @@ describe Toys::DSL::Tool do
 
     it "is not allowed outside the DSL" do
       ex = assert_raises(Toys::ToolDefinitionError) do
-        class Hello1 < Toys::Tool; end
+        class HelloOutsideDsl < Toys::Tool; end
       end
       assert_match(/Toys::Tool can be subclassed only from a Toys tool file/, ex.message)
+    ensure
+      remove_leaked_tool_constant(:HelloOutsideDsl)
     end
 
     it "is not allowed from a toplevel block" do
       t = self
       cli.add_source do
         ex = t.assert_raises(Toys::ToolDefinitionError) do
-          class Hello1 < Toys::Tool; end
+          class HelloToplevelBlock < Toys::Tool; end
         end
         t.assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.message)
       end
+      # The source block is evaluated lazily, so without a lookup nothing above
+      # it actually runs, and the test asserts nothing.
+      loader.lookup([])
+    ensure
+      remove_leaked_tool_constant(:HelloToplevelBlock)
     end
 
     it "is not allowed from a tool block" do
