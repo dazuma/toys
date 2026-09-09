@@ -104,7 +104,6 @@ module Toys
       #
       def acceptor(name, spec = nil, type_desc: nil, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.add_acceptor(name, spec, type_desc: type_desc || name.to_s, &block)
         self
       end
@@ -149,7 +148,6 @@ module Toys
       #
       def mixin(name, mixin_module = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.add_mixin(name, mixin_module, &block)
         self
       end
@@ -212,7 +210,6 @@ module Toys
       #
       def template(name, template_class = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.add_template(name, template_class, &block)
         self
       end
@@ -260,7 +257,6 @@ module Toys
       #
       def completion(name, spec = nil, **options, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.add_completion(name, spec, **options, &block)
         self
       end
@@ -314,18 +310,9 @@ module Toys
       # @return [self]
       #
       def tool(words, if_defined: :combine, delegate_to: nil, delegate_relative: nil, &block)
-        subtool_words, next_remaining = DSL::Internal.analyze_name(self, words)
-        subtool = @__loader.get_tool(subtool_words, source_info.priority)
-        if subtool.includes_definition?
-          case if_defined
-          when :ignore
-            return self
-          when :reset
-            subtool.reset_definition
-          end
-        end
+        state = DSL::Internal.current_load_state(self)
         if delegate_to || delegate_relative
-          delegate_to2 = @__words + @__loader.tool_name_splitter.split(delegate_relative) if delegate_relative
+          delegate_to2 = state.canonical_relative_tool_name(delegate_relative) if delegate_relative
           orig_block = block
           block = proc do
             self.delegate_to(delegate_to) if delegate_to
@@ -333,13 +320,7 @@ module Toys
             instance_eval(&orig_block) if orig_block
           end
         end
-        if block
-          # Intentionally uses load_block instead of load_source because we are
-          # remaining within the same "outer source" and want to inherit all
-          # the SourceInfo fields. (cf. the `load` methods which want to jump
-          # to a totally different source and so use load_source.)
-          @__loader.load_block(source_info, block, subtool_words, next_remaining)
-        end
+        state.eval_tool_block(block, words, if_defined)
         self
       end
 
@@ -405,7 +386,8 @@ module Toys
       def delegate_to(target)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        cur_tool.delegate_to(@__loader.tool_name_splitter.split(target))
+        state = DSL::Internal.current_load_state(self)
+        cur_tool.delegate_to(state.canonical_absolute_tool_name(target))
         self
       end
 
@@ -433,7 +415,7 @@ module Toys
           return self
         end
         spec = SourceSpec.path(path, context_directory: context_directory)
-        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
+        DSL::Internal.current_load_state(self).load_source(spec)
         self
       end
 
@@ -485,7 +467,7 @@ module Toys
                               commit: commit,
                               update: update,
                               context_directory: context_directory)
-        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
+        DSL::Internal.current_load_state(self).load_source(spec)
         self
       end
 
@@ -535,7 +517,7 @@ module Toys
                               path: path,
                               toys_dir: toys_dir,
                               context_directory: context_directory)
-        @__loader.load_source(source_info, spec, @__words, @__remaining_words)
+        DSL::Internal.current_load_state(self).load_source(spec)
         self
       end
 
@@ -572,18 +554,7 @@ module Toys
       # @return [self]
       #
       def expand(template_class, *args, **kwargs)
-        cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
-        name = template_class.to_s
-        case template_class
-        when ::String
-          template_class = cur_tool.lookup_template(template_class)
-        when ::Symbol
-          template_class = @__loader.resolve_standard_template(name)
-        end
-        if template_class.nil?
-          raise ToolDefinitionError, "Template not found: #{name.inspect}"
-        end
+        template_class = DSL::Internal.current_load_state(self).resolve_template(template_class)
         template = template_class.new(*args, **kwargs)
         yield template if block_given?
         class_exec(template, &template_class.expansion)
@@ -663,11 +634,12 @@ module Toys
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         if file
-          unless source_info.source_path
+          source_path = source_info.source_path
+          unless source_path
             raise ::Toys::ToolDefinitionError,
                   "Cannot set long_desc from a file because the tool is not defined in a file"
           end
-          file = ::File.join(::File.dirname(source_info.source_path), file)
+          file = ::File.join(::File.dirname(source_path), file)
         elsif data
           file = source_info.find_data(data, type: :file)
         end
@@ -1796,7 +1768,7 @@ module Toys
       def include(mixin, *args, **kwargs)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        mod = DSL::Internal.resolve_mixin(mixin, cur_tool, @__loader)
+        mod = DSL::Internal.current_load_state(self).resolve_mixin(mixin)
         cur_tool.include_mixin(mod, *args, **kwargs)
         self
       end
@@ -1811,12 +1783,9 @@ module Toys
       # @param mod [Module,Symbol,String] Module or module name.
       #
       # @return [boolean] Whether the mixin is included
-      # @return [nil] if the current tool is not active.
       #
       def include?(mod)
-        cur_tool = DSL::Internal.current_tool(self, false)
-        return if cur_tool.nil?
-        super(DSL::Internal.resolve_mixin(mod, cur_tool, @__loader))
+        super(DSL::Internal.current_load_state(self).resolve_mixin(mod))
       end
 
       ##
@@ -1825,7 +1794,7 @@ module Toys
       # @return [Toys::SourceInfo] Source info.
       #
       def source_info
-        @__source
+        DSL::Internal.current_load_state(self).source
       end
 
       ##
@@ -1931,7 +1900,6 @@ module Toys
       #
       def subtool_apply(&block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.subtool_middleware_stack.add(:apply_config, parent_source: source_info, &block)
         self
       end
@@ -1947,10 +1915,7 @@ module Toys
       #     already been loaded.
       #
       def truncate_load_path!
-        unless @__loader.stop_loading_at_priority(source_info.priority)
-          raise ToolDefinitionError,
-                "Cannot truncate load path because tools have already been loaded"
-        end
+        DSL::Internal.current_load_state(self).stop_loading_at_current_priority
       end
 
       ##
@@ -1963,7 +1928,6 @@ module Toys
       #
       def inheritable_helper_methods(val)
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
         cur_tool.inheritable_helper_methods = val
         self
       end
@@ -2002,7 +1966,8 @@ module Toys
       end
 
       ##
-      # Notify the tool definition when a method is defined in this tool class.
+      # A callback defined on `::Module`. Notifies the tool definition when a
+      # method is defined in this tool class.
       #
       # @private
       #
@@ -2017,10 +1982,9 @@ module Toys
       # @private
       #
       def inspect
-        return super unless defined? @__words
-        name = @__words.empty? ? "(root)" : @__words.join(" ").inspect
-        id = object_id.to_s(16)
-        "#<Class id=0x#{id} tool=#{name}>"
+        state = DSL::Internal.current_load_state(self)
+        return super unless state
+        "#<Class id=0x#{object_id.to_s(16)} tool=#{state.tool_display_name}>"
       end
     end
   end

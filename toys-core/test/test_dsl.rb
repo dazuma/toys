@@ -2969,6 +2969,176 @@ describe Toys::DSL::Tool do
     ::Object.send(:remove_const, name) if ::Object.const_defined?(name, false)
   end
 
+  describe "tool class load state" do
+    # Records the words and activate flag of every Loader#get_tool call.
+    # Loader#get_tool is entered only from the DSL, so a memoized current tool
+    # shows up as a missing entry.
+    def record_get_tool_calls
+      calls = []
+      loader.define_singleton_method(:get_tool) do |words, priority, activate: false, tool_class: nil|
+        calls << [words, activate]
+        super(words, priority, activate: activate, tool_class: tool_class)
+      end
+      calls
+    end
+
+    it "restores the enclosing source when a nested block re-enters the same class" do
+      t = self
+      cli.add_source do
+        tool "a" do
+          outer_class = self
+          outer_source = source_info
+          desc "outer"
+          # An empty tool name descends to the same words, and therefore to the
+          # same tool class, so this block re-enters the class it appears in.
+          tool "" do
+            t.assert_same(outer_class, self)
+            t.refute_same(outer_source, source_info)
+            t.assert_same(outer_source, source_info.parent)
+            long_desc "inner"
+          end
+          t.assert_same(outer_source, source_info)
+        end
+      end
+      tool, _remaining = loader.lookup(["a"])
+      assert_equal("outer", tool.desc.to_s)
+      assert_equal("inner", tool.long_desc.first.to_s)
+    end
+
+    it "reuses the memoized current tool when a nested block re-enters the class" do
+      cli.add_source do
+        tool "a" do
+          desc "outer"
+          tool "" do
+            long_desc "inner"
+          end
+        end
+      end
+      calls = record_get_tool_calls
+      tool, _remaining = loader.lookup(["a"])
+      assert_equal("inner", tool.long_desc.first.to_s)
+      assert_equal(1, calls.count([["a"], true]))
+    end
+
+    it "caches a failed activation" do
+      cli.add_source do
+        tool "foo" do
+          desc "high priority"
+        end
+      end
+      cli.add_source do
+        tool "foo" do
+          # Both directives ask to activate. The first is refused because the
+          # higher-priority definition above is already active, and the second
+          # must not ask the loader again.
+          desc "low priority"
+          long_desc "low priority"
+        end
+      end
+      calls = record_get_tool_calls
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("high priority", tool.desc.to_s)
+      assert_empty(tool.long_desc)
+      # One activating fetch per tool class: the high-priority class's, which
+      # succeeds, and the low-priority class's, which is refused and cached.
+      assert_equal(2, calls.count([["foo"], true]))
+    end
+
+    it "pre-seeds the current tool of a class-defined tool" do
+      cli.add_source(File.join(cases_dir, "tool-subclass-load-state"))
+      calls = record_get_tool_calls
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal("applied to subtools of foo", tool.long_desc.first.to_s)
+      # prepare_subclass makes exactly one non-activating fetch for "foo", whose
+      # result it seeds; subtool_apply then reads the seeded memo.
+      assert_equal(1, calls.count([["foo"], false]))
+    end
+
+    it "keeps the source of a namespace class that only a config block prepared" do
+      cli.add_source do
+        tool "a" do
+          subtool_apply do
+            # Empty block
+          end
+          tool "b c" do
+            def run; end
+          end
+        end
+      end
+      loader.lookup(["a", "b", "c"])
+      # The config block is applied to "a b" only when that name is itself
+      # finished, which the lookup above does not do.
+      namespace = loader.lookup_specific(["a", "b"])
+      source = namespace.tool_class.source_info
+      refute_nil(source)
+      assert_equal(:proc, source.source_type)
+    end
+
+    it "leaves no active load state after a lookup returns" do
+      cli.add_source do
+        tool "a" do
+          def run; end
+        end
+      end
+      loader.lookup(["a"])
+      # The fiber-local is process-global per thread and the suite is one
+      # randomized process, so a failed restore would otherwise surface as an
+      # unrelated test failing on some seeds.
+      assert_nil(::Thread.current[Toys::Loader::LoadState.const_get(:FIBER_LOCAL_KEY)])
+    end
+
+    it "gives an inheriting subtool class its own load state" do
+      t = self
+      cli.add_source do
+        tool "foo" do
+          inheritable_helper_methods true
+          foo_class = self
+          foo_source = source_info
+          t.assert_equal(["foo"], current_tool.full_name)
+          tool "bar" do
+            t.assert_operator(self, :<, foo_class)
+            t.refute_same(foo_source, source_info)
+            t.assert_equal(["foo", "bar"], current_tool.full_name)
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal(["foo", "bar"], tool.full_name)
+    end
+  end
+
+  describe "tool class inspection" do
+    it "includes the tool name" do
+      cli.add_source do
+        tool "foo" do
+          tool "bar" do
+            def run; end
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_match(/^#<Class id=0x\h+ tool="foo bar">$/, tool.tool_class.inspect)
+    end
+
+    it "identifies the root tool" do
+      cli.add_source do
+        desc "hello"
+      end
+      tool, _remaining = loader.lookup([])
+      assert_match(/^#<Class id=0x\h+ tool=\(root\)>$/, tool.tool_class.inspect)
+    end
+
+    it "falls back to the default for a class with no load state" do
+      cli.add_source do
+        tool "foo" do
+          def run; end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_match(/^#<Class:0x\h+>$/, Class.new(tool.tool_class).inspect)
+    end
+  end
+
   describe "Toys::Tool subclassing" do
     it "creates a tool" do
       cli.add_source(File.join(cases_dir, "tool-subclasses"))
@@ -3062,6 +3232,14 @@ describe Toys::DSL::Tool do
 
     it "is not allowed under a module that is not a tool" do
       cli.add_source(File.join(cases_dir, "tool-subclass-under-module"))
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["thing"])
+      end
+      assert_match(/Toys::Tool can be subclassed only from the Toys DSL/, ex.cause.message)
+    end
+
+    it "is not allowed under a class that is not a tool" do
+      cli.add_source(File.join(cases_dir, "tool-subclass-under-context"))
       ex = assert_raises(Toys::ContextualError) do
         loader.lookup(["thing"])
       end

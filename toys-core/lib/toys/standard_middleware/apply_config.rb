@@ -53,7 +53,8 @@ module Toys
         tool_class = tool.tool_class
         source = find_source(tool.source_root)
         if source
-          DSL::Internal.prepare(tool_class, tool.full_name, nil, source, loader) do
+          DSL::Internal.setup_class_dsl(tool_class)
+          Loader::LoadState.prepare(tool_class, loader, tool.full_name, nil, source) do
             tool_class.class_eval(&@block)
           end
         end

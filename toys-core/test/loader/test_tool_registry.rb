@@ -54,10 +54,6 @@ describe Toys::Loader::ToolRegistry do
       assert_equal("Tool already defined for #{tool_name.inspect}", err.message)
     end
 
-    # No current caller repeats a tool class: DSL::Internal.configure_class
-    # registers each Toys::Tool subclass exactly once. This pins the registry's
-    # own contract, which keys the assertion on the class rather than on the
-    # mere presence of a definition.
     it "returns the existing definition if the same tool class is given twice" do
       tool_class = ::Class.new(Toys::Context)
       tool = registry.get_tool(tool_name, 0, tool_class: tool_class)

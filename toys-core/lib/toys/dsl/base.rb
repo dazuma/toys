@@ -45,9 +45,16 @@ def Toys.Tool(*args, name: nil, base: nil) # rubocop:disable Naming/MethodName
   ::Class.new(base || ::Toys::Context) do
     base_class = self
     define_singleton_method(:inherited) do |tool_class|
-      ::Toys::DSL::Internal.configure_class(tool_class, base_class == self ? name.to_s : nil)
+      # We set up LoadState *before* calling super, to make sure that, if the
+      # base is already a Tool subclass that has one of these `inherited`
+      # methods defined (and thus executes during super) the outermost
+      # prepare_subclass needs to be called first so it wins.
+      ::Toys::Loader::LoadState.prepare_subclass(tool_class, given_name: base_class == self ? name.to_s : nil)
       super(tool_class)
-      ::Toys::DSL::Internal.setup_class_dsl(tool_class)
+      # The DSL installs a method_added hook, so setup_subclass_dsl must be
+      # called *after* super to avoid the hook firing as the superclass methods
+      # are added.
+      ::Toys::DSL::Internal.setup_subclass_dsl(tool_class)
     end
   end
 end
@@ -79,9 +86,16 @@ module Toys
     # @private
     #
     def self.inherited(tool_class)
-      DSL::Internal.configure_class(tool_class)
+      # We set up LoadState *before* calling super, to make sure that, if the
+      # base is already a Tool subclass that has one of these `inherited`
+      # methods defined (and thus executes during super) the outermost
+      # prepare_subclass needs to be called first so it wins.
+      ::Toys::Loader::LoadState.prepare_subclass(tool_class)
       super
-      DSL::Internal.setup_class_dsl(tool_class)
+      # The DSL installs a method_added hook, so setup_subclass_dsl must be
+      # called *after* super to avoid the hook firing as the superclass methods
+      # are added.
+      ::Toys::DSL::Internal.setup_subclass_dsl(tool_class)
     end
   end
 end
