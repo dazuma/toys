@@ -1,5 +1,30 @@
 # Release History
 
+### v0.23.0 / 2026-09-09
+
+* BREAKING CHANGE: Refactor CLI to extract a Runnable class and limit back-references to CLI
+* BREAKING CHANGE: Extract tool name splitting from Loader into a public ToolNameSplitter class
+* BREAKING CHANGE: Split SourceListBuilder out of Loader
+* BREAKING CHANGE: Ensure a context directory is always available
+* BREAKING CHANGE: Improvements to error rendering in the standard error handler
+* BREAKING CHANGE: Raise ToolDefinitionError when attempting to create or descend into a subtool from within a subtool_apply block or middleware-based config
+* ADDED: Add treat_unknown_flags_as_args directive
+* ADDED: CLI#child can copy loader sources
+* ADDED: Added CLI#add_config_gem and CLI#add_config_git
+* ADDED: Add --gem flag to the do builtin
+* ADDED: Extract tool name splitting from Loader into a public ToolNameSplitter class
+* ADDED: Rename ContextualError#config_path and config_line to tool_file_path and tool_file_line
+* ADDED: Allow a custom source list to be passed to StandardCLI
+* ADDED: Support `--path` and `--git` flags in `toys do`
+* ADDED: Add SourceSpec, an unresolved description of a tool source
+* ADDED: Ensure a context directory is always available
+* ADDED: Improvements to error rendering in the standard error handler
+* FIXED: Various minor fixes
+* FIXED: Raise ToolDefinitionError when attempting to create or descend into a subtool from within a subtool_apply block or middleware-based config
+* DOCS: Fixed a few links in the reference documentation
+* DOCS: Fix typos in the flag parsing directive documentation
+* DOCS: Classes from toys-core display their notice at the end instead of the beginning of their description
+
 ### v0.22.0 / 2026-05-05
 
 Toys 0.22 is a major release focused on polish and cleanup in preparation for version 1.0. It includes a number of small breaking changes where needed to clean up the interfaces. (Note that many of the changes listed below are actually in the `toys-core` gem.)
