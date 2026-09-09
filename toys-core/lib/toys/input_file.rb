@@ -32,7 +32,8 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     str = build_eval_string(name, ::IO.read(path))
     if str
       const_set(name, namespace)
-      ::Toys::DSL::Internal.prepare(tool_class, words, remaining_words, source, loader) do
+      ::Toys::DSL::Internal.setup_class_dsl(tool_class)
+      ::Toys::Loader::LoadState.prepare(tool_class, loader, words, remaining_words, source) do
         ::Toys::ContextualError.capture(banner: "Error while loading tool file",
                                         path: path,
                                         tool_verb: "loading",

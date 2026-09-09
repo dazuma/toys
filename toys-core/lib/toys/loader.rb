@@ -185,6 +185,8 @@ module Toys
       # filter immediate children. If not returning recursive data, we'll
       # post-filter below.
       each_definition_in_subtree(words, recursive: true) do |tool|
+        # each_definition_in_subtree iterates within the mutex, so this code
+        # will execute within the mutex.
         if include_hidden || tool.full_name[words_len..].none? { |word| word.start_with?("_") }
           found_tools << tool.finish_definition(self)
         end
@@ -347,6 +349,14 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
+    # @param parent_source [Toys::SourceInfo] The source for the load's
+    #     enclosing context.
+    # @param spec [Toys::SourceSpec::Base] The source to load
+    # @param words [Array<String>] The tool name to load under
+    # @param remaining_words [Array<String>,nil] Remaining words in the current
+    #     lookup.
+    # @return [self]
+    #
     def load_source(parent_source, spec, words, remaining_words)
       source = SourceInfo.resolve_child(spec, parent_source,
                                         git_cache: @git_cache,
@@ -354,6 +364,7 @@ module Toys
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words)
       end
+      self
     end
 
     ##
@@ -367,46 +378,20 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
+    # @param parent_source [Toys::SourceInfo] The source for the block's
+    #     enclosing context.
+    # @param block [Proc] The block to evaluate
+    # @param words [Array<String>] The tool name the block should configure
+    # @param remaining_words [Array<String>,nil] Remaining words in the current
+    #     lookup.
+    # @return [self]
+    #
     def load_block(parent_source, block, words, remaining_words)
       source = parent_source.proc_child(block)
       @mutex.synchronize do
         load_proc(source, words, remaining_words)
       end
-    end
-
-    ##
-    # Descend from the given tool name through the given additional name
-    # segments, tracking how much of the name being looked up is still
-    # outstanding. Returns the resulting tool name along with the resulting
-    # remaining words, which are nil if the resulting name is not on the path
-    # to the name being looked up. No argument is modified, and the returned
-    # arrays must be treated as read-only because they may alias the arguments.
-    #
-    # Called from the DSL as well as from within Loader.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    # @param words [Array<String>] The current tool name
-    # @param remaining_words [Array<String>,nil] Remaining name segments still
-    #     outstanding in the current lookup
-    # @param new_words [Array<String>] Name segments to descend
-    # @return [Array(Array<String>,(Array<String>|nil))] The tool name with the
-    #     new segments appended, and either the remaining name segments in the
-    #     lookup if the descent followed it, or nil if the descent strayed from
-    #     the lookup.
-    #
-    def descend_name(words, remaining_words, new_words)
-      new_words = new_words.map(&:to_s)
-      next_remaining = new_words.reduce(remaining_words) do |cur_remaining, word|
-        if cur_remaining.nil?
-          nil
-        elsif cur_remaining.empty?
-          cur_remaining
-        elsif cur_remaining.first == word
-          cur_remaining.slice(1..-1)
-        end
-      end
-      [words + new_words, next_remaining]
+      self
     end
 
     private
@@ -499,7 +484,8 @@ module Toys
         priority = source.priority
         update_min_loaded_priority(priority)
         tool_class = @tool_registry.get_tool(words, priority).tool_class
-        DSL::Internal.prepare(tool_class, words, remaining_words, source, self) do
+        DSL::Internal.setup_class_dsl(tool_class)
+        LoadState.prepare(tool_class, self, words, remaining_words, source) do
           ContextualError.capture(banner: "Error while evaluating tool definition",
                                   path: source.source_path,
                                   tool_verb: "loading",
@@ -540,7 +526,7 @@ module Toys
           require file
         end
         load_index_in(source, words, remaining_words)
-        ::Dir.entries(source.source_path).each do |child|
+        ::Dir.entries(source.source_path).sort.each do |child|
           load_child_in(source, child, words, remaining_words)
         end
       end
@@ -566,7 +552,7 @@ module Toys
       child_source = source.relative_child(child)
       return unless child_source
       child_word = ::File.basename(child, ".rb")
-      next_words, next_remaining = descend_name(words, remaining_words, [child_word])
+      next_words, next_remaining = LoadState.descend_name(words, remaining_words, [child_word])
       load_validated_path(child_source, next_words, next_remaining)
     end
 
