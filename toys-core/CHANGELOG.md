@@ -1,5 +1,44 @@
 # Release History
 
+### v0.23.0 / 2026-09-09
+
+* BREAKING CHANGE: Refactor CLI to extract a Runnable class and limit back-references to CLI
+* BREAKING CHANGE: Extract tool name splitting from Loader into a public ToolNameSplitter class
+* BREAKING CHANGE: Split SourceListBuilder out of Loader
+* BREAKING CHANGE: Ensure a context directory is always available
+* BREAKING CHANGE: Improvements to error rendering in the standard error handler
+* BREAKING CHANGE: Replace SourceInfo's flat git and gem fields with an origin object
+* BREAKING CHANGE: Raise ToolDefinitionError when attempting to create or descend into a subtool from within a subtool_apply block or middleware-based config
+* ADDED: Add treat_unknown_flags_as_args directive
+* ADDED: CLI#child can copy loader sources
+* ADDED: Added CLI#add_config_gem and CLI#add_config_git
+* ADDED: Add --gem flag to the do builtin
+* ADDED: ToolDefinition#run_handler returns the delegate target for a delegating tool
+* ADDED: Context keys and sentinels now display their names in diagnostic output
+* ADDED: Extract tool name splitting from Loader into a public ToolNameSplitter class
+* ADDED: Rename ContextualError#config_path and config_line to tool_file_path and tool_file_line
+* ADDED: Replace SourceListBuilder with SourceList that is passed directly to the Loader
+* ADDED: Add SourceSpec, an unresolved description of a tool source
+* ADDED: Ensure a context directory is always available
+* ADDED: The ApplyConfig middleware can now be provided independently in addition to from an existing source
+* ADDED: Improvements to error rendering in the standard error handler
+* ADDED: Replace SourceInfo's flat git and gem fields with an origin object
+* FIXED: Fixed a "circular causes" error on certain versions of JRuby
+* FIXED: Loader#add_path_set raises immediately for a relative path that is not a readable config
+* FIXED: More minor loader cleanup
+* FIXED: Identify flags by definition rather than by context key when validating flag groups
+* FIXED: Include git_cache 0.1.2 which includes a fix for git auto maintenance races
+* FIXED: Toys::Tool subclasses now have their own source info
+* FIXED: Raise ToolDefinitionError when attempting to reset a tool previously defined by subclassing Toys::Tool
+* FIXED: Preserve dependency provenance and require: in the modified gemfile
+* FIXED: Honor BUNDLE_LOCKFILE and stop leaking it from the modified bundle
+* FIXED: Various minor fixes
+* FIXED: Raise ToolDefinitionError when attempting to create or descend into a subtool from within a subtool_apply block or middleware-based config
+* DOCS: Fixed a few links in the reference documentation
+* DOCS: Fix typos in the flag parsing directive documentation
+* DOCS: Classify Middleware in the support layer
+* DOCS: Update ToolDefinition docs with a note about the two-phase lifecycle
+
 ### v0.22.0 / 2026-05-05
 
 Toys-core 0.22 is a major release focused on polish and cleanup in preparation for version 1.0. It includes a number of small breaking changes where needed to clean up the interfaces.
