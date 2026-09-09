@@ -23,6 +23,21 @@ module Toys
       #     the tool's source, and will be associated with a separate "proc"
       #     source for every tool source tree (i.e. every priority).
       #
+      # Your block cannot create or modify subtools of the tool being modified.
+      # (This is because the same middleware could be expected to apply to that
+      # subtool as well, and the semantics of the resulting recursion would be
+      # messy and ambiguous.) Thus, within the block:
+      #
+      #  *  You cannot use the `tool` directive.
+      #  *  You cannot create a `Toys::Tool` subclass.
+      #  *  You cannot use a `subtool_apply` directive.
+      #  *  You cannot pass the `as:` parameter to any `load` or related
+      #     directive.
+      #  *  You cannot use any `load` or related directive that references a
+      #     directory. (You can, however, load a file directly, as long as it
+      #     does not use the `as:` parameter, and the file's contents do not
+      #     violate any of these rules.)
+      #
       # @param parent_source [Toys::SourceInfo,nil] The SourceInfo corresponding
       #     to the source where this block is provided, to apply this block only
       #     to that source tree. Or, omit to apply this block to every tool
@@ -54,7 +69,11 @@ module Toys
         source = find_source(tool.source_root)
         if source
           DSL::Internal.setup_class_dsl(tool_class)
-          Loader::LoadState.prepare(tool_class, loader, tool.full_name, nil, source) do
+          # Remaining words are empty rather than nil: the block is evaluated
+          # against a tool that has already been located, so any source it
+          # loads is relevant now and must be evaluated inline rather than
+          # deferred to the worklist.
+          Loader::LoadState.prepare(tool_class, loader, tool.full_name, [], source) do
             tool_class.class_eval(&@block)
           end
         end

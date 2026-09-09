@@ -72,6 +72,7 @@ module Toys
           mod_names = tool_class.name.split("::")
           class_name = mod_names.pop
           parent_state = parent_state_from_mod_name_segments(mod_names)
+          parent_state.current_tool(false).check_definition_state(is_descending: true)
           loader = parent_state.loader
           name = given_name ? loader.tool_name_splitter.split(given_name) : class_name_to_tool_name(class_name)
           source = parent_state.source.subclass_child(tool_class)

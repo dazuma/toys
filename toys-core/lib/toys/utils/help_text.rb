@@ -333,7 +333,8 @@ module Toys
         # @return [String]
         #
         def namespace_synopsis
-          "#{@executable_name} #{@tool.display_name} TOOL [ARGUMENTS...]"
+          ([@executable_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
+          # "#{@executable_name} #{@tool.display_name} TOOL [ARGUMENTS...]"
         end
 
         ##

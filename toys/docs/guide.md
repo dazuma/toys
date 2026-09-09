@@ -2680,6 +2680,19 @@ tool "another-tool" do
 end
 ```
 
+A `subtool_apply` block cannot create or modify subtools of the subtool being
+applied to. (This is because the same block could be expected to apply to that
+subtool as well, and the semantics of the resulting recursion would be messy
+and ambiguous.) Thus, within the block:
+
+ *  You cannot use the `tool` directive.
+ *  You cannot create a `Toys::Tool` subclass.
+ *  You cannot use a nested `subtool_apply` directive.
+ *  You cannot pass the `as:` parameter to any `load` or related directive.
+ *  You cannot use any `load` or related directive that references a directory.
+    (You can, however, load a file directly, as long as it does not use the
+    `as:` parameter, and the file's contents do not violate any of these rules.)
+
 ## Testing your tools
 
 Tests play a critical part in the maintainability of any Ruby app. However, it

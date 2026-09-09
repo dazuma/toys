@@ -2284,6 +2284,184 @@ describe Toys::DSL::Tool do
       end
       loader.lookup(["foo", "bar"])
     end
+
+    it "refuses to descend to a block-based subtool within the block" do
+      t = self
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            desc "hello"
+            t.assert_raises(Toys::ToolDefinitionError) do
+              tool "baz" do
+                desc "bye"
+              end
+            end
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      loader.lookup(["foo", "bar"])
+    end
+
+    it "refuses to load a directory source within the block" do
+      dir_to_load = ::File.join(cases_dir, "config-items", ".toys")
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load(dir_to_load)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    it "applies a file source loaded within the block" do
+      file_to_load = ::File.join(cases_dir, "config-block-load", "shared-config.rb")
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load(file_to_load)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      tool, = loader.lookup(["foo", "bar"])
+      assert_equal("shared description", tool.desc.to_s)
+      assert_equal(["shared long description"], tool.long_desc.map(&:to_s))
+      # The same lookup, repeated, must give the same answer.
+      tool, = loader.lookup(["foo", "bar"])
+      assert_equal("shared description", tool.desc.to_s)
+    end
+
+    it "refuses to define a subtool from a file source loaded within the block" do
+      file_to_load = ::File.join(cases_dir, "config-items", ".toys.rb")
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load(file_to_load)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    it "refuses to define a subclass-based subtool from a file source loaded within the block" do
+      file_to_load = ::File.join(cases_dir, "config-block-load", "config-with-subclass.rb")
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load(file_to_load)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    it "refuses a nested subtool_apply within the block" do
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            subtool_apply do
+              desc "hello"
+            end
+          end
+          tool "bar" do
+            tool "baz" do
+              # Empty tool
+            end
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    it "refuses a tool-defining block while listing subtools" do
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            tool "generated" do
+              def run; end
+            end
+          end
+          tool "bar" do
+            def run; end
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.list_subtools(["foo"], recursive: true)
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    describe "with the default middleware stack" do
+      let(:cli) {
+        Toys::CLI.new(executable_name: executable_name, logger: logger,
+                      middleware_stack: Toys::CLI.default_middleware_stack)
+      }
+
+      let(:tool_generating_source) {
+        proc do
+          tool "foo" do
+            subtool_apply do
+              tool "generated" do
+                def run; end
+              end
+            end
+            tool "bar" do
+              def run; end
+            end
+          end
+        end
+      }
+
+      it "reports the error when running the tool the block applies to" do
+        cli.add_source(&tool_generating_source)
+        ex = assert_raises(Toys::ContextualError) do
+          cli.run(["foo", "bar"])
+        end
+        assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+        assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+      end
+
+      # Showing help for the parent namespace never mentions the offending
+      # subtool by name, but ShowHelp calls list_subtools, which finishes it.
+      it "reports the error when showing help for the parent namespace" do
+        cli.add_source(&tool_generating_source)
+        ex = assert_raises(Toys::ContextualError) do
+          cli.run(["foo"])
+        end
+        assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+        assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+      end
+    end
   end
 
   describe "truncate_load_path! directive" do
@@ -2530,10 +2708,51 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["ns1", "ns2", "tool-1"])
       assert_expanded_path("/loaded/dir", tool.context_directory)
     end
+
+    it "refuses to load a directory from within a subtool_apply block" do
+      remote = git_remote
+      path = git_dir_path
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load_git(remote: remote, path: path, update: true)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    it "refuses the as: parameter from within a subtool_apply block" do
+      remote = git_remote
+      path = git_file_path
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load_git(remote: remote, path: path, update: true, as: "generated")
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
   end
 
   describe "load_gem directive" do
     let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
+    let(:shared_config_toys_dir) { "test-data/lookup-cases/config-block-load" }
 
     it "loads a file into the current namespace" do
       toys_dir = gem_toys_dir
@@ -2618,6 +2837,65 @@ describe Toys::DSL::Tool do
       end)
       tool, _remaining = loader.lookup(["ns1", "ns2", "tool-1"])
       assert_expanded_path("/loaded/dir", tool.context_directory)
+    end
+
+    it "refuses to load a directory from within a subtool_apply block" do
+      toys_dir = gem_toys_dir
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load_gem("toys-core", path: ".toys", toys_dir: toys_dir)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    # The as: keyword is refused by the tool directive it delegates to, so this
+    # pins that delegation rather than a check of its own.
+    it "refuses the as: parameter from within a subtool_apply block" do
+      toys_dir = shared_config_toys_dir
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load_gem("toys-core", path: "shared-config.rb", toys_dir: toys_dir, as: "generated")
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo", "bar"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo bar"/, ex.cause.message)
+    end
+
+    # The positive control for the two tests above: a gem-sourced *file* with no
+    # as: parameter loads into the current tool and is still allowed.
+    it "applies a file loaded from within a subtool_apply block" do
+      toys_dir = shared_config_toys_dir
+      cli.add_source do
+        tool "foo" do
+          subtool_apply do
+            load_gem("toys-core", path: "shared-config.rb", toys_dir: toys_dir)
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal("shared description", tool.desc.to_s)
+      assert_equal(["shared long description"], tool.long_desc.map(&:to_s))
     end
   end
 

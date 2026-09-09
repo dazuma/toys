@@ -361,6 +361,16 @@ module Toys
       source = SourceInfo.resolve_child(spec, parent_source,
                                         git_cache: @git_cache,
                                         gems_util: @gems_util)
+      # A directory source defines subtools named after its children, so it is
+      # not allowed to load during the tool finishing phase. A file source
+      # loads into the current tool, so it is allowed.
+      unless source.source_type == :file
+        # This check is intended to prevent new tool creation during tool
+        # finishing. get_tool technically could create tools, but `load_source`
+        # is always called from the DSL which is already evaluating the tool
+        # for `words`, so we know it already exists.
+        get_tool(words, parent_source.priority).check_definition_state(is_descending: true)
+      end
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words)
       end

@@ -88,12 +88,16 @@ module Toys
       ##
       # Iterates over the current definitions (i.e. the activated or highest
       # priority, if one exists) for every name in this registry, in no
-      # particular order.
+      # particular order. The iteration occurs over a snapshot, so any tools
+      # added mid-iteration will not be included.
       #
       # @private This interface is internal and subject to change without warning.
       #
       def each_cur_definition
-        @entries.each_value do |entry|
+        # We intentionally get an explicit array of entries instead of calling
+        # each_value because we want to iterate over a snapshot.
+        entry_values = @entries.values
+        entry_values.each do |entry|
           definition = entry.cur_definition
           yield definition if definition
         end
