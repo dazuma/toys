@@ -20,7 +20,10 @@ describe "toys e2e" do
 
     it "displays exception message and source location on runtime failure" do
       toys_rb = File.join(e2e_cases_dir, "exception", ".toys.rb")
-      result = run_toys("boom", chdir: "#{e2e_cases_dir}/exception", out: :capture, err: :capture)
+      result = run_toys("boom",
+                        chdir: "#{e2e_cases_dir}/exception",
+                        env: {"TOYS_TRACE" => nil},
+                        out: :capture, err: :capture)
       refute(result.success?)
       assert_includes(result.captured_err, "Error during tool execution: something went wrong (RuntimeError)")
       assert_includes(result.captured_err, "(#{toys_rb}:5)")

@@ -264,6 +264,9 @@ module Toys
       ##
       # Create a subtool. You must provide a block defining the subtool.
       #
+      # Note that this cannot be called from within {#subtool_apply} or from
+      # a middleware config method.
+      #
       # ### Example
       #
       # The following example defines a tool and two subtools within it.
@@ -310,6 +313,8 @@ module Toys
       # @return [self]
       #
       def tool(words, if_defined: :combine, delegate_to: nil, delegate_relative: nil, &block)
+        cur_tool = DSL::Internal.current_tool(self, false)
+        cur_tool.check_definition_state(is_descending: true)
         state = DSL::Internal.current_load_state(self)
         if delegate_to || delegate_relative
           delegate_to2 = state.canonical_relative_tool_name(delegate_relative) if delegate_relative
@@ -395,6 +400,9 @@ module Toys
       # Load another tool file or directory, as if its contents were inserted
       # at the current location.
       #
+      # Note that this directive has restrictions within a {#subtool_apply}
+      # block. See the {#subtool_apply} documentation for details.
+      #
       # @param path [String] The file or directory to load.
       # @param context_directory [String,Pathname,nil] The context directory
       #     path for tools loaded from this source. Optional. If not provided,
@@ -402,12 +410,15 @@ module Toys
       #     Context directory paths should generally be absolute. Relative
       #     paths will be converted to absolute, using the current working
       #     directory at the time of loading.
-      # @param as [String] Load into the given tool/namespace. If omitted,
-      #     tools will be loaded into the current namespace.
+      # @param as [String] Load into the given tool/namespace, relative to the
+      #     current namespace. If omitted, tools will be loaded into the
+      #     current namespace.
       #
       # @return [self]
       #
-      def load(path, as: nil, context_directory: nil)
+      def load(path,
+               context_directory: nil,
+               as: nil)
         if as
           tool(as) do
             load(path, context_directory: context_directory)
@@ -422,6 +433,9 @@ module Toys
       ##
       # Load tools from a public git repository, as if its contents were
       # inserted at the current location.
+      #
+      # Note that this directive has restrictions within a {#subtool_apply}
+      # block. See the {#subtool_apply} documentation for details.
       #
       # @param remote [String] The URL of the git repository. Defaults to the
       #     current repository if already loading from git.
@@ -441,8 +455,9 @@ module Toys
       #     Context directory paths should generally be absolute. Relative
       #     paths will be converted to absolute, using the current working
       #     directory at the time of loading.
-      # @param as [String] Load into the given tool/namespace. If omitted,
-      #     tools will be loaded into the current namespace.
+      # @param as [String] Load into the given tool/namespace, relative to the
+      #     current namespace. If omitted, tools will be loaded into the
+      #     current namespace.
       #
       # @return [self]
       #
@@ -475,6 +490,9 @@ module Toys
       # Load tools from a gem, as if its contents were inserted at the current
       # location.
       #
+      # Note that this directive has restrictions within a {#subtool_apply}
+      # block. See the {#subtool_apply} documentation for details.
+      #
       # @param name [String] Name of the gem
       # @param versions [Array<String>] Version requirements for the gem.
       # @param version [String,Array<String>] An alternate way to specify
@@ -490,8 +508,9 @@ module Toys
       #     Context directory paths should generally be absolute. Relative
       #     paths will be converted to absolute, using the current working
       #     directory at the time of loading.
-      # @param as [String] Load into the given tool/namespace. If omitted,
-      #     tools will be loaded into the current namespace.
+      # @param as [String] Load into the given tool/namespace, relative to the
+      #     current namespace. If omitted, tools will be loaded into the
+      #     current namespace.
       #
       # @return [self]
       #
@@ -1874,6 +1893,21 @@ module Toys
       # The block is applied only to subtools defined *after* the block
       # appears. Subtools defined before the block appears are not affected.
       #
+      # A `subtool_apply` block cannot create or modify subtools of the subtool
+      # being applied to. (This is because the same block could be expected to
+      # apply to that subtool as well, and the semantics of the resulting
+      # recursion would be messy and ambiguous.) Thus, within the block:
+      #
+      #  *  You cannot use the `tool` directive.
+      #  *  You cannot create a `Toys::Tool` subclass.
+      #  *  You cannot use a nested `subtool_apply` directive.
+      #  *  You cannot pass the `as:` parameter to any `load` or related
+      #     directive.
+      #  *  You cannot use any `load` or related directive that references a
+      #     directory. (You can, however, load a file directly, as long as it
+      #     does not use the `as:` parameter, and the file's contents do not
+      #     violate any of these rules.)
+      #
       # ### Example
       #
       # It is common for tools to use the `:exec` mixin to invoke external
@@ -1900,6 +1934,7 @@ module Toys
       #
       def subtool_apply(&block)
         cur_tool = DSL::Internal.current_tool(self, false)
+        cur_tool.check_definition_state(is_descending: true)
         cur_tool.subtool_middleware_stack.add(:apply_config, parent_source: source_info, &block)
         self
       end

@@ -159,6 +159,28 @@ describe Toys::Loader::ToolRegistry do
     end
   end
 
+  describe "each_cur_definition" do
+    it "yields the current definition for every name" do
+      registry.get_tool(tool_name, 0)
+      high = registry.get_tool(tool_name, 1)
+      tools = []
+      registry.each_cur_definition { |tool| tools << tool }
+      assert_equal([[], ["foo"], ["foo", "bar"]], tools.map(&:full_name).sort)
+      assert_same(high, tools.find { |tool| tool.full_name == tool_name })
+    end
+
+    it "allows the registry to be modified while iterating a snapshot" do
+      registry.get_tool(tool_name, 0)
+      names = []
+      registry.each_cur_definition do |tool|
+        names << tool.full_name
+        registry.get_tool(["added"] + tool.full_name, 0)
+      end
+      assert_equal([[], ["foo"], ["foo", "bar"]], names.sort)
+      assert(registry.tool_defined?(["added", "foo", "bar"]))
+    end
+  end
+
   describe "tool_defined?" do
     it "returns false before the tool is defined" do
       refute(registry.tool_defined?(tool_name))

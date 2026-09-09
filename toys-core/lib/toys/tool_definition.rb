@@ -312,7 +312,7 @@ module Toys
       @tool_class = @precreated_class || create_class
 
       @source_info = nil
-      @definition_finished = false
+      @definition_state = nil
 
       @desc = WrappableString.new
       @long_desc = []
@@ -580,7 +580,7 @@ module Toys
     # @return [String]
     #
     def display_name
-      full_name.join(" ")
+      full_name.empty? ? "(root)" : full_name.join(" ")
     end
 
     ##
@@ -697,7 +697,7 @@ module Toys
     # @return [true,false]
     #
     def definition_finished?
-      @definition_finished
+      @definition_state == :finished
     end
 
     ##
@@ -1547,23 +1547,29 @@ module Toys
     # Complete definition and run middleware configs. Should be called from
     # the Loader only.
     #
+    # Note that if an error occurs during finishing (e.g. a middleware raises),
+    # the tool will be left an inconsistent state, and cannot be used unless it
+    # is reset.
+    #
     # @private This interface is internal and subject to change without warning.
     #
     def finish_definition(loader)
-      unless @definition_finished
-        ContextualError.capture(banner: "Error installing tool middleware",
-                                tool_verb: "loading",
-                                tool_name: full_name) do
-          config_proc = proc {}
-          @built_middleware.reverse_each do |middleware|
-            config_proc = make_config_proc(middleware, loader, config_proc)
-          end
-          config_proc.call
-        end
-        flag_groups.each do |flag_group|
-          flag_group.flags.sort_by!(&:sort_str)
-        end
-        @definition_finished = true
+      case @definition_state
+      when :finished
+        return self
+      when :errored
+        raise ToolDefinitionError,
+              "The tool #{display_name.inspect} failed to finish and cannot be used."
+      when :finishing
+        raise ToolDefinitionError,
+              "The tool #{display_name.inspect} is in the middle of finishing and cannot be used at this time."
+      end
+      @definition_state = :finishing
+      begin
+        finish_definition_internal(loader)
+        @definition_state = :finished
+      ensure
+        @definition_state = :errored unless @definition_state == :finished
       end
       self
     end
@@ -1585,10 +1591,20 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def check_definition_state(is_arg: false, is_method: false)
-      if @definition_finished
+    def check_definition_state(is_arg: false, is_method: false, is_descending: false)
+      case @definition_state
+      when :finished
         raise ToolDefinitionError,
               "Definition of tool #{display_name.inspect} is already finished"
+      when :finishing
+        if is_descending
+          raise ToolDefinitionError,
+                "Cannot define or descend into a subtool of #{display_name.inspect} " \
+                "from a middleware or a subtool_apply block"
+        end
+      when :errored
+        raise ToolDefinitionError,
+              "The tool #{display_name.inspect} failed to finish and cannot be used."
       end
       if is_arg && argument_parsing_disabled?
         raise ToolDefinitionError,
@@ -1640,6 +1656,22 @@ module Toys
         return signal if ::Signal.signame(signal)
       end
       raise ::ArgumentError, "Unknown signal: #{signal}"
+    end
+
+    # The heart of finish_definition, without the definition_state logic
+    def finish_definition_internal(loader)
+      ContextualError.capture(banner: "Error installing tool middleware",
+                              tool_verb: "loading",
+                              tool_name: full_name) do
+        config_proc = proc {}
+        @built_middleware.reverse_each do |middleware|
+          config_proc = make_config_proc(middleware, loader, config_proc)
+        end
+        config_proc.call
+      end
+      flag_groups.each do |flag_group|
+        flag_group.flags.sort_by!(&:sort_str)
+      end
     end
   end
 end

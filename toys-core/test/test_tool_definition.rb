@@ -44,6 +44,7 @@ describe Toys::ToolDefinition do
   let(:subtool) { loader.get_tool([tool_name, subtool_name], priority, activate: true) }
   let(:subtool2) { loader.get_tool([tool_name, subtool2_name], priority, activate: true) }
   let(:full_tool) { full_loader.get_tool([full_tool_name], priority, activate: true) }
+  let(:full_subtool) { full_loader.get_tool([full_tool_name, subtool_name], priority, activate: true) }
 
   def wrappable(str)
     Toys::WrappableString.new(str)
@@ -96,7 +97,7 @@ describe Toys::ToolDefinition do
       assert_nil(root_tool.simple_name)
       assert_equal([], root_tool.full_name)
       assert_equal(true, root_tool.root?)
-      assert_equal("", root_tool.display_name)
+      assert_equal("(root)", root_tool.display_name)
     end
 
     it "works for a toplevel tool" do
@@ -1352,6 +1353,58 @@ describe Toys::ToolDefinition do
         full_tool.desc = "hi"
       end
     end
+
+    it "raises if re-entry is attempted" do
+      my_loader = full_loader
+      my_subtool_name = [full_tool_name, subtool_name]
+      full_tool.subtool_middleware_stack.add(:apply_config) do
+        my_loader.lookup_specific(my_subtool_name)
+      end
+      err = assert_raises(Toys::ContextualError) do
+        full_subtool.finish_definition(full_loader)
+      end
+      assert_includes(err.message, 'The tool "fool bar" is in the middle of finishing and cannot be used at this time.')
+    end
+
+    # full_subtool must be fetched after the middleware is installed, because
+    # that is when its middleware stack is built.
+    def prepare_failing_subtool
+      full_tool.subtool_middleware_stack.add(:apply_config) do
+        raise "middleware exploded"
+      end
+      full_subtool
+    end
+
+    it "does not report a tool as finished if a middleware raised" do
+      failing_tool = prepare_failing_subtool
+      err = assert_raises(Toys::ContextualError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      assert_includes(err.message, "middleware exploded")
+      assert_equal(false, failing_tool.definition_finished?)
+    end
+
+    it "raises without retrying if finishing is attempted again after a failure" do
+      failing_tool = prepare_failing_subtool
+      assert_raises(Toys::ContextualError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      err = assert_raises(Toys::ToolDefinitionError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      assert_includes(err.message, 'The tool "fool bar" failed to finish and cannot be used.')
+    end
+
+    it "prevents further editing after a failure" do
+      failing_tool = prepare_failing_subtool
+      assert_raises(Toys::ContextualError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      err = assert_raises(Toys::ToolDefinitionError) do
+        failing_tool.desc = "hi"
+      end
+      assert_includes(err.message, 'The tool "fool bar" failed to finish and cannot be used.')
+    end
   end
 
   describe "reset_definition" do
@@ -1369,6 +1422,23 @@ describe Toys::ToolDefinition do
       end
       assert_equal("Cannot reset tool #{tool2_name.inspect} because it uses a fixed subclass", error.message)
       assert_equal("hi", fixed_tool.desc.to_s)
+    end
+
+    it "clears the errored state left by a failed finish" do
+      full_tool.subtool_middleware_stack.add(:apply_config) do
+        raise "middleware exploded"
+      end
+      failing_tool = full_subtool
+      assert_raises(Toys::ContextualError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      failing_tool.reset_definition
+      # The tool is usable again, so the same middleware fails the same way,
+      # rather than the state machine short-circuiting with its own error.
+      err = assert_raises(Toys::ContextualError) do
+        failing_tool.finish_definition(full_loader)
+      end
+      assert_includes(err.message, "middleware exploded")
     end
   end
 

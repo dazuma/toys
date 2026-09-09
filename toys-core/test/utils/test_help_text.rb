@@ -5,6 +5,7 @@ require "toys/utils/help_text"
 
 describe Toys::Utils::HelpText do
   let(:executable_name) { "toys" }
+  let(:simple_tool_name) { ["fuzz"] }
   let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
   let(:tool_name) { ["foo", "bar"] }
   let(:tool2_name) { ["foo", "baz"] }
@@ -18,6 +19,12 @@ describe Toys::Utils::HelpText do
   let(:single_loader) {
     loader = Toys::Loader.new(source_list).resolve_sources
     loader.get_tool(tool_name, priority, activate: true).run_handler = runnable
+    loader
+  }
+  let(:root_loader) {
+    loader = Toys::Loader.new(source_list).resolve_sources
+    loader.get_tool([], priority, activate: true)
+    loader.get_tool(simple_tool_name, priority, activate: true).run_handler = runnable
     loader
   }
   let(:namespace_loader) {
@@ -57,6 +64,9 @@ describe Toys::Utils::HelpText do
     loader
   }
 
+  let(:root_tool) do
+    root_loader.get_tool([], priority)
+  end
   let(:normal_tool) do
     single_loader.get_tool(tool_name, priority)
   end
@@ -284,6 +294,16 @@ describe Toys::Utils::HelpText do
               " ( [-aVALUE | --aa=VALUE] [-bVALUE | --bb=VALUE] )",
           help_array[index + 1]
         )
+      end
+
+      it "is set for a root tool" do
+        help = Toys::Utils::HelpText.new(root_tool, root_loader, executable_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal("    toys TOOL [ARGUMENTS...]", help_array[index + 1])
+        assert_equal("    toys", help_array[index + 2])
+        assert_equal("", help_array[index + 3])
       end
     end
 
@@ -941,6 +961,14 @@ describe Toys::Utils::HelpText do
         assert_equal("Usage:  toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
         assert_equal("", usage_array[1])
+      end
+
+      it "is set for the root tool" do
+        help = Toys::Utils::HelpText.new(root_tool, root_loader, executable_name)
+        usage_array = help.usage_string.split("\n")
+        assert_equal("Usage:  toys TOOL [ARGUMENTS...]", usage_array[0])
+        assert_equal("        toys", usage_array[1])
+        assert_equal("", usage_array[2])
       end
     end
 

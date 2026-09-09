@@ -194,4 +194,100 @@ describe Toys::StandardMiddleware::ApplyConfig do
       assert_equal("applied by middleware", tool.long_desc.first.to_s)
     end
   end
+
+  describe "restrictions on creating subtools" do
+    let(:cases_dir) {
+      ::File.join(::File.dirname(::File.dirname(__dir__)), "test-data", "lookup-cases")
+    }
+
+    # Each of these tests needs its own config block, so they build their own
+    # middleware rather than using the shared `middleware` let.
+    def make_cli(&block)
+      middleware = Toys::StandardMiddleware::ApplyConfig.new(&block)
+      cli = Toys::CLI.new(executable_name: "toys", logger: logger, middleware_stack: [middleware])
+      cli.add_source do
+        tool "foo" do
+          # Empty tool
+        end
+      end
+      cli
+    end
+
+    it "refuses the tool directive" do
+      cli = make_cli do
+        tool "generated" do
+          def run; end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        cli.loader.lookup(["foo"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo"/, ex.cause.message)
+    end
+
+    it "refuses to load a directory source" do
+      dir_to_load = ::File.join(cases_dir, "config-items", ".toys")
+      cli = make_cli do
+        load(dir_to_load)
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        cli.loader.lookup(["foo"])
+      end
+      assert_match(/Cannot define or descend into a subtool of "foo"/, ex.cause.message)
+    end
+
+    it "refuses to load a file source with the as: parameter" do
+      file_to_load = ::File.join(cases_dir, "config-block-load", "shared-config.rb")
+      cli = make_cli do
+        load(file_to_load, as: "generated")
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        cli.loader.lookup(["foo"])
+      end
+      assert_match(/Cannot define or descend into a subtool of "foo"/, ex.cause.message)
+    end
+
+    # The positive control for the three tests above: the restriction must not
+    # become a blanket prohibition on loading from a config block.
+    it "applies a file source loaded with no as: parameter" do
+      file_to_load = ::File.join(cases_dir, "config-block-load", "shared-config.rb")
+      cli = make_cli do
+        load(file_to_load)
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      assert_equal("shared description", tool.desc.to_s)
+      assert_equal(["shared long description"], tool.long_desc.map(&:to_s))
+    end
+
+    it "refuses a subtool_apply directive" do
+      cli = make_cli do
+        subtool_apply do
+          desc "applied to a grandchild"
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        cli.loader.lookup(["foo"])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of "foo"/, ex.cause.message)
+    end
+
+    # Mode 2 applies to every tool, the root included, so the root is where an
+    # embedder installing this middleware globally hits the restriction first.
+    # The assertion deliberately does not pin how the root tool's empty name is
+    # rendered in the message.
+    it "refuses the tool directive when applied to the root tool" do
+      cli = make_cli do
+        tool "generated" do
+          def run; end
+        end
+      end
+      ex = assert_raises(Toys::ContextualError) do
+        cli.loader.lookup([])
+      end
+      assert_instance_of(Toys::ToolDefinitionError, ex.cause)
+      assert_match(/Cannot define or descend into a subtool of/, ex.cause.message)
+    end
+  end
 end
