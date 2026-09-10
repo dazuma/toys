@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Toys
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css">
+
+  <link rel="stylesheet" href="css/common.css" type="text/css">
+
+<script type="text/javascript">
+  pathId = "Toys";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="main_progress" aria-hidden="true"></div>
+
+    <div class="nav_wrap">
+      <iframe id="nav" src="class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index (T)</a> &raquo;
+    
+    
+    <span class="title">Toys</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Toys
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/utils/xdg.rb<span class="defines">,<br>
+  lib/toys/cli.rb,<br> lib/toys/core.rb,<br> lib/toys/flag.rb,<br> lib/toys/mixin.rb,<br> lib/toys/compat.rb,<br> lib/toys/errors.rb,<br> lib/toys/loader.rb,<br> lib/toys/runner.rb,<br> lib/toys/context.rb,<br> lib/toys/acceptor.rb,<br> lib/toys/dsl/base.rb,<br> lib/toys/dsl/flag.rb,<br> lib/toys/dsl/tool.rb,<br> lib/toys/template.rb,<br> lib/toys/arg_parser.rb,<br> lib/toys/completion.rb,<br> lib/toys/flag_group.rb,<br> lib/toys/middleware.rb,<br> lib/toys/unique_key.rb,<br> lib/toys/utils/exec.rb,<br> lib/toys/utils/gems.rb,<br> lib/toys/source_info.rb,<br> lib/toys/source_list.rb,<br> lib/toys/source_spec.rb,<br> lib/toys/utils/pager.rb,<br> lib/toys/dsl/internal.rb,<br> lib/toys/module_lookup.rb,<br> lib/toys/dsl/flag_group.rb,<br> lib/toys/positional_arg.rb,<br> lib/toys/utils/terminal.rb,<br> lib/toys/tool_definition.rb,<br> lib/toys/utils/git_cache.rb,<br> lib/toys/utils/help_text.rb,<br> lib/toys/wrappable_string.rb,<br> lib/toys/loader/load_state.rb,<br> lib/toys/utils/standard_ui.rb,<br> lib/toys/dsl/positional_arg.rb,<br> lib/toys/source_info/origin.rb,<br> lib/toys/tool_name_splitter.rb,<br> lib/toys/standard_mixins/xdg.rb,<br> lib/toys/loader/tool_registry.rb,<br> lib/toys/standard_mixins/exec.rb,<br> lib/toys/standard_mixins/gems.rb,<br> lib/toys/standard_mixins/pager.rb,<br> lib/toys/standard_mixins/bundler.rb,<br> lib/toys/utils/completion_engine.rb,<br> lib/toys/standard_mixins/highline.rb,<br> lib/toys/standard_mixins/terminal.rb,<br> lib/toys/standard_mixins/fileutils.rb,<br> lib/toys/standard_mixins/git_cache.rb,<br> lib/toys/standard_middleware/show_help.rb,<br> lib/toys/standard_middleware/apply_config.rb,<br> lib/toys/standard_middleware/show_root_version.rb,<br> lib/toys/standard_middleware/add_verbosity_flags.rb,<br> lib/toys/standard_middleware/handle_usage_errors.rb,<br> lib/toys/standard_middleware/set_default_descriptions.rb,<br> lib/toys-core.rb</span>
+
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Toys is a configurable command line tool. Write commands in source files
+using a simple DSL, and Toys will provide the command line executable and
+take care of all the details such as argument parsing, online help, and error
+reporting. Toys is designed for software developers, IT professionals, and
+other power users who want to write and organize scripts to automate their
+workflows. It can also be used as a Rake replacement, providing a more
+natural command line interface for your project&#39;s build tasks.</p>
+
+<p>This module contains the command line framework underlying Toys. It can be
+used to create command line executables using the Toys DSL and classes.</p>
+
+<h2 id="common-starting-points">Common starting points</h2>
+
+<p>Some of the most commonly needed class documentation is listed below:</p>
+
+<ul>
+<li>For information on the DSL used to write tools, start with
+<span class='object_link'><a href="Toys/DSL/Tool.html" title="Toys::DSL::Tool (module)">DSL::Tool</a></span>.</li>
+<li>The base class for tool runtime (i.e. that defines the basic methods
+available to a tool&#39;s implementation) is <span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span>.</li>
+<li>For information on writing mixins, see <span class='object_link'><a href="Toys/Mixin.html" title="Toys::Mixin (module)">Mixin</a></span>.</li>
+<li>For information on writing templates, see <span class='object_link'><a href="Toys/Template.html" title="Toys::Template (module)">Template</a></span>.</li>
+<li>For information on writing acceptors, see <span class='object_link'><a href="Toys/Acceptor.html" title="Toys::Acceptor (module)">Acceptor</a></span>.</li>
+<li>For information on writing custom shell completions, see <span class='object_link'><a href="Toys/Completion.html" title="Toys::Completion (module)">Completion</a></span>.</li>
+<li>Standard mixins are defined under the <span class='object_link'><a href="Toys/StandardMixins.html" title="Toys::StandardMixins (module)">StandardMixins</a></span> module.</li>
+<li>Various utilities are defined under <span class='object_link'><a href="Toys/Utils.html" title="Toys::Utils (module)">Utils</a></span>. Some of these serve as
+the implementations of corresponding mixins.</li>
+<li>The main entrypoint for the command line framework is <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span>.</li>
+</ul>
+
+<h2 id="architecture-layers">Architecture layers</h2>
+
+<p>The classes directly under the <span class='object_link'><a href="" title="Toys (module)">Toys</a></span> module are not grouped by directory,
+but fall into four layers, listed here from the outside in. Except where
+noted below, dependencies point downward.</p>
+
+<ul>
+<li><strong>Execution</strong> — runs tools. <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span> is the main entrypoint and owns
+the configuration, <span class='object_link'><a href="Toys/Runner.html" title="Toys::Runner (class)">Runner</a></span> holds the environment tools run in and
+carries out each run, <span class='object_link'><a href="Toys/ArgParser.html" title="Toys::ArgParser (class)">ArgParser</a></span> parses the command line, and
+<span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span> is the base class for tool runtime.</li>
+<li><strong>Loading</strong> — resolves a tool name to a definition. <span class='object_link'><a href="Toys/Loader.html" title="Toys::Loader (class)">Loader</a></span>
+discovers and loads tool definitions, <span class='object_link'><a href="Toys/SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span> tracks their
+provenance, and <span class='object_link'><a href="Toys/InputFile.html" title="Toys::InputFile (module)">InputFile</a></span> reads tool files. A source is described
+unresolved by a <span class='object_link'><a href="Toys/SourceSpec.html" title="Toys::SourceSpec (module)">SourceSpec</a></span>; <span class='object_link'><a href="Toys/SourceList.html" title="Toys::SourceList (class)">SourceList</a></span> is the ordered
+collection of root sources that a loader reads tools from. The loader
+resolves each spec into a <span class='object_link'><a href="Toys/SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span> when it first needs that
+priority level.</li>
+<li><strong>Definition</strong> — models a tool. <span class='object_link'><a href="Toys/ToolDefinition.html" title="Toys::ToolDefinition (class)">ToolDefinition</a></span> is the central
+class, with <span class='object_link'><a href="Toys/Flag.html" title="Toys::Flag (class)">Flag</a></span>, <span class='object_link'><a href="Toys/FlagGroup.html" title="Toys::FlagGroup (module)">FlagGroup</a></span>, and <span class='object_link'><a href="Toys/PositionalArg.html" title="Toys::PositionalArg (class)">PositionalArg</a></span> as
+its components, along with the pluggable <span class='object_link'><a href="Toys/Acceptor.html" title="Toys::Acceptor (module)">Acceptor</a></span> and
+<span class='object_link'><a href="Toys/Completion.html" title="Toys::Completion (module)">Completion</a></span> types that the DSL attaches to flags and args.</li>
+<li><strong>Support</strong> — shared vocabulary used by all of the above. This includes
+the pluggable extension types <span class='object_link'><a href="Toys/Mixin.html" title="Toys::Mixin (module)">Mixin</a></span>, <span class='object_link'><a href="Toys/Template.html" title="Toys::Template (module)">Template</a></span>, and
+<span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span>, which are resolved by name through
+<span class='object_link'><a href="Toys/ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span>, as well as <span class='object_link'><a href="Toys/WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>,
+<span class='object_link'><a href="Toys/ToolNameSplitter.html" title="Toys::ToolNameSplitter (class)">ToolNameSplitter</a></span> which interprets delimiters in tool names, the
+named sentinel <span class='object_link'><a href="Toys/UniqueKey.html" title="Toys::UniqueKey (class)">UniqueKey</a></span>, and the error classes.</li>
+</ul>
+
+<p>The deliberate upward dependencies are:</p>
+
+<ul>
+<li>The definition layer builds each tool class as a subclass of
+<span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span>, so that a tool&#39;s implementation inherits the runtime
+methods defined there.</li>
+<li>Completion is computed against a partially parsed command line, so the
+completion classes in the definition layer reach upward for the machinery
+to do it. <span class='object_link'><a href="Toys/Completion/Context.html" title="Toys::Completion::Context (class)">Completion::Context</a></span> holds a <span class='object_link'><a href="Toys/Loader.html" title="Toys::Loader (class)">Loader</a></span> and builds a
+<span class='object_link'><a href="Toys/ArgParser.html" title="Toys::ArgParser (class)">ArgParser</a></span>, and a tool&#39;s default completion uses that loader to
+enumerate subtools and to resolve delegation targets.</li>
+<li><span class='object_link'><a href="Toys/ToolDefinition.html" title="Toys::ToolDefinition (class)">ToolDefinition</a></span> retains the <span class='object_link'><a href="Toys/SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span> describing where it
+was defined.</li>
+<li>The context key constants under <span class='object_link'><a href="Toys/Context/Key.html" title="Toys::Context::Key (module)">Context::Key</a></span>, which are
+<span class='object_link'><a href="Toys/UniqueKey.html" title="Toys::UniqueKey (class)">UniqueKey</a></span> instances, act as shared vocabulary, and are referenced
+from any layer.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="Toys/Acceptor.html" title="Toys::Acceptor (module)">Acceptor</a></span>, <span class='object_link'><a href="Toys/Completion.html" title="Toys::Completion (module)">Completion</a></span>, <span class='object_link'><a href="Toys/Core.html" title="Toys::Core (module)">Core</a></span>, <span class='object_link'><a href="Toys/DSL.html" title="Toys::DSL (module)">DSL</a></span>, <span class='object_link'><a href="Toys/FlagGroup.html" title="Toys::FlagGroup (module)">FlagGroup</a></span>, <span class='object_link'><a href="Toys/InputFile.html" title="Toys::InputFile (module)">InputFile</a></span>, <span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span>, <span class='object_link'><a href="Toys/Mixin.html" title="Toys::Mixin (module)">Mixin</a></span>, <span class='object_link'><a href="Toys/SourceSpec.html" title="Toys::SourceSpec (module)">SourceSpec</a></span>, <span class='object_link'><a href="Toys/StandardMiddleware.html" title="Toys::StandardMiddleware (module)">StandardMiddleware</a></span>, <span class='object_link'><a href="Toys/StandardMixins.html" title="Toys::StandardMixins (module)">StandardMixins</a></span>, <span class='object_link'><a href="Toys/Template.html" title="Toys::Template (module)">Template</a></span>, <span class='object_link'><a href="Toys/Utils.html" title="Toys::Utils (module)">Utils</a></span>
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Toys/ArgParser.html" title="Toys::ArgParser (class)">ArgParser</a></span>, <span class='object_link'><a href="Toys/ArgParsingError.html" title="Toys::ArgParsingError (class)">ArgParsingError</a></span>, <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span>, <span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span>, <span class='object_link'><a href="Toys/ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span>, <span class='object_link'><a href="Toys/Flag.html" title="Toys::Flag (class)">Flag</a></span>, <span class='object_link'><a href="Toys/Loader.html" title="Toys::Loader (class)">Loader</a></span>, <span class='object_link'><a href="Toys/ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span>, <span class='object_link'><a href="Toys/NotRunnableError.html" title="Toys::NotRunnableError (class)">NotRunnableError</a></span>, <span class='object_link'><a href="Toys/PositionalArg.html" title="Toys::PositionalArg (class)">PositionalArg</a></span>, <span class='object_link'><a href="Toys/Runner.html" title="Toys::Runner (class)">Runner</a></span>, <span class='object_link'><a href="Toys/SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span>, <span class='object_link'><a href="Toys/SourceList.html" title="Toys::SourceList (class)">SourceList</a></span>, <span class='object_link'><a href="Toys/SourceListFinalizedError.html" title="Toys::SourceListFinalizedError (class)">SourceListFinalizedError</a></span>, <span class='object_link'><a href="Toys/Tool.html" title="Toys::Tool (class)">Tool</a></span>, <span class='object_link'><a href="Toys/ToolDefinition.html" title="Toys::ToolDefinition (class)">ToolDefinition</a></span>, <span class='object_link'><a href="Toys/ToolDefinitionError.html" title="Toys::ToolDefinitionError (class)">ToolDefinitionError</a></span>, <span class='object_link'><a href="Toys/ToolNameSplitter.html" title="Toys::ToolNameSplitter (class)">ToolNameSplitter</a></span>, <span class='object_link'><a href="Toys/ToolSourceError.html" title="Toys::ToolSourceError (class)">ToolSourceError</a></span>, <span class='object_link'><a href="Toys/UniqueKey.html" title="Toys::UniqueKey (class)">UniqueKey</a></span>, <span class='object_link'><a href="Toys/WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>
+    
+  
+</p>
+
+
+
+
+  <h2>Class Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#executable_path-class_method" title="executable_path (class method)">.<strong>executable_path</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Path to the executable.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#framework_lib_paths-class_method" title="framework_lib_paths (class method)">.<strong>framework_lib_paths</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Array of directory absolute paths within which Ruby files for the toys-core (and toys, if present) gems live.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#Tool-class_method" title="Tool (class method)">.<strong>Tool</strong>(*args, name: nil, base: nil)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a base class for defining a tool with a given name.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+    
+  
+
+
+  <div id="class_attr_details" class="attr_details">
+    <h2>Class Attribute Details</h2>
+    
+      
+      <span id="executable_path=-class_method"></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="executable_path-class_method">
+  
+    .<strong>executable_path</strong>  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Path to the executable. This can, for example, be invoked to run a subtool
+in a clean environment.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is an executable</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no such executable</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+150
+151
+152</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys-core.rb', line 150</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_executable_path'>executable_path</span>
+  <span class='ivar'>@executable_path</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="framework_lib_paths-class_method">
+  
+    .<strong>framework_lib_paths</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Array of directory absolute paths within which Ruby files for the
+toys-core (and toys, if present) gems live.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Array of directory paths</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+158
+159
+160</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys-core.rb', line 158</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_framework_lib_paths'>framework_lib_paths</span>
+  <span class='ivar'>@framework_lib_paths</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="Tool-class_method">
+  
+    .<strong>Tool</strong>(*args, name: nil, base: nil)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a base class for defining a tool with a given name.</p>
+
+<p>This method returns a base class for defining a tool with a given name.
+This is useful if the naming behavior of <span class='object_link'><a href="Toys/Tool.html" title="Toys::Tool (class)">Tool</a></span> is not adequate for
+your tool.</p>
+
+<h3 id="example">Example</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>FooBar</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='period'>.</span><span class='const'>Tool</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Foo_Bar</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This is a tool called Foo_Bar</span><span class='tstring_end'>&quot;</span></span>
+
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Foo_Bar called</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Name of the tool. Defaults to a name inferred from the
+class name. (See <span class='object_link'><a href="Toys/Tool.html" title="Toys::Tool (class)">Tool</a></span>.)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>base</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Use this tool class as the base class, and inherit helper
+methods from it.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Class</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Any string-valued positional argument is
+interpreted as the name. Any class-valued positional argument is
+interpreted as the base class.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/base.rb', line 28</span>
+
+<span class='kw'>def</span> <span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='period'>.</span><span class='const'>Tool</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='kw'>nil</span><span class='rparen'>)</span> <span class='comment'># rubocop:disable Naming/MethodName
+</span>  <span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_arg'>arg</span><span class='op'>|</span>
+    <span class='kw'>case</span> <span class='id identifier rubyid_arg'>arg</span>
+    <span class='kw'>when</span> <span class='op'>::</span><span class='const'>Class</span>
+      <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Both base keyword argument and class-valued argument received</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_base'>base</span>
+      <span class='id identifier rubyid_base'>base</span> <span class='op'>=</span> <span class='id identifier rubyid_arg'>arg</span>
+    <span class='kw'>when</span> <span class='op'>::</span><span class='const'>String</span><span class='comma'>,</span> <span class='op'>::</span><span class='const'>Symbol</span>
+      <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Both name keyword argument and string-valued argument received</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span>
+      <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_arg'>arg</span>
+    <span class='kw'>else</span>
+      <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unrecognized argument: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_arg'>arg</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_base'>base</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_base'>base</span><span class='period'>.</span><span class='id identifier rubyid_ancestors'>ancestors</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Base class must itself be a tool</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_base'>base</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Tool.html" title="Toys::Tool (class)">Tool</a></span></span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='op'>::</span><span class='const'>Class</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_base'>base</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Context</a></span></span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_base_class'>base_class</span> <span class='op'>=</span> <span class='kw'>self</span>
+    <span class='id identifier rubyid_define_singleton_method'>define_singleton_method</span><span class='lparen'>(</span><span class='symbol'>:inherited</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tool_class'>tool_class</span><span class='op'>|</span>
+      <span class='comment'># We set up LoadState *before* calling super, to make sure that, if the
+</span>      <span class='comment'># base is already a Tool subclass that has one of these `inherited`
+</span>      <span class='comment'># methods defined (and thus executes during super) the outermost
+</span>      <span class='comment'># prepare_subclass needs to be called first so it wins.
+</span>      <span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Loader.html" title="Toys::Loader (class)">Loader</a></span></span><span class='op'>::</span><span class='const'>LoadState</span><span class='period'>.</span><span class='id identifier rubyid_prepare_subclass'>prepare_subclass</span><span class='lparen'>(</span><span class='id identifier rubyid_tool_class'>tool_class</span><span class='comma'>,</span> <span class='label'>given_name:</span> <span class='id identifier rubyid_base_class'>base_class</span> <span class='op'>==</span> <span class='kw'>self</span> <span class='op'>?</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+      <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_tool_class'>tool_class</span><span class='rparen'>)</span>
+      <span class='comment'># The DSL installs a method_added hook, so setup_subclass_dsl must be
+</span>      <span class='comment'># called *after* super to avoid the hook firing as the superclass methods
+</span>      <span class='comment'># are added.
+</span>      <span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_setup_subclass_dsl'>setup_subclass_dsl</span><span class='lparen'>(</span><span class='id identifier rubyid_tool_class'>tool_class</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Sep 10 15:28:17 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.45 (ruby-4.0.6).
+</div>
+
+    </div>
+  </body>
+</html>
