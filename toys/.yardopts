@@ -1,7 +1,6 @@
 --no-private
 --title=Toys
 --markup=markdown
---markup-provider redcarpet
 --main=README.md
 ./core-docs/toys/**/*.rb
 ./core-docs/toys-core.rb
