@@ -1,5 +1,73 @@
 # Release History
 
+### v0.23.0 / 2026-09-09
+
+This is a major release, with several new features. It also includes a significant refactor of some of the underlying layers, which should be mostly invisible. It is a release candidate for the upcoming version 1.0.
+
+Highlights include:
+
+* Added the ability to treat unknown flags as positional args via the `treat_unknown_flags_as_args` DSL directive. Useful for wrapping and delegating to other commands.
+* The `do` builtin tool supports `--gem=`, `--git=`, and `--path=` flags that make additional tool sources available.
+* Running tools from within a tool should generally now be done via the new `Toys::Runner` object, now available in the runtime context, instead of via the `Toys::CLI`. The new object provides finer-grained control over error handling and verbosity.
+* Updates to error handling to improve the output and fix some long-standing issues related to tool delegation.
+* Several fixes to bundler integration, especially with Bundler 4.
+
+Details follow.
+
+* Changes to tool definition:
+    * Added the `treat_unknown_flags_as_args` DSL directive (and the corresponding `ToolDefinition#treat_unknown_flags_as_args` setter and `ToolDefinition#unknown_flags_are_args?` query), which redirects unrecognized flags to the tool's positional arguments instead of reporting a usage error. Useful for wrapping and delegating to other commands.
+    * The `set_context_directory` DSL directive can now take Pathname arguments and handles relative paths (by expanding to absolute paths).
+    * When two or more flags are declared using the same context key, within a flag group, the flag group's requirements now evaluate correctly.
+    * A flag or optional/remaining positional argument declared with a `nil` default no longer clears default data already set for the same key by an earlier declaration.
+    * Toys now raises `Toys::ToolDefinitionError` if you attempt to "reset" a tool previously defined using a `Toys::Tool` subclass.
+    * SECURITY FIX: Toys now raises `Toys::ToolSourceError` if a tool loaded from a RubyGem attempts to load tools from the local file system.
+    * BREAKING CHANGE: Toys now raises `Toys::ToolDefintionError` if you attempt to create or descend into a subtool from a `subtool_apply` block or a middleware-based config.
+    * Caught additional cases of incorrectly located `Toys::Tool` subclasses and raised `Toys::ToolDefinitionError`
+    * Toys directory contents are loaded in deterministic (sorted) order.
+
+* Changes to tool execution:
+    * Added `Toys::Context#runner` for access to the `Toys::Runner` object. This is now the preferred way to run tools from within other tools (instead of `Toys::CLI#run`), unless you need to change the configuration.
+    * Added `Toys::Context#loader` for access to the `Toys::Loader` object.
+    * BREAKING CHANGE: `Toys::Context#context_directory`, and `Toys::Context#get` with the associated context key, now never return nil. If no context directory is set for the tool, these now return the current working directory.
+    * BREAKING CHANGE: Removed git- and gem- specific attributes from `Toys::SourceInfo` and replaced with `Toys::SourceInfo#origin`.
+    * Standard context keys and sentinels use the new class `Toys::UniqueKey`, which displays useful names in diagnostic output.
+    * Delegation now propagates the caller's verbosity to the delegate target, rather than resetting it to zero.
+    * When a tool delegates, a `SignalException` unhandled by the inner tool now propagates outward so each tool in the delegation chain gets a chance at its own `on_interrupt` / `on_signal` handler.
+    * A nested run that shares a logger with the run that called it now uses the base level already in effect for that logger, so verbosity no longer compounds across nested runs.
+    * Revamped the output and stack trace printed when an exception occurs.
+
+* Changes to shell completion:
+    * Fixed shell completion for non-flag words containing `=` or `:`: completions are now computed against the whole word, and the engine trims candidates to the span the shell will actually replace.
+    * Zsh completion now replaces the entire word rather than only the text after an `=` or `:`, matching how zsh actually handles word breaks; bash continues to break at `=` and `:`.
+    * Word-break trimming for bash now ignores `=` and `:` characters that were quoted or backslash-escaped, since the shell does not break a word at a quoted character.
+    * Subtool completion now uses the loader's configured delimiters to decide where a tool path ends, rather than a separate regex over the fragment prefix, so completing a partially typed tool path works consistently with any configured extra delimiters.
+
+* Changes to builtin tools:
+    * The `do` builtin tool supports `--gem=`, `--git=`, and `--path=` flags that make additional tool sources available.
+
+* Changes to CLI interfaces:
+    * `Toys::CLI#child` accepts `copy_sources: true`, which populates the new CLI's loader with the same sources as the original. This makes it easy to create a new CLI with additional sources on top of the current.
+    * You can get the `Toys::Runner` for a CLI using `Toys::CLI#runner`, providing a way to customize the run process more closely than using `Toys::CLI#run`.
+    * Added `add_source` method that takes an instance of the new `Toys::SourceSpec` types that describe a tool source. This method replaces the now deprecated `add_config_*` methods (although those methods will continue to be supported for a time). In general, the "config" terminology is being retired in favor of "source" which I think better describes what is going on.
+    * BREAKING CHANGE: The `config_file_name` and `config_dir_name` arguments to CLI have been renamed to `toplevel_tool_file_name` and `toplevel_tool_dir_name`, respectively, as part of a general removal of the "config" term. The old names are not aliased.
+    * BREAKING CHANGE: `Toys::CLI#run` no longer accepts the `delegated_from:` keyword argument. Tool delegation is now handled internally and its runtime is not exposed in the public interface.
+    * BREAKING CHANGE: Renamed the `StandardCLI::CONFIG_DIR_NAME` to `StandardCLI::TOPLEVEL_TOOL_DIR_NAME` and `StandardCLI::CONFIG_FILE_NAME` to `StandardCLI::TOPLEVEL_TOOL_FILE_NAME`.
+    * BREAKING CHANGE: Removed the constants `INDEX_FILE_NAME`, `PRELOAD_DIR_NAME`, `PRELOAD_FILE_NAME`, `DATA_DIR_NAME`, and `LIB_DIR_NAME` from `StandardCLI`.
+    * The `Toys::StandardCLI` constructor now takes `git_cache` and `gems_util` keyword arguments letting you customize the objects used to resolve git and gem sources.
+    * Path parameters for the methods that add sources, such as `path` and `context_directory`, can now take Pathname objects and can handle relative paths properly (by expanding them into absolute paths).
+
+* Rubygems/Bundler integration changes:
+    * Bundler integration requires Bundler 2.4 or later. This is the default on Ruby 3.2, but requires that Bundler is updated on earlier Rubies.
+    * Bundler integration properly detects provenance attributes such as `path:` and `git:`.
+    * Calling bundler integration with a nonempty group list no longer loses gems that were already loaded.
+    * Bundler integration now honors `BUNDLE_LOCKFILE` (new in Bundler 4) and stops leaking it from the modified bundle.
+
+* Other fixes
+    * Terminal mixin now raises the correct ArgumentError (instead of NameError) if given an unknown style code.
+    * `Toys::Loader#list_subtools` now ensures returned tools have been finished by their middleware. This affects listing tools not underneath the currently running tool.
+
+A number of additional minor breaking changes were made to internal interfaces in the toys-core gem classes. It is unlikely you will encounter these unless you are extending the framework, but you can see the toys-core changelog for details.
+
 ### v0.22.0 / 2026-05-05
 
 Toys 0.22 is a major release focused on polish and cleanup in preparation for version 1.0. It includes a number of small breaking changes where needed to clean up the interfaces. (Note that many of the changes listed below are actually in the `toys-core` gem.)

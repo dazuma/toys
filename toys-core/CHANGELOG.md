@@ -1,5 +1,94 @@
 # Release History
 
+### v0.23.0 / 2026-09-09
+
+This is a major release, with several new features, a number of fixes, and a significant refactor of the tool loading and execution layers, including several breaking interface changes. It is a release candidate for the upcoming version 1.0.
+
+Highlights include:
+
+* Major refactor of some of the larger classes that were doing too much: Extracted run logic out of `Toys::CLI` into `Toys::Runner`, extracted source configuration out of `Toys::Loader` into `Toys::SourceSpec` and `Toys::SourceList`, and extracted delimiter handling out of `Toys::Loader` into `Toys::ToolNameSplitter`. This cleaned up the architecture significantly, eliminating most back-references to the CLI object.
+* Added the ability to treat unknown flags as positional args via the `treat_unknown_flags_as_args` DSL directive and corresponding methods on `Toys::ToolDefinition`. Useful for wrapping and delegating to other commands.
+* Updates to error handling to improve the output and fix some long-standing issues related to tool delegation.
+* Several fixes to bundler integration, especially with Bundler 4.
+
+Details follow.
+
+* Changes to tool definition:
+    * BREAKING CHANGE: In a tool that delegates, `Toys::ToolDefinition#run_handler` now returns the delegate target (the target's full name as a frozen array of strings) instead of a Proc. The `run_handler=` setter still accepts only a proc, symbol, or nil, so delegation must still be configured via `delegate_to`.
+    * BREAKING CHANGE: The `validation_errors` field in `Toys::FlagGroup` classes now return strings rather than `Toys::ArgParser::FlagGroupConstraintError` objects.
+    * Added the `treat_unknown_flags_as_args` DSL directive (and the corresponding `ToolDefinition#treat_unknown_flags_as_args` setter and `ToolDefinition#unknown_flags_are_args?` query), which redirects unrecognized flags to the tool's positional arguments instead of reporting a usage error. Useful for wrapping and delegating to other commands.
+    * When two or more flags are declared using the same context key, within a flag group, the flag group's requirements now evaluate correctly.
+    * A flag or optional/remaining positional argument declared with a `nil` default no longer clears default data already set for the same key by an earlier declaration.
+    * `ToolDefinition#custom_context_directory=` and the corresponding `set_context_directory` DSL directive can take Pathname arguments and can handle relative paths (by expanding them into absolute paths).
+    * Toys now raises `Toys::ToolDefinitionError` if you attempt to "reset" a tool previously defined using a `Toys::Tool` subclass.
+    * SECURITY FIX: Toys now raises `Toys::ToolSourceError` if a tool loaded from a RubyGem attempts to load tools from the local file system.
+    * `Toys::ToolDefinition#add_flag_group` and `Toys::ToolDefinition#completion=` now properly raise ToolDefinitionError if the definition has already been finished.
+    * BREAKING CHANGE: Toys now raises `Toys::ToolDefintionError` if you attempt to create or descend into a subtool from a `subtool_apply` block or a middleware-based config.
+    * Caught additional cases of incorrectly located `Toys::Tool` subclasses and raised `Toys::ToolDefinitionError`.
+    * If `Toys::ToolDefinition#finish_definition` raises an error (e.g. due to a middleware issue), the tool now goes into an error state and refuses any operation unless it is reset.
+    * The root tool's display_name is now "(root)" instead of the empty string.
+
+* Changes to tool loading:
+    * BREAKING CHANGE: You no longer add sources to a `Toys::Loader` in place. Instead, construct a `Toys::SourceList` and add sources there, then pass it to the `Toys::Loader` constructor. (`Toys::CLI` has been modified to use this mechanism.)
+    * BREAKING CHANGE: Removed `Loader#split_path` and `Loader#split_partial_path` in favor of `Toys::ToolNameSplitter`. Use `Loader#tool_name_splitter` to get the name splitter object from a Loader. Related, `Loader.new` now takes a `tool_name_splitter` keyword argument in place of `extra_delimiters`. (`CLI.new` still takes `extra_delimiters`.)
+    * BREAKING CHANGE: `Toys::SourceInfo#apply_lib_paths` was replaced with `Toys::SourceInfo#find_lib_paths`, which returns a list of paths but does not actually `require` them. It is now the responsibility of the caller to do the `require`.
+    * BREAKING CHANGE: Removed git- and gem- specific attributes from `Toys::SourceInfo` and replaced with `Toys::SourceInfo#origin`.
+    * BREAKING CHANGE: `Toys::Loader#lookup_specific` now cannot take a tool name with delimiters. The tool name must be a string array.
+    * BREAKING CHANGE: Errors raised when the loader cannot open a tool source (e.g. a gem is missing) are now `Toys::ToolSourceError` instead of `Toys::ToolDefinitionError`.
+    * Added `Toys::SourceInfo#find_preload_files` which returns all files to preload.
+    * `Toys::Loader#list_subtools` now ensures returned tools have been finished by their middleware.
+    * The priority for the fallback root tool is now `-999_999_999` instead of `-999_999`. This value should still fit within the fixnum optimization.
+    * Directory contents are loaded in deterministic (sorted) order.
+
+* Changes to tool execution:
+    * New class `Toys::Runner` now directs tool execution (which previously was available only from `Toys::CLI`.) `Toys::Runner` provides finer-grained control over error handling, allowing independent control over `Toys::ContextualError` wrapping and error handler usage.
+    * Added `Toys::Context#runner` and `Toys::Context#loader` for easy access to those facilities from a running tool.
+    * BREAKING CHANGE: `Toys::Context#context_directory`, and `Toys::Context#get` with the associated context key, now never return nil. If no context directory is set for the tool, these now return the current working directory.
+    * Standard context keys and sentinels use the new class `Toys::UniqueKey`, which displays useful names in diagnostic output.
+    * Delegation now propagates the caller's verbosity to the delegate target, rather than resetting it to zero.
+    * When a tool delegates, a `SignalException` unhandled by the inner tool now propagates outward so each tool in the delegation chain gets a chance at its own `on_interrupt` / `on_signal` handler.
+    * A nested run that shares a logger with the run that called it now uses the base level already in effect for that logger, so verbosity no longer compounds across nested runs.
+    * BREAKING CHANGE: Several internal `Toys::ArgParser` changes: The constructor now takes the tool and loader instead of the CLI and tool, and the `default_data` keyword argument was renamed to `common_data`. It also no longer populates context keys such as `LOGGER` and `TOOL` that are not directly related to parsing; those must be passed in via `common_data`, and are generally handled by `Tool::Runner`.
+    * `Toys::ArgParser#data` now reflects the args, unmatched args, unmatched flags, unmatched positional, and usage errors accumulated so far while parsing, instead of only after `finish` is called.
+
+* Changes to the error handling system, particularly important if you provide a custom error handler:
+    * BREAKING CHANGE: `Toys::ContextualError` no longer wraps `SignalException`. Custom error handlers should be prepared to handle `SignalException` directly.
+    * BREAKING CHANGE: Custom error handlers should also be prepared to handle unwrapped `StandardError` and `ScriptError` exceptions directly, since it is now possible to disable `Toys::ContextualError` wrapping.
+    * An error raised by a delegated tool now raises nested `ContextualError` objects providing information about the inter-tool call sequence, one wrapper per tool in the chain. This might happen, for example, if a tool was delegated or if a subtool was called without an error handler. In normal runs, this displays both the delegating and original tools in the error message. It also means custom error handlers should use the new `Toys::ContextualError#root_cause` if they want the original exception.
+    * `ContextualError` now sets its backtrace from the wrapped error's backtrace locations when available (falling back to the backtrace strings), so an enclosing capture can still locate the config file line.
+    * Renamed `config_path` and `config_line` to `tool_file_path` and `tool_file_line`. The original names have been aliased for backward compatibility.
+    * `ContextualError` now captures tool names in more places, and captures the current phase (loading or running).
+    * Revamped the exception output provided by `Toys::Utils::StandardUI` so it's more compact and usable.
+
+* Changes to the shell completion system:
+    * BREAKING CHANGE: Minor simplifications to the completion internals, notably `Toys::Completion::Context#fragment_prefix` has been removed, and `prefix_constraint` has been removed from several provided completions. A completion now always receives the entire word under the cursor as its `fragment`, and every candidate must be a replacement for the entire word. (The prefix handling requirements of the Bash completion have been moved up into `Toys::Utils::CompletionEngine`.)
+    * BREAKING CHANGE: The Bash and Zsh completion engine constructors now take a completion and a loader instead of a cli, and some of the internals and override points have been reorganized.
+    * Fixed shell completion for non-flag words containing `=` or `:`: completions are now computed against the whole word, and the engine trims candidates to the span the shell will actually replace.
+    * Zsh completion now replaces the entire word rather than only the text after an `=` or `:`, matching how zsh actually handles word breaks; bash continues to break at `=` and `:`.
+    * Word-break trimming for bash now ignores `=` and `:` characters that were quoted or backslash-escaped, since the shell does not break a word at a quoted character.
+    * Subtool completion now uses the loader's configured delimiters to decide where a tool path ends, rather than a separate regex over the fragment prefix, so completing a partially typed tool path works consistently with any configured extra delimiters.
+
+* Changes to the CLI interfaces:
+    * Added `add_source` method that takes an instance of the new `Toys::SourceSpec` types that describe a tool source. This method replaces the now deprecated `add_config_*` methods (although those methods will continue to be supported for a time). In general, the "config" terminology is being retired in favor of "source" which I think better describes what is going on.
+    * BREAKING CHANGE: The `config_file_name` and `config_dir_name` arguments to CLI have been renamed to `toplevel_tool_file_name` and `toplevel_tool_dir_name`, respectively, as part of a general removal of the "config" term. The old names are not aliased.
+    * BREAKING CHANGE: It is no longer possible to configure the index file name, lib and data directory names, and preload names, via keyword arguments. This was done to simplify the CLI and Loader interfaces, and because I realized that if they ever were to be customizable, it would need to be per source directory rather than per-CLI.
+    * BREAKING CHANGE: `Toys::CLI#run` no longer accepts the `delegated_from:` keyword argument. Tool delegation is now handled internally, and its runtime is not exposed in the public interface.
+    * You can get the `Toys::Runner` for a CLI using `Toys::CLI#runner`, providing a way to customize the run process more closely than using `Toys::CLI#run`.
+    * Path parameters for the methods that add sources, such as `path` and `context_directory`, can now take Pathname objects and can handle relative paths properly (by expanding them into absolute paths).
+    * `Toys::CLI#child` accepts `copy_sources: true`, which populates the new CLI's loader with the same sources as the original. This makes it easy to create a new CLI with additional sources on top of the current.
+    * The `Toys::CLI` constructor now takes `git_cache` and `gems_util` keyword arguments letting you customize the objects used to resolve git and gem sources.
+    * Calling `Toys::CLI#add_search_path` with a nonexistent directory no longer raises.
+    * The ApplyConfig middleware now behaves correctly when configured globally in the CLI or loader.
+
+* Rubygems/Bundler integration changes:
+    * Bundler integration requires Bundler 2.4 or later. This is the default on Ruby 3.2, but requires that Bundler is updated on earlier Rubies.
+    * Bundler integration properly detects provenance attributes such as `path:` and `git:`.
+    * Calling bundler integration with a nonempty group list no longer loses gems that were already loaded.
+    * Bundler integration now honors `BUNDLE_LOCKFILE` (new in Bundler 4) and stops leaking it from the modified bundle.
+
+* Other fixes
+    * Terminal mixin now raises the correct ArgumentError (instead of NameError) if given an unknown style code.
+
 ### v0.22.0 / 2026-05-05
 
 Toys-core 0.22 is a major release focused on polish and cleanup in preparation for version 1.0. It includes a number of small breaking changes where needed to clean up the interfaces.
