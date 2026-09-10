@@ -19,16 +19,14 @@ permissions:
 jobs:
   release-retry:
     if: ${{ github.repository == '<%= @settings.repo_path %>' }}
-    env:
-      ruby_version: "4.0"
     runs-on: ubuntu-latest
     steps:
-      - name: Install Ruby ${{ env.ruby_version }}
+      - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ env.ruby_version }}
+          ruby-version: "4.0"
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Toys
         run: "gem install --no-document toys"
       - name: Retry release
