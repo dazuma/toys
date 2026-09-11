@@ -2,15 +2,17 @@
 
 ### v0.24.0 / 2026-09-11
 
-* BREAKING CHANGE: Removed deprecated Toys::CORE_VERSION. Use Toys::Core::VERSION instead.
-* BREAKING CHANGE: Removed deprecated alias_tool directive. Pass delegate_relative to the tool directive instead.
-* BREAKING CHANGE: Removed deprecated suppress_confirm argument to the Gems utility. Use on_missing instead.
-* ADDED: Removed deprecated Toys::CORE_VERSION. Use Toys::Core::VERSION instead.
-* ADDED: Removed deprecated alias_tool directive. Pass delegate_relative to the tool directive instead.
-* ADDED: Removed deprecated suppress_confirm argument to the Gems utility. Use on_missing instead.
-* ADDED: SourceSpec::Gem now includes optional on_missing: and default_confirm: fields to control how missing gems are handled
-* ADDED: The load_gem directive now takes optional on_missing: and default_confirm: arguments to control how missing gems are handled
-* FIXED: Passing options when activating a gem using the `:gems` mixin no longer clobbers options passed when instantiating the mixin
+Feature updates:
+
+* `SourceSpec::Gem` now includes optional `on_missing:` and `default_confirm:` fields to control how missing gems are handled.
+* The `load_gem` directive now takes optional `on_missing:` and `default_confirm:` arguments to control how missing gems are handled.
+* Passing options when activating a gem using the `:gems` mixin no longer clobbers options passed when instantiating the mixin.
+
+Removed some old deprecated items. (All technically breaking changes)
+
+* Removed deprecated `Toys::CORE_VERSION`. Use `Toys::Core::VERSION` instead.
+* Removed deprecated `alias_tool` directive. Pass `delegate_relative:` to the `tool` directive instead.
+* Removed deprecated `suppress_confirm:` argument to the `Gems` utility. Use `on_missing:` instead.
 
 ### v0.23.0 / 2026-09-09
 
