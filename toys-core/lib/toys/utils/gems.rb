@@ -175,28 +175,17 @@ module Toys
       # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
       # @param input [IO] Input IO (optional, defaults to STDIN)
       # @param output [IO] Output IO (optional, defaults to STDOUT)
-      # @param suppress_confirm [boolean] Deprecated. Use `on_missing` instead.
       #
       def initialize(on_missing: nil,
                      on_conflict: nil,
                      terminal: nil,
                      input: nil,
                      output: nil,
-                     suppress_confirm: nil,
                      default_confirm: nil)
         require "rubygems"
-        unless suppress_confirm.nil?
-          warn("The :suppress_confirm argument to Toys::Utils::Gems is deprecated. " \
-               "Use :on_missing instead.")
-        end
         default_confirm = true if default_confirm.nil?
         @default_confirm = default_confirm ? true : false
-        @on_missing = on_missing ||
-                      if suppress_confirm
-                        @default_confirm ? :install : :error
-                      else
-                        :confirm
-                      end
+        @on_missing = on_missing || :confirm
         @on_conflict = on_conflict || :error
         @terminal = terminal
         @input = input || $stdin
