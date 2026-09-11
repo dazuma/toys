@@ -2,9 +2,8 @@
 
 ### v0.24.0 / 2026-09-11
 
-* BREAKING CHANGE: Removed deprecated gem_version argument from rspec and minitest templates
-* ADDED: Removed deprecated gem_version argument from rspec and minitest templates
-* ADDED: The `toys do` builtin provides an --on-missing-gem flag that governs how the --gem flag handles gems that are not installed
+* Feature: The `toys do` builtin provides an `--on-missing-gem` flag that governs how the `--gem` flag handles gems that are not installed.
+* BREAKING CHANGE: Removed deprecated `gem_version:` argument from `:rspec` and `:minitest` templates.
 
 ### v0.23.0 / 2026-09-09
 
