@@ -11,11 +11,4 @@ module Toys
     #
     VERSION = "0.23.0"
   end
-
-  ##
-  # Deprecated
-  #
-  # @private
-  #
-  CORE_VERSION = Core::VERSION
 end

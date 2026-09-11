@@ -330,39 +330,6 @@ module Toys
       end
 
       ##
-      # Create an alias, representing an "alternate name" for a tool.
-      #
-      # Note: This is functionally equivalent to creating a tool with the
-      # `:delegate_relative` option. As such, `alias_tool` is considered
-      # deprecated.
-      #
-      # ### Example
-      #
-      # This example defines a tool and an alias pointing to it. Both the tool
-      # name `test` and the alias `t` will then refer to the same tool.
-      #
-      #     tool "test" do
-      #       def run
-      #         puts "Running tests..."
-      #       end
-      #     end
-      #     alias_tool "t", "test"
-      #     # Note: the following is preferred over alias_tool:
-      #     # tool "t", delegate_relative: "test"
-      #
-      # @param word [String] The name of the alias
-      # @param target [String,Array<String>] Relative path to the target of the
-      #     alias. This path may be given as an array of strings, or a single
-      #     string possibly delimited by path separators.
-      # @return [self]
-      # @deprecated Use {#tool} and pass `:delegate_relative` instead
-      #
-      def alias_tool(word, target)
-        tool(word, delegate_relative: target)
-        self
-      end
-
-      ##
       # Causes the current tool to delegate to another tool, specified by the
       # full tool name. When run, it simply invokes the target tool with the
       # same arguments.

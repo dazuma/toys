@@ -2180,36 +2180,6 @@ describe Toys::DSL::Tool do
     end
   end
 
-  describe "alias_tool directive" do
-    it "delegates using a relative path" do
-      cli.add_source do
-        tool "foo" do
-          tool "bar" do
-            def run
-              exit(3)
-            end
-          end
-          alias_tool "baz", "bar"
-        end
-      end
-      assert_equal(3, cli.run(["foo", "baz"]))
-    end
-
-    it "delegates using a symbol" do
-      cli.add_source do
-        tool :foo do
-          tool :bar do
-            def run
-              exit(3)
-            end
-          end
-          alias_tool :baz, :bar
-        end
-      end
-      assert_equal(3, cli.run(["foo", "baz"]))
-    end
-  end
-
   describe "subtool_apply directive" do
     it "applies recursively to subtools" do
       cli.add_source do
