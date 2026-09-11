@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::SourceSpec::Gem
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css">
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css">
+
+<script type="text/javascript">
+  pathId = "Toys::SourceSpec::Gem";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="main_progress" aria-hidden="true"></div>
+
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (G)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../SourceSpec.html" title="Toys::SourceSpec (module)">SourceSpec</a></span></span>
+     &raquo; 
+    <span class="title">Gem</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::SourceSpec::Gem
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName"><span class='object_link'><a href="Base.html" title="Toys::SourceSpec::Base (class)">Base</a></span></span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next"><span class='object_link'><a href="Base.html" title="Toys::SourceSpec::Base (class)">Base</a></span></li>
+          
+            <li class="next">Toys::SourceSpec::Gem</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>core-docs/toys/source_spec.rb
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A spec for a source located in a gem.</p>
+<p>Beware that within the <span class='object_link'><a href="../SourceSpec.html" title="Toys::SourceSpec (module)">Toys::SourceSpec</a></span> namespace, the name <code>Gem</code>
+resolves to this class rather than to Ruby's <code>::Gem</code>. Prefix references
+to the latter with <code>::</code>, as the project's style rules already require.</p>
+<p><strong><em>Defined in the toys-core gem</em></strong></p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_confirm-instance_method" title="#default_confirm (instance method)">#<strong>default_confirm</strong>  &#x21d2; nil, boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default response for a confirmation prompt.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#name-instance_method" title="#name (instance method)">#<strong>name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The gem name.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#on_missing-instance_method" title="#on_missing (instance method)">#<strong>on_missing</strong>  &#x21d2; nil, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>What to do if the gem is not installed.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#path-instance_method" title="#path (instance method)">#<strong>path</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The path from the gem's toys directory, or <code>nil</code> for the entire toys directory.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#toys_dir-instance_method" title="#toys_dir (instance method)">#<strong>toys_dir</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The name of the gem's toys directory, or <code>nil</code> to use the default.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#version-instance_method" title="#version (instance method)">#<strong>version</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The version requirements.</p></div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+  
+  
+  <h3 class="inherited">Attributes inherited from <span class='object_link'><a href="Base.html" title="Toys::SourceSpec::Base (class)">Base</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Base.html#context_directory-instance_method" title="Toys::SourceSpec::Base#context_directory (method)">#context_directory</a></span>, <span class='object_link'><a href="Base.html#source_name-instance_method" title="Toys::SourceSpec::Base#source_name (method)">#source_name</a></span></p>
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  <h2>Method Summary</h2>
+  
+  <h3 class="inherited">Methods inherited from <span class='object_link'><a href="Base.html" title="Toys::SourceSpec::Base (class)">Base</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Base.html#==-instance_method" title="Toys::SourceSpec::Base#== (method)">#==</a></span>, <span class='object_link'><a href="Base.html#hash-instance_method" title="Toys::SourceSpec::Base#hash (method)">#hash</a></span></p>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="default_confirm-instance_method">
+  
+    #<strong>default_confirm</strong>  &#x21d2; <tt>nil</tt>, <tt>boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default response for a confirmation prompt</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>to use the default behavior for the Gems util</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>to provide an override</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+318
+319
+320</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 318</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_confirm'>default_confirm</span>
+  <span class='ivar'>@default_confirm</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="name-instance_method">
+  
+    #<strong>name</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The gem name.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+277
+278
+279</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 277</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_name'>name</span>
+  <span class='ivar'>@name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="on_missing-instance_method">
+  
+    #<strong>on_missing</strong>  &#x21d2; <tt>nil</tt>, ...  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>What to do if the gem is not installed.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>to use the default behavior for the Gems util</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>:error</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if an error should be raised</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>:confirm</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if a confirmation prompt should be presented</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>:install</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the gem should be installed without confirmation</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+310
+311
+312</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 310</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_on_missing'>on_missing</span>
+  <span class='ivar'>@on_missing</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="path-instance_method">
+  
+    #<strong>path</strong>  &#x21d2; <tt>String</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The path from the gem's toys directory, or <code>nil</code> for the entire toys
+directory.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+293
+294
+295</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 293</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_path'>path</span>
+  <span class='ivar'>@path</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="toys_dir-instance_method">
+  
+    #<strong>toys_dir</strong>  &#x21d2; <tt>String</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The name of the gem's toys directory, or <code>nil</code> to use the default.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+300
+301
+302</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 300</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toys_dir'>toys_dir</span>
+  <span class='ivar'>@toys_dir</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="version-instance_method">
+  
+    #<strong>version</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The version requirements. Always an array, which is empty if any
+version is allowed.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+285
+286
+287</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/source_spec.rb', line 285</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_version'>version</span>
+  <span class='ivar'>@version</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Fri Sep 11 23:46:48 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.45 (ruby-4.0.6).
+</div>
+
+    </div>
+  </body>
+</html>
