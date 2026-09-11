@@ -1809,6 +1809,7 @@ describe Toys::CLI do
       activations = []
       util = Object.new
       util.define_singleton_method(:activate) { |name, *_versions| activations << name }
+      util.define_singleton_method(:with) { |**_opts| util }
       gem_cli = Toys::CLI.new(logger: logger, middleware_stack: [], gems_util: util)
       gem_cli.add_source(Toys::SourceSpec.gem("toys-core", path: ".toys.rb",
                                               toys_dir: "test-data/lookup-cases/config-items"))

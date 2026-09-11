@@ -54,7 +54,12 @@ describe Toys::SourceInfo do
     calls = gems_util_calls
     util = Object.new
     util.define_singleton_method(:activate) do |name, *versions|
-      calls << {name: name, versions: versions}
+      calls << [:activate, [name] + versions, {}]
+      nil
+    end
+    util.define_singleton_method(:with) do |**opts|
+      calls << [:with, [], opts]
+      util
     end
     util
   }
@@ -174,10 +179,13 @@ describe Toys::SourceInfo do
                    si.source_name)
     end
 
-    it "passes the gem version requirements through to activation" do
-      spec = Toys::SourceSpec.gem(gem_name, version: "~> 0.1", toys_dir: gem_toys_dir)
+    it "passes the gem version requirements and options through to activation" do
+      spec = Toys::SourceSpec.gem(gem_name,
+                                  version: "~> 0.1", toys_dir: gem_toys_dir,
+                                  on_missing: :confirm, default_confirm: false)
       resolve_root(spec, gems_util: gems_util)
-      assert_equal([{name: gem_name, versions: ["~> 0.1"]}], gems_util_calls)
+      assert_includes(gems_util_calls, [:activate, [gem_name, "~> 0.1"], {}])
+      assert_includes(gems_util_calls, [:with, [], {on_missing: :confirm, default_confirm: false}])
     end
 
     it "errors when resolving a path spec with a nonexistent path" do

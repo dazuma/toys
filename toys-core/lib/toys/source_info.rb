@@ -345,6 +345,8 @@ module Toys
       end
 
       def resolve_gem_spec(spec, parent, priority, gems_util)
+        gems_util ||= default_gems_util
+        gems_util = gems_util.with(on_missing: spec.on_missing, default_confirm: spec.default_confirm)
         gem_version, gem_path, source_path =
           resolve_gem_info(gems_util, spec.name, spec.version, spec.path, spec.toys_dir)
         source_path, type = check_path(source_path, false)
@@ -486,7 +488,7 @@ module Toys
       def resolve_gem_info(gems_util, gem_name, gem_versions, gem_path, gem_toys_dir)
         require "toys/utils/gems"
         begin
-          (gems_util || default_gems_util).activate(gem_name, *gem_versions)
+          gems_util.activate(gem_name, *gem_versions)
         rescue ::Toys::Utils::Gems::ActivationFailedError => e
           raise ToolSourceError, e.message
         end

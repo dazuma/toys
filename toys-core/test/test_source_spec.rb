@@ -137,6 +137,8 @@ describe Toys::SourceSpec do
       assert_nil(spec.toys_dir)
       assert_nil(spec.context_directory)
       assert_nil(spec.source_name)
+      assert_nil(spec.on_missing)
+      assert_nil(spec.default_confirm)
     end
 
     it "creates a Gem spec with all attributes" do
@@ -145,12 +147,16 @@ describe Toys::SourceSpec do
                                   path: "subdir",
                                   toys_dir: "mytoys",
                                   context_directory: "/my/context",
-                                  source_name: "mysource")
+                                  source_name: "mysource",
+                                  on_missing: :confirm,
+                                  default_confirm: false)
       assert_equal(["~> 1.0", "< 1.5"], spec.version)
       assert_equal("subdir", spec.path)
       assert_equal("mytoys", spec.toys_dir)
       assert_expanded_path("/my/context", spec.context_directory)
       assert_equal("mysource", spec.source_name)
+      assert_equal(:confirm, spec.on_missing)
+      assert_equal(false, spec.default_confirm)
     end
 
     it "normalizes a single version to an array" do
@@ -179,6 +185,18 @@ describe Toys::SourceSpec do
       assert_raises(ArgumentError) do
         Toys::SourceSpec.gem("mygem", relative_paths: [".toys"])
       end
+    end
+
+    it "rejects an unrecognized on_missing value" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.gem("mygem", on_missing: :prompt) }
+      assert_equal("Illegal on_missing value: :prompt", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.gem("mygem", on_missing: "confirm") }
+    end
+
+    it "rejects a non-boolean default_confirm value" do
+      error = assert_raises(ArgumentError) { Toys::SourceSpec.gem("mygem", default_confirm: :yes) }
+      assert_equal("Illegal default_confirm value: :yes", error.message)
+      assert_raises(ArgumentError) { Toys::SourceSpec.gem("mygem", default_confirm: 1) }
     end
 
     it "creates a frozen object" do

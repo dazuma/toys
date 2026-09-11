@@ -105,11 +105,25 @@ module Toys
       # @param source_name [String,nil] The source name that will be shown in
       #     documentation for tools loaded from this source. If omitted, a
       #     default is generated at resolution time.
+      # @param on_missing [:confirm,:error,:install] What to do if the
+      #     requested gem is not installed. Possible values:
+      #
+      #      *  `:confirm` - prompt the user on whether to install
+      #      *  `:error` - raise an exception
+      #      *  `:install` - just install the gem
+      #
+      #     Defaults to the setting in the {Toys::Utils::Gems} utility used to
+      #     activate the gem (usually `:confirm`).
+      # @param default_confirm [boolean] The default confirmation result, if
+      #     `on_missing` is set to `:confirm`. Defaults to the setting in the
+      #     {Toys::Utils::Gems} utility used to activate the gem (usually true).
+      #
       # @return [Toys::SourceSpec::Gem]
       # @raise [ArgumentError] if an argument is not a legal value.
       #
-      def gem(name, version: nil, path: nil, toys_dir: nil, context_directory: nil, source_name: nil)
-        Gem.new(name, version, path, toys_dir, context_directory, source_name)
+      def gem(name, version: nil, path: nil, toys_dir: nil, context_directory: nil, source_name: nil,
+              on_missing: nil, default_confirm: nil)
+        Gem.new(name, version, path, toys_dir, context_directory, source_name, on_missing, default_confirm)
       end
 
       ##
@@ -249,6 +263,16 @@ module Toys
       def check_optional_string(value, name)
         value.nil? ? nil : check_string(value, name)
       end
+
+      ##
+      # Returns the given value if it is equal to one of the given valid values,
+      # otherwise raise. The name is used only to describe the offending field
+      # in the error message.
+      #
+      def check_one_of(value, name, valid_values)
+        return value if valid_values.include?(value)
+        raise ::ArgumentError, "Illegal #{name} value: #{value.inspect}"
+      end
     end
 
     ##
@@ -385,11 +409,13 @@ module Toys
       #
       # @private
       #
-      def initialize(name, version, path, toys_dir, context_directory, source_name)
+      def initialize(name, version, path, toys_dir, context_directory, source_name, on_missing, default_confirm)
         @name = check_string(name, "name")
         @version = Array(version).map { |v| check_string(v, "version requirement") }.freeze
         @path = check_optional_string(path, "path")
         @toys_dir = check_optional_string(toys_dir, "toys_dir")
+        @on_missing = check_one_of(on_missing, "on_missing", [nil, :error, :confirm, :install])
+        @default_confirm = check_one_of(default_confirm, "default_confirm", [nil, true, false])
         super(context_directory, source_name)
       end
 
@@ -423,13 +449,31 @@ module Toys
       #
       attr_reader :toys_dir
 
+      ##
+      # What to do if the gem is not installed.
+      #
+      # @return [nil] to use the default behavior for the Gems util
+      # @return [:error] if an error should be raised
+      # @return [:confirm] if a confirmation prompt should be presented
+      # @return [:install] if the gem should be installed without confirmation
+      #
+      attr_reader :on_missing
+
+      ##
+      # The default response for a confirmation prompt
+      #
+      # @return [nil] to use the default behavior for the Gems util
+      # @return [boolean] to provide an override
+      #
+      attr_reader :default_confirm
+
       protected
 
       ##
       # @private
       #
       def equality_fields
-        super + [@name, @version, @path, @toys_dir]
+        super + [@name, @version, @path, @toys_dir, @on_missing, @default_confirm]
       end
     end
 

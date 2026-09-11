@@ -475,6 +475,18 @@ module Toys
       #     Context directory paths should generally be absolute. Relative
       #     paths will be converted to absolute, using the current working
       #     directory at the time of loading.
+      # @param on_missing [:confirm,:error,:install] What to do if the
+      #     requested gem is not installed. Possible values:
+      #
+      #      *  `:confirm` - prompt the user on whether to install
+      #      *  `:error` - raise an exception
+      #      *  `:install` - just install the gem
+      #
+      #     Defaults to the setting in the {Toys::Utils::Gems} utility used to
+      #     activate the gem (usually `:confirm`).
+      # @param default_confirm [boolean] The default confirmation result, if
+      #     `on_missing` is set to `:confirm`. Defaults to the setting in the
+      #     {Toys::Utils::Gems} utility used to activate the gem (usually true).
       # @param as [String] Load into the given tool/namespace, relative to the
       #     current namespace. If omitted, tools will be loaded into the
       #     current namespace.
@@ -486,6 +498,8 @@ module Toys
                    path: nil,
                    toys_dir: nil,
                    context_directory: nil,
+                   on_missing: nil,
+                   default_confirm: nil,
                    as: nil)
         version = versions + Array(version)
         if as
@@ -494,7 +508,9 @@ module Toys
                      version: version,
                      path: path,
                      toys_dir: toys_dir,
-                     context_directory: context_directory)
+                     context_directory: context_directory,
+                     on_missing: on_missing,
+                     default_confirm: default_confirm)
           end
           return self
         end
@@ -502,7 +518,9 @@ module Toys
                               version: version,
                               path: path,
                               toys_dir: toys_dir,
-                              context_directory: context_directory)
+                              context_directory: context_directory,
+                              on_missing: on_missing,
+                              default_confirm: default_confirm)
         DSL::Internal.current_load_state(self).load_source(spec)
         self
       end

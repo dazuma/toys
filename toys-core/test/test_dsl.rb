@@ -2724,6 +2724,24 @@ describe Toys::DSL::Tool do
     let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
     let(:shared_config_toys_dir) { "test-data/lookup-cases/config-block-load" }
 
+    # A recording stand-in for Toys::Utils::Gems. Its #activate returns nil
+    # because the loader reads the resolved gem out of Gem.loaded_specs rather
+    # than from the return value, and toys-core is already loaded there.
+    let(:gems_util_calls) { [] }
+    let(:recording_gems_util) {
+      calls = gems_util_calls
+      util = Object.new
+      util.define_singleton_method(:activate) { |_name, *_versions| nil }
+      util.define_singleton_method(:with) do |**opts|
+        calls << opts
+        util
+      end
+      util
+    }
+    let(:gems_cli) {
+      Toys::CLI.new(logger: logger, middleware_stack: [], gems_util: recording_gems_util)
+    }
+
     it "loads a file into the current namespace" do
       toys_dir = gem_toys_dir
       cli.add_source do
@@ -2750,6 +2768,41 @@ describe Toys::DSL::Tool do
       assert_equal(["hello"], remaining)
       assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys/tool-2\.rb\)},
                    tool.source_info.source_name)
+    end
+
+    it "passes the missing-gem settings through to gem activation" do
+      toys_dir = gem_toys_dir
+      gems_cli.add_source do
+        tool "ns-1" do
+          load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir,
+                   on_missing: :error, default_confirm: false)
+        end
+      end
+      gems_cli.loader.lookup(["ns-1", "tool-1"])
+      assert_equal([{on_missing: :error, default_confirm: false}], gems_util_calls)
+    end
+
+    # The as: parameter reloads the directive inside a new namespace, which is a
+    # separate path through the directive, and has to forward the settings too.
+    it "passes the missing-gem settings through when loading as a name" do
+      toys_dir = gem_toys_dir
+      gems_cli.add_source do
+        load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir,
+                 on_missing: :install, default_confirm: true, as: "ns1 ns2")
+      end
+      gems_cli.loader.lookup(["ns1", "ns2", "tool-1"])
+      assert_equal([{on_missing: :install, default_confirm: true}], gems_util_calls)
+    end
+
+    it "passes no missing-gem settings through when none are given" do
+      toys_dir = gem_toys_dir
+      gems_cli.add_source do
+        tool "ns-1" do
+          load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir)
+        end
+      end
+      gems_cli.loader.lookup(["ns-1", "tool-1"])
+      assert_equal([{on_missing: nil, default_confirm: nil}], gems_util_calls)
     end
 
     it "loads a file as a name" do
