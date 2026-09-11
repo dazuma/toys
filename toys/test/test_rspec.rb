@@ -55,27 +55,6 @@ describe "rspec template" do
       refute_includes(template.gem_dependencies, "toys")
     end
 
-    it "handles the gem_version field without bundler" do
-      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
-      template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
-    end
-
-    it "handles the gem_version field with bundler" do
-      template.use_bundler
-      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
-      template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
-    end
-
     it "handles the options field" do
       assert_nil(template.options)
       template.options = "myoptions/.rspec"

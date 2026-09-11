@@ -49,8 +49,6 @@ module Toys
       #     the "minitest" gem, used if bundler is not enabled.
       #     Optional. If not provided, defaults to the value given in
       #     {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param gem_version [String,Array<String>] Deprecated alias for the
-      #     `minitest` argument.
       # @param minitest_mock [String,Array<String>,true] Include the
       #     "minitest-mock" gem with the given version requirements. Used if
       #     bundler is not enabled. If true is passed, the value in
@@ -99,7 +97,6 @@ module Toys
                      minitest_focus: nil,
                      minitest_rg: nil,
                      gems: nil,
-                     gem_version: nil,
                      libs: nil,
                      files: nil,
                      seed: nil,
@@ -118,7 +115,7 @@ module Toys
         @mt_compat = mt_compat
         @context_directory = context_directory
         @gem_dependencies = {}
-        update_version_spec("minitest", minitest || gem_version)
+        update_version_spec("minitest", minitest)
         update_version_spec("minitest-mock", minitest_mock)
         update_version_spec("minitest-focus", minitest_focus)
         update_version_spec("minitest-rg", minitest_rg)
@@ -161,7 +158,6 @@ module Toys
       def minitest=(value)
         update_version_spec("minitest", value)
       end
-      alias gem_version= minitest=
 
       ##
       # Version requirements for the minitest-mock gem. Used if bundler is not
