@@ -1,5 +1,10 @@
 # Release History
 
+### v0.24.0 / 2026-09-11
+
+* Feature: The `toys do` builtin provides an `--on-missing-gem` flag that governs how the `--gem` flag handles gems that are not installed.
+* BREAKING CHANGE: Removed deprecated `gem_version:` argument from `:rspec` and `:minitest` templates.
+
 ### v0.23.0 / 2026-09-09
 
 This is a major release, with several new features. It also includes a significant refactor of some of the underlying layers, which should be mostly invisible. It is a release candidate for the upcoming version 1.0.
