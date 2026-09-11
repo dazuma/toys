@@ -928,6 +928,7 @@ describe Toys::Loader do
       calls = gems_util_calls
       util = Object.new
       util.define_singleton_method(:activate) { |name, *versions| calls << [name, versions] }
+      util.define_singleton_method(:with) { |**_opts| util }
       util
     }
     let(:deferring_loader) {

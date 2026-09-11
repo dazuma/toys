@@ -160,7 +160,6 @@ module Toys
       #      *  `:install` - just install the gem
       #
       #     The default is `:confirm`.
-      #
       # @param on_conflict [:error,:warn,:ignore] What to do if bundler has
       #     already been run with a different Gemfile. Possible values:
       #
@@ -169,7 +168,6 @@ module Toys
       #      *  `:warn` - print a warning and proceed without bundling again
       #
       #     The default is `:error`.
-      #
       # @param default_confirm [boolean] The default confirmation result, if
       #     `on_missing` is set to `:confirm`. Defaults to true.
       # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
@@ -178,18 +176,54 @@ module Toys
       #
       def initialize(on_missing: nil,
                      on_conflict: nil,
+                     default_confirm: nil,
                      terminal: nil,
                      input: nil,
-                     output: nil,
-                     default_confirm: nil)
+                     output: nil)
         require "rubygems"
-        default_confirm = true if default_confirm.nil?
-        @default_confirm = default_confirm ? true : false
+        unless [nil, :confirm, :install, :error].include?(on_missing)
+          raise ::ArgumentError, "Illegal value for on_missing: #{on_missing.inspect}"
+        end
+        unless [nil, :error, :warn, :ignore].include?(on_conflict)
+          raise ::ArgumentError, "Illegal value for on_conflict: #{on_conflict.inspect}"
+        end
+        unless [nil, true, false].include?(default_confirm)
+          raise ::ArgumentError, "Illegal value for default_confirm: #{default_confirm.inspect}"
+        end
         @on_missing = on_missing || :confirm
         @on_conflict = on_conflict || :error
+        default_confirm = true if default_confirm.nil?
+        @default_confirm = default_confirm
+        # The terminal passed in is remembered separately from the one this
+        # object may later derive from the input and output, so that #with
+        # copies the former. Copying a derived terminal would silently defeat
+        # an input or output override.
+        @param_terminal = terminal
         @terminal = terminal
         @input = input || $stdin
         @output = output || $stdout
+      end
+
+      ##
+      # Return a gem activator with the same settings as this one, except for
+      # the provided overrides. See the constructor for argument docs. If no
+      # non-nil overrides are provided, self is returned.
+      #
+      # @param overrides [Hash] Overrides. See the constructor for details.
+      # @return [Toys::Utils::Gems]
+      #
+      def with(**overrides)
+        overrides = overrides.compact
+        return self if overrides.empty?
+        current_settings = {
+          on_missing: @on_missing,
+          on_conflict: @on_conflict,
+          default_confirm: @default_confirm,
+          terminal: @param_terminal,
+          input: @input,
+          output: @output,
+        }
+        Gems.new(**current_settings, **overrides)
       end
 
       ##
@@ -251,7 +285,7 @@ module Toys
         raise GemfileNotFoundError, "Gemfile not found" unless gemfile_path
         gemfile_path = ::File.absolute_path(gemfile_path)
         Gems.synchronize do
-          setup_bundle(gemfile_path, groups: Array(groups), retries: retries)
+          setup_bundle(gemfile_path, Array(groups), retries)
         end
       end
 
@@ -358,7 +392,7 @@ module Toys
 
       # ---- Private methods as part of bundle install and setup ----
 
-      def setup_bundle(gemfile_path, groups: nil, retries: nil)
+      def setup_bundle(gemfile_path, groups, retries)
         configure_gemfile(gemfile_path) do
           activate_bundler
           check_gemfile_compatibility(gemfile_path)
@@ -380,7 +414,7 @@ module Toys
         rescue *bundler_exceptions
           ::Bundler.reset!
           restore_toys_libs
-          install_result = install_bundle(modified_gemfile_path, retries: retries)
+          install_result = install_bundle(modified_gemfile_path, retries)
           attempt_setup_bundle(modified_gemfile_path, groups)
           result = install_result
         ensure
@@ -691,7 +725,7 @@ module Toys
         end
       end
 
-      def install_bundle(gemfile_path, retries: nil)
+      def install_bundle(gemfile_path, retries)
         gemfile_dir = ::File.dirname(gemfile_path)
         unless permission_to_bundle?
           raise BundleNotInstalledError,

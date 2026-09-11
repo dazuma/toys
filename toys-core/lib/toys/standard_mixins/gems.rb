@@ -80,8 +80,7 @@ module Toys
       # @raise [ActivationFailedError] if activation or install failed
       #
       def gem(name, *requirements, **options)
-        gems_util = options.empty? ? gems : Utils::Gems.new(**options)
-        gems_util.activate(name, *requirements)
+        gems.with(**options).activate(name, *requirements)
       end
 
       ##
@@ -114,8 +113,7 @@ module Toys
         # @raise [ActivationFailedError] if activation or install failed
         #
         def gem(name, *requirements, **options)
-          gems_util = options.empty? ? gems : Utils::Gems.new(**options)
-          gems_util.activate(name, *requirements)
+          gems.with(**options).activate(name, *requirements)
         end
       end
 

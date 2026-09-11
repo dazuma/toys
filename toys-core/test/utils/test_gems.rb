@@ -8,6 +8,7 @@ require "timeout"
 require "tmpdir"
 require "toys/utils/exec"
 require "toys/utils/gems"
+require "toys/utils/terminal"
 
 describe Toys::Utils::Gems do
   let(:gem_base_dir) { File.dirname(File.dirname(__dir__)) }
@@ -23,6 +24,12 @@ describe Toys::Utils::Gems do
     spec.name = name
     spec.version = version
     spec
+  end
+
+  # The keyword names of a method, sorted, for comparing one method's interface
+  # against another's.
+  def keyword_names(method)
+    method.parameters.filter_map { |type, name| name if [:key, :keyreq].include?(type) }.sort
   end
 
   # Point BUNDLE_GEMFILE at a sentinel path that is not the gemfile under test,
@@ -54,6 +61,104 @@ describe Toys::Utils::Gems do
       yield
     ensure
       ENV["BUNDLE_LOCKFILE"] = old_value
+    end
+  end
+
+  describe "#initialize" do
+    it "rejects an unrecognized on_missing value" do
+      err = assert_raises(::ArgumentError) { Toys::Utils::Gems.new(on_missing: :prompt) }
+      assert_equal("Illegal value for on_missing: :prompt", err.message)
+    end
+
+    it "rejects an unrecognized on_conflict value" do
+      err = assert_raises(::ArgumentError) { Toys::Utils::Gems.new(on_conflict: :abort) }
+      assert_equal("Illegal value for on_conflict: :abort", err.message)
+    end
+
+    # The values are symbols, so a string that reads correctly is still wrong.
+    # The message inspects the value so that such a mistake is visible in it.
+    it "rejects a string in place of a symbol" do
+      err = assert_raises(::ArgumentError) { Toys::Utils::Gems.new(on_missing: "install") }
+      assert_equal("Illegal value for on_missing: \"install\"", err.message)
+      assert_raises(::ArgumentError) { Toys::Utils::Gems.new(on_conflict: "warn") }
+    end
+  end
+
+  describe "#with" do
+    let(:input) { StringIO.new }
+    let(:output) { StringIO.new }
+    let(:other_input) { StringIO.new }
+    let(:other_output) { StringIO.new }
+    let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output) }
+    let(:other_terminal) { Toys::Utils::Terminal.new(input: other_input, output: other_output) }
+    let(:conflict_warning) {
+      "Warning: could not set up bundle because another is already set up.\n"
+    }
+    let(:configured_gems) {
+      Toys::Utils::Gems.new(on_missing: :install, on_conflict: :warn, default_confirm: false,
+                            terminal: terminal, input: input, output: output)
+    }
+
+    it "returns self when nothing is overridden" do
+      gems = Toys::Utils::Gems.new
+      assert_same(gems, gems.with)
+      assert_same(gems, gems.with(on_missing: nil, on_conflict: nil, default_confirm: nil,
+                                  terminal: nil, input: nil, output: nil))
+    end
+
+    # nil means "not overridden", so false has to be distinguished from it.
+    it "returns a copy when a setting is overridden to false" do
+      gems = Toys::Utils::Gems.new(default_confirm: true)
+      copy = gems.with(default_confirm: false)
+      refute_same(gems, copy)
+      assert_equal(false, copy.instance_variable_get(:@default_confirm))
+    end
+
+    it "copies every setting that is not overridden" do
+      overrides = {
+        on_missing: :error,
+        on_conflict: :ignore,
+        default_confirm: true,
+        terminal: other_terminal,
+        input: other_input,
+        output: other_output,
+      }
+      overrides.each do |key, value|
+        modified = configured_gems.with(**{key => value})
+        ivar = :"@#{key}"
+        refute_equal(configured_gems.instance_variable_get(ivar), modified.instance_variable_get(ivar),
+                     "#{key} was not overridden")
+        keyword_names(configured_gems.method(:initialize)).each do |key2|
+          next if key == key2
+          ivar2 = :"@#{key2}"
+          assert_equal(configured_gems.instance_variable_get(ivar2), modified.instance_variable_get(ivar2),
+                       "overriding #{key} disturbed #{key2}")
+        end
+      end
+    end
+
+    # #current_settings is the copy mechanism itself, so the tests above cannot
+    # tell a faithful copy from one that merely reports itself as faithful.
+    # These two reach the settings through behavior instead. Only on_conflict
+    # and the output are reachable without installing a gem.
+    it "overrides on_conflict, carrying the original output through" do
+      with_conflicting_bundle_gemfile do |gemfile_path, _sentinel|
+        gems = Toys::Utils::Gems.new(on_conflict: :error, output: output)
+        assert_equal(false, gems.with(on_conflict: :warn).bundle(gemfile_path: gemfile_path))
+        assert_equal(conflict_warning, output.string)
+      end
+    end
+
+    it "overrides the output, even after the original has written to its own" do
+      with_conflicting_bundle_gemfile do |gemfile_path, _sentinel|
+        gems = Toys::Utils::Gems.new(on_conflict: :warn, output: output)
+        assert_equal(false, gems.bundle(gemfile_path: gemfile_path))
+        assert_equal(conflict_warning, output.string)
+        copy = gems.with(output: other_output)
+        assert_equal(false, copy.bundle(gemfile_path: gemfile_path))
+        assert_equal(conflict_warning, other_output.string)
+        assert_equal(conflict_warning, output.string)
+      end
     end
   end
 
@@ -1021,6 +1126,34 @@ describe Toys::Utils::Gems do
       end
     end
 
+    it "sets up a bundle requiring installation of a direct dependency without confirm when on_missing: :install" do
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
+        skip "Skipped test because highline 2.0.2 is already installed"
+      end
+      setup_case("bundle-without-toys") do
+        FileUtils.rm_f("Gemfile.lock")
+        result = run_script("run_test_no_confirm.rb")
+        assert(result.success?)
+        refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Bundle (complete|updated)!/, result.captured_out)
+      end
+    end
+
+    it "errors on a bundle requiring installation of a direct dependency when on_missing: :error" do
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
+        skip "Skipped test because highline 2.0.2 is already installed"
+      end
+      setup_case("bundle-without-toys") do
+        FileUtils.rm_f("Gemfile.lock")
+        result = run_script("run_test_error.rb")
+        refute(result.success?)
+        refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_includes(result.captured_err, "Toys::Utils::Gems::BundleNotInstalledError")
+      end
+    end
+
     it "sets up a bundle requiring installation of a transitive dependency via a gemspec" do
       skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       if exec_service.capture(["gem", "list", "highline"]).include?("2.0.1")
@@ -1076,14 +1209,43 @@ describe Toys::Utils::Gems do
     it "installs and activates a gem" do
       setup_case("activate-highline") do
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
-        result = run_script
+        result = run_script("run_test_confirm_true.rb")
         assert(result.success?)
         assert_match(/Gem needed: .* Install\?/, result.captured_out)
         assert_includes(result.captured_out, "result: :installed")
-        result = run_script
+        result = run_script("run_test_confirm_true.rb")
         assert(result.success?)
         refute_match(/Gem needed: .* Install\?/, result.captured_out)
         assert_includes(result.captured_out, "result: :activated")
+      end
+    end
+
+    it "installs and activates a gem without confirmation when on_missing: :install" do
+      setup_case("activate-highline") do
+        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
+        result = run_script("run_test_no_confirm.rb")
+        assert(result.success?)
+        refute_match(/Gem needed: .* Install\?/, result.captured_out)
+        assert_includes(result.captured_out, "result: :installed")
+      end
+    end
+
+    it "errors when gem is not present when on_missing: :error" do
+      setup_case("activate-highline") do
+        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
+        result = run_script("run_test_error.rb")
+        refute(result.success?)
+        assert_includes(result.captured_err, "Toys::Utils::Gems::ActivationFailedError")
+      end
+    end
+
+    it "errors when gem is not present when default_confirm: false" do
+      setup_case("activate-highline") do
+        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
+        result = run_script("run_test_confirm_false.rb")
+        refute(result.success?)
+        assert_match(/Gem needed: .* Install\?/, result.captured_out)
+        assert_includes(result.captured_err, "Toys::Utils::Gems::InstallFailedError")
       end
     end
 
