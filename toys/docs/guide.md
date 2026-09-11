@@ -1955,7 +1955,7 @@ below.
 
 Finally, you can define and distribute tools in a Ruby gem, and load them from
 the gem. This can be more involved as it requires creating and publishing a
-gem, but it is useful for versioning and public distribution of tools.
+gem, but it is useful for versioning and distribution of tools.
 
 A Ruby gem is basically just a zip file with some metadata. By convention, it
 contains Ruby classes (usually in a top level `lib` directory), and sometimes
@@ -2012,6 +2012,14 @@ directive. This can be useful if a gem has multiple toys directories:
 load_gem "my-tools", toys_dir: "uncommon-tools"
 ```
 
+By default, if the specified gem is not currently installed, Toys will
+interactively ask whether it should install the gem for you. If you need to
+suppress this prompt, for example if you need to run in a non-interactive
+shell environment, set the `:on_missing` keyword argument. You can set
+`on_missing: :install` to attempt to install without asking, or
+`on_missing: :error` to abort with an error without asking. (The default value
+is `on_missing: :confirm` which displays the interactive prompt.)
+
 #### Loading sources from the command line
 
 If you want to run a tool from an additional source without referencing that
@@ -2037,11 +2045,13 @@ Gemfile:
 $ toys do --gem="my-tools, ~> 1.5, >= 1.5.2" greet
 ```
 
-The `--path` value is a file system path, naming either a directory of tools or
-a single Ruby file defining tools:
+You can also suppress the interactive prompt when the gem is not installed, by
+providing the `--on-missing-gem=` flag. Set `--on-missing-gem=install` to
+attempt to install the gem without asking, or `--on-missing-gem=error` to abort
+with an error. For example:
 
 ```
-$ toys do --path=/var/share/mytools greet
+$ toys do --gem=my-tools --on-missing-gem=install greet
 ```
 
 The `--git` value begins with the git remote, optionally followed by any number
@@ -2050,14 +2060,18 @@ of `key=value` elements, again separated by commas. The recognized keys are
 `load_git` directive:
 
 ```
-$ toys do --git="https://github.com/dazuma/example, path=greet.rb, update=3600" greet
+$ toys do --git="https://github.com/dazuma/example, path=toys/greet.rb, update=3600" greet
 ```
 
-The elements of a `--git` value are named, rather than positional as in a
-`--gem` value, because a git source has three independent optional fields, and
-a positional syntax could not express, for example, a path with no commit.
 Whitespace surrounding each element, and surrounding each equals sign, is
 ignored. There is no way to escape a comma appearing within a value.
+
+The `--path` value is a file system path, naming either a directory of tools or
+a single Ruby file defining tools:
+
+```
+$ toys do --path=/var/share/mytools greet
+```
 
 You can pass these flags multiple times, and interleave them, to make several
 sources available at once. If two sources define the same tool, the source
@@ -2067,7 +2081,8 @@ whose flag appears earlier on the command line wins:
 $ toys do --path=./tools --gem=my-tools --git=https://github.com/dazuma/example greet
 ```
 
-Here, a `greet` tool defined by all three sources is taken from `./tools`.
+Here, if a `greet` tool is defined by all three sources, the one from `./tools`
+wins.
 
 Remember to quote any value that includes commas or characters that are
 meaningful to the shell. The commas inside these values are part of the flag

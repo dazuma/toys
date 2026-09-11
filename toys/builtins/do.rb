@@ -17,16 +17,10 @@ long_desc \
   "The --delim flag must appear first before the tools to run. Any flags that appear later in" \
     " the command line will be passed to the tools themselves.",
   "",
-  "You may also make additional tools available to the tools you run, by passing the --gem," \
-    " --git, and --path flags. Each adds a source of tools, which takes priority over the" \
-    " tools that would otherwise be found. The three flags may be repeated and interleaved," \
-    " and the source added by the leftmost flag takes priority over the sources added by the" \
-    " flags to its right. For example:",
-  ["    toys do --gem=my-tools --git=https://github.com/dazuma/example deploy --migrate"],
-  "Here, a tool defined by both sources is taken from the gem. See the descriptions of the" \
-    " individual flags below for the syntax of their values. Note that the commas within those" \
-    " values are part of the flag value, and are unrelated to the delimiter that separates the" \
-    " tools to run."
+  "You may also load tools from additional sources, by passing the --gem, --git, and --path" \
+    " flags. Any number of these flags can be added; each adds a source of tools, with earlier" \
+    " flags taking priority over later. For example:",
+  ["    toys do --gem=my-tools --git=https://github.com/dazuma/example deploy --migrate"]
 
 flag :delim do
   flags "-d", "--delim=VALUE"
@@ -49,7 +43,9 @@ flag :sources do
   default []
   desc "Make the tools from the given gem available"
   long_desc \
-    "Adds the tools from the given gem, prompting to install the gem if it is not present.",
+    "Adds the tools from the given gem. If the specified gem is not currently installed," \
+      " follows the policy set by the --on-missing-gem flag, which is normally to prompt" \
+      " whether to install.",
     "",
     "The value is the gem name, optionally followed by any number of version requirements," \
       " all separated by commas. Whitespace surrounding each element is ignored. The version" \
@@ -67,21 +63,18 @@ flag :sources do
       " if it is not already there.",
     "",
     "The value is the git remote (i.e. the repository URL or path), optionally followed by any" \
-      " number of \"key=value\" elements, all separated by commas. Whitespace surrounding each" \
-      " element, and surrounding each equals sign, is ignored. For example:",
+      " number of \"key=value\" elements, all separated by commas. There is no way to escape" \
+      " a comma appearing within the value. Whitespace surrounding each element, and surrounding" \
+      " each equals sign, is ignored. For example:",
     ["    --git=\"https://github.com/dazuma/example, path=toys, commit=main\""],
-    "The recognized keys are:",
-    ["    path     The file or directory within the repository to load. By default, the"],
-    ["             entire repository is loaded."],
-    ["    commit   The SHA, tag, or branch to load. By default, the repository head is used."],
-    ["    update   Whether to refresh a previously cached repository. Pass \"true\" or \"false\","],
-    ["             or a number of seconds, to refresh only if the cache is at least that old."],
-    ["             The default is \"false\"."],
-    "Unlike --gem, which takes its elements positionally, the elements here are named, because" \
-      " a git source has three independent optional fields and a positional syntax could not" \
-      " express, for example, a path with no commit.",
     "",
-    "There is no way to escape a comma appearing within the value."
+    "The recognized keys are:",
+    "* \"path\" : The file or directory within the repository to load. By default, the entire" \
+      " repository is loaded.",
+    "* \"commit\" : The SHA, tag, or branch to load. By default, the repository head is used.",
+    "* \"update\" : Whether to refresh a previously cached repository. Pass \"true\" or" \
+      " \"false\", or a number of seconds, to refresh only if the cache is at least that old." \
+      " The default is \"false\"."
 end
 
 flag :sources do
@@ -94,6 +87,22 @@ flag :sources do
     "Adds the tools from the given file system path. The path must name either a directory" \
       " of tools, or a single Ruby file defining tools. For example:",
     ["    --path=/path/to/my-tools"]
+end
+
+flag :on_missing_gem do
+  flags "--on-missing-gem=WHAT"
+  accept [:confirm, :install, :error]
+  complete_values ["confirm", "install", "error"]
+  desc "Specify what to do if a gem is not installed"
+  long_desc \
+    "Specifies what to do if a gem referenced by the --gem flag is not installed." \
+      " Possible values are:",
+    "* \"confirm\" : Prompt for what to do.",
+    "* \"install\" : Do not prompt, but just install the needed gem.",
+    "* \"error\" : Display an error and abort.",
+    "",
+    "Defaults to the existing CLI configuration, normally \"confirm\". Note this does not affect" \
+      " any other gem references such as via the \"gem\" or \"load_gem\" directives."
 end
 
 remaining_args :commands do
@@ -119,24 +128,19 @@ def run
 end
 
 # Returns the CLI used to run the requested tools. Normally this is simply the
-# current CLI, but if any sources were requested, we need a new CLI because
-# sources cannot be added to a CLI that has already started loading tools. The
-# new CLI copies the current sources and adds the requested ones on top of
-# them. The requested sources are added in reverse order so that the first flag
-# on the command line ends up with the highest priority.
+# current CLI, but if any sources were requested, we need a new CLI with those
+# sources added. Any new sources are added in reverse order so that the first
+# flag on the command line ends up with the highest priority.
 #
 # All the flag values are parsed up front, in command line order, so that a
 # malformed value is reported before any source is added, and is reported
-# against the first offending flag rather than the last.
-#
-# All added sources are then proactively resolved and failures reported.
+# against the first offending flag rather than the last. All added sources are
+# then proactively resolved and failures reported.
 def build_cli
   specs = sources.map { |kind, value| parse_source_request(kind, value) }
   return cli if specs.empty?
-  require "toys/utils/gems" if specs.any? { |spec| spec.is_a?(::Toys::SourceSpec::Gem) }
-  tool_cli = cli.child(copy_sources: true) do |child_cli|
-    specs.reverse_each { |spec| child_cli.add_source(spec, high_priority: true) }
-  end
+  tool_cli = cli.child(copy_sources: true)
+  specs.reverse_each { |spec| tool_cli.add_source(spec, high_priority: true) }
   begin
     tool_cli.loader.resolve_sources
   rescue ::Toys::ToolSourceError => e
@@ -174,7 +178,7 @@ def parse_gem_request(gem_request)
     logger.fatal("Invalid version requirement for gem #{gem_name.inspect}: #{e.message}")
     exit(1)
   end
-  ::Toys::SourceSpec.gem(gem_name, version: gem_version)
+  ::Toys::SourceSpec.gem(gem_name, version: gem_version, on_missing: on_missing_gem)
 end
 
 # Splits a --git flag value into the git remote and the options that follow it,

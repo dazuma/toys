@@ -154,7 +154,7 @@ describe "toys do" do
     assert_match(/--gem=GEM/, unwrapped)
     assert_match(/--git=SPEC/, unwrapped)
     assert_match(/--path=PATH/, unwrapped)
-    assert_match(/the source added by the leftmost flag takes priority/, unwrapped)
+    assert_match(/earlier flags taking priority over later/, unwrapped)
   end
 
   it "passes flags to the running tool" do
@@ -368,6 +368,41 @@ describe "toys do --gem" do
   it "builds a new cli when a gem is requested" do
     toys_load_tool(["do", "--gem=fake-tools-one"]) do |context|
       refute_same(context.cli, context.build_cli)
+    end
+  end
+
+  describe "with a missing gem" do
+    before do
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
+    end
+
+    let(:nonexistent_gem_name) { "toys-nonexistent-98765" }
+
+    it "asks to install a missing gem by default" do
+      skip "Skipped integration test" unless ::ENV["TOYS_TEST_INTEGRATION"]
+      result = toys_exec_tool(["do", "--gem=#{nonexistent_gem_name}", "one-tool"],
+                              in: :null, out: :capture, err: :capture)
+      refute(result.success?)
+      assert_includes(result.captured_out, "Install?")
+      assert_includes(result.captured_err, "Failed to install gem")
+    end
+
+    it "attempts to install a gem without asking with --on-missing-gem=install" do
+      skip "Skipped integration test" unless ::ENV["TOYS_TEST_INTEGRATION"]
+      result = toys_exec_tool(["do", "--gem=#{nonexistent_gem_name}", "--on-missing-gem=install", "one-tool"],
+                              in: :null, out: :capture, err: :capture)
+      refute(result.success?)
+      refute_includes(result.captured_out, "Install?")
+      assert_includes(result.captured_err, "Failed to install gem")
+    end
+
+    it "just errors without attempt to install a gem with --on-missing-gem=error" do
+      result = toys_exec_tool(["do", "--gem=#{nonexistent_gem_name}", "--on-missing-gem=error", "one-tool"],
+                              in: :null, out: :capture, err: :capture)
+      refute(result.success?)
+      refute_includes(result.captured_out, "Install?")
+      refute_includes(result.captured_err, "Failed to install gem")
+      assert_includes(result.captured_err, "Could not find")
     end
   end
 end
