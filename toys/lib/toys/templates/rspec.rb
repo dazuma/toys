@@ -58,8 +58,6 @@ module Toys
       #     the "rspec" gem, used if bundler is not enabled.
       #     Optional. If not provided, defaults to the value given in
       #     {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param gem_version [String,Array<String>] Deprecated alias for the
-      #     `rspec` argument.
       # @param gems [Hash{String=>String|Array<String>|true}] Include the given
       #     gems with the given version requirements. Used if bundler is not
       #     enabled. If the version requirement is set to `true`, then the
@@ -91,7 +89,6 @@ module Toys
       #
       def initialize(name: nil,
                      rspec: nil,
-                     gem_version: nil,
                      gems: nil,
                      libs: nil,
                      options: nil,
@@ -115,7 +112,7 @@ module Toys
         @bundler = bundler
         @context_directory = context_directory
         @gem_dependencies = {}
-        update_version_spec("rspec", rspec || gem_version)
+        update_version_spec("rspec", rspec)
         update_gems(gems) if gems
       end
 
@@ -155,7 +152,6 @@ module Toys
       def rspec=(value)
         update_version_spec("rspec", value)
       end
-      alias gem_version= rspec=
 
       ##
       # An array of directories to add to the Ruby require path.
