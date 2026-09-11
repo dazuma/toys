@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::StandardMiddleware::ApplyConfig
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css">
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css">
+
+<script type="text/javascript">
+  pathId = "Toys::StandardMiddleware::ApplyConfig";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="main_progress" aria-hidden="true"></div>
+
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (A)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../StandardMiddleware.html" title="Toys::StandardMiddleware (module)">StandardMiddleware</a></span></span>
+     &raquo; 
+    <span class="title">ApplyConfig</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::StandardMiddleware::ApplyConfig
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::StandardMiddleware::ApplyConfig</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/standard_middleware/apply_config.rb
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A middleware that applies the given block to all tool configurations.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(parent_source: nil, source_name: nil, &amp;block)  &#x21d2; ApplyConfig </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create an ApplyConfig middleware.</p></div></span>
+  
+</li>
+
+      
+    </ul>
+    
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(parent_source: nil, source_name: nil, &amp;block)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::StandardMiddleware::ApplyConfig (class)">ApplyConfig</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create an ApplyConfig middleware.</p>
+<p>This middleware works in one of two modes:</p>
+<ol>
+<li>Tied to a provided <code>parent_source</code>. This is generally used when
+the middleware is invoked during tool loading, e.g. via the
+<span class='object_link'><a href="../DSL/Tool.html#subtool_apply-instance_method" title="Toys::DSL::Tool#subtool_apply (method)">DSL::Tool#subtool_apply</a></span> DSL directive. The block will be
+associated with a new &quot;proc&quot; source under the given parent, and
+will apply only to tools from the same source tree (i.e. the same
+priority.)</li>
+<li>Not tied to a source, i.e. the no <code>parent_source</code> provided. This is
+generally used when the middleware is installed globally in the
+loader. The block will be applied to <em>every</em> tool, regardless of
+the tool's source, and will be associated with a separate &quot;proc&quot;
+source for every tool source tree (i.e. every priority).</li>
+</ol>
+<p>Your block cannot create or modify subtools of the tool being modified.
+(This is because the same middleware could be expected to apply to that
+subtool as well, and the semantics of the resulting recursion would be
+messy and ambiguous.) Thus, within the block:</p>
+<ul>
+<li>You cannot use the <code>tool</code> directive.</li>
+<li>You cannot create a <code>Toys::Tool</code> subclass.</li>
+<li>You cannot use a <code>subtool_apply</code> directive.</li>
+<li>You cannot pass the <code>as:</code> parameter to any <code>load</code> or related
+directive.</li>
+<li>You cannot use any <code>load</code> or related directive that references a
+directory. (You can, however, load a file directly, as long as it
+does not use the <code>as:</code> parameter, and the file's contents do not
+violate any of these rules.)</li>
+</ul>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>parent_source</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The SourceInfo corresponding
+to the source where this block is provided, to apply this block only
+to that source tree. Or, omit to apply this block to every tool
+regardless of source.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>source_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A user-visible name for the source, or
+<code>nil</code> to use the default.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The configuration to apply.</p></div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_middleware/apply_config.rb', line 49</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>parent_source:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='ivar'>@block</span> <span class='op'>=</span> <span class='id identifier rubyid_block'>block</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_parent_source'>parent_source</span>
+    <span class='ivar'>@source</span> <span class='op'>=</span> <span class='id identifier rubyid_parent_source'>parent_source</span><span class='period'>.</span><span class='id identifier rubyid_proc_child'>proc_child</span><span class='lparen'>(</span><span class='id identifier rubyid_block'>block</span><span class='comma'>,</span> <span class='label'>source_name:</span> <span class='id identifier rubyid_source_name'>source_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@mutex</span> <span class='op'>=</span> <span class='ivar'>@sources_by_root</span> <span class='op'>=</span> <span class='ivar'>@source_name</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@source_name</span> <span class='op'>=</span> <span class='id identifier rubyid_source_name'>source_name</span>
+    <span class='ivar'>@sources_by_root</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+    <span class='ivar'>@mutex</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Mutex</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+    <span class='ivar'>@source</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Fri Sep 11 23:47:16 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.45 (ruby-4.0.6).
+</div>
+
+    </div>
+  </body>
+</html>
