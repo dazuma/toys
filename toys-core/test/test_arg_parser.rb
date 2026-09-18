@@ -316,6 +316,27 @@ describe Toys::ArgParser do
         assert_empty(arg_parser.errors)
       end
 
+      it "does not modify the default array when using the push handler" do
+        tool.add_flag(:a, ["-a", "--aa=VALUE"], default: [], handler: :push)
+        parser1 = Toys::ArgParser.new(tool, loader)
+        parser1.parse(["--aa", "hi"])
+        parser1.finish
+        assert_data_includes({a: ["hi"]}, parser1.data)
+        parser2 = Toys::ArgParser.new(tool, loader)
+        parser2.parse(["--aa", "ho"])
+        parser2.finish
+        assert_data_includes({a: ["ho"]}, parser2.data)
+        assert_equal([], tool.default_data[:a])
+      end
+
+      it "supports a frozen default array with the push handler" do
+        tool.add_flag(:a, ["-a", "--aa=VALUE"], default: [].freeze, handler: :push)
+        arg_parser.parse(["--aa", "hi", "-a", "ho"])
+        arg_parser.finish
+        assert_data_includes({a: ["hi", "ho"]}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
       it "honors the set handler" do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], handler: :set)
         arg_parser.parse(["--aa", "hi", "-a", "ho"])
