@@ -377,10 +377,12 @@ module Toys
     SET_HANDLER = proc { |val| val }
 
     ##
-    # The push handler pushes the given value using the `<<` operator.
+    # The push handler appends the given value, returning a new array. The
+    # previous array is not modified, so a shared or frozen default array
+    # can be used safely.
     # @return [Proc]
     #
-    PUSH_HANDLER = proc { |val, prev| prev.nil? ? [val] : prev << val }
+    PUSH_HANDLER = proc { |val, prev| prev.nil? ? [val] : prev + [val] }
 
     ##
     # The default handler is the set handler, which replaces the previous value.
