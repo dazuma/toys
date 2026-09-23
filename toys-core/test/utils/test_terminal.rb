@@ -130,6 +130,36 @@ describe Toys::Utils::Terminal do
     end
   end
 
+  describe "infer_styled" do
+    let(:tty_output) do
+      out = ::StringIO.new
+      def out.tty?
+        true
+      end
+      out
+    end
+
+    it "is styled for a tty with an empty environment" do
+      assert(Toys::Utils::Terminal.infer_styled(tty_output, env: {}))
+    end
+
+    it "is not styled for a non-tty with an empty environment" do
+      refute(Toys::Utils::Terminal.infer_styled(output, env: {}))
+    end
+
+    it "is not styled for an output that does not respond to tty?" do
+      refute(Toys::Utils::Terminal.infer_styled(::Object.new, env: {}))
+    end
+
+    it "is not styled for a nil output" do
+      refute(Toys::Utils::Terminal.infer_styled(nil, env: {}))
+    end
+
+    it "is not styled for a tty when NO_COLOR is set" do
+      refute(Toys::Utils::Terminal.infer_styled(tty_output, env: { "NO_COLOR" => "1" }))
+    end
+  end
+
   describe "NO_COLOR integration" do
     let(:output_with_tty) do
       def output.tty?

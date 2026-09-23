@@ -105,12 +105,31 @@ module Toys
       end
 
       ##
+      # Infers whether styled output should be written to the given output,
+      # from the output itself and the environment. This is the rule a
+      # terminal uses when it is not told explicitly whether to style output,
+      # and it is available to tools that write styled output by other means.
+      #
+      # Output is styled if the output is a tty and the `NO_COLOR` environment
+      # variable is not set.
+      #
+      # @param output [IO,Logger,nil] The output stream.
+      # @param env [Hash{String=>String}] The environment. Defaults to `ENV`.
+      # @return [boolean] Whether output should be styled.
+      #
+      def self.infer_styled(output, env: ::ENV)
+        return false if env["NO_COLOR"]
+        output.respond_to?(:tty?) && output.tty?
+      end
+
+      ##
       # Create a terminal.
       #
       # @param input [IO,nil] Input stream.
       # @param output [IO,Logger,nil] Output stream or logger.
       # @param styled [boolean,nil] Whether to output ansi styles. If `nil`, the
-      #     setting is inferred from whether the output has a tty.
+      #     setting is inferred from the output and the environment. See
+      #     {Terminal.infer_styled}.
       #
       def initialize(input: $stdin, output: $stdout, styled: nil)
         require "monitor"
@@ -118,7 +137,7 @@ module Toys
         @output = output
         @styled =
           if styled.nil?
-            output.respond_to?(:tty?) && output.tty? && !::ENV["NO_COLOR"]
+            Terminal.infer_styled(output)
           else
             styled ? true : false
           end
