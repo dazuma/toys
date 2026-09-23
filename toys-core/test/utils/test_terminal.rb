@@ -174,6 +174,38 @@ describe Toys::Utils::Terminal do
     it "is styled for a tty when TERM is some other value" do
       assert(Toys::Utils::Terminal.infer_styled(tty_output, env: { "TERM" => "xterm-256color" }))
     end
+
+    it "is styled for a non-tty when FORCE_COLOR is set" do
+      assert(Toys::Utils::Terminal.infer_styled(output, env: { "FORCE_COLOR" => "1" }))
+    end
+
+    it "is styled for a nil output when FORCE_COLOR is set" do
+      assert(Toys::Utils::Terminal.infer_styled(nil, env: { "FORCE_COLOR" => "1" }))
+    end
+
+    it "lets FORCE_COLOR override NO_COLOR" do
+      env = { "FORCE_COLOR" => "1", "NO_COLOR" => "1" }
+      assert(Toys::Utils::Terminal.infer_styled(output, env: env))
+    end
+
+    it "lets FORCE_COLOR override a dumb TERM" do
+      env = { "FORCE_COLOR" => "1", "TERM" => "dumb" }
+      assert(Toys::Utils::Terminal.infer_styled(output, env: env))
+    end
+
+    it "treats an empty FORCE_COLOR as unset for a non-tty" do
+      refute(Toys::Utils::Terminal.infer_styled(output, env: { "FORCE_COLOR" => "" }))
+    end
+
+    it "treats an empty FORCE_COLOR as unset for a tty" do
+      assert(Toys::Utils::Terminal.infer_styled(tty_output, env: { "FORCE_COLOR" => "" }))
+    end
+
+    ["0", "false", "FALSE", "False"].each do |value|
+      it "is not styled for a tty when FORCE_COLOR=#{value.inspect}" do
+        refute(Toys::Utils::Terminal.infer_styled(tty_output, env: { "FORCE_COLOR" => value }))
+      end
+    end
   end
 
   describe "environment integration" do
@@ -207,6 +239,29 @@ describe Toys::Utils::Terminal do
     it "disables styling when TERM is dumb" do
       ::ENV["TERM"] = "dumb"
       refute(terminal.styled)
+    end
+
+    it "enables styling for a non-tty when FORCE_COLOR is set" do
+      ::ENV["FORCE_COLOR"] = "1"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert(terminal.styled)
+    end
+
+    it "does not let FORCE_COLOR override an explicit styled setting" do
+      ::ENV["FORCE_COLOR"] = "1"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output, styled: false)
+      refute(terminal.styled)
+    end
+
+    it "disables styling for a tty when FORCE_COLOR is 0" do
+      ::ENV["FORCE_COLOR"] = "0"
+      refute(terminal.styled)
+    end
+
+    it "does not let FORCE_COLOR=0 override an explicit styled setting" do
+      ::ENV["FORCE_COLOR"] = "0"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output, styled: true)
+      assert(terminal.styled)
     end
   end
 

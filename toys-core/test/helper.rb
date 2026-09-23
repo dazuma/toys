@@ -7,6 +7,10 @@ require "minitest/rg"
 require "toys-core"
 require "toys/utils/exec"
 
+# Many tests expect a terminal writing to a StringIO to be unstyled. Keep an
+# ambient FORCE_COLOR, such as one set by a CI system, from changing that.
+::ENV.delete("FORCE_COLOR")
+
 module Toys
   module TestHelper
     def isolate_ruby
