@@ -158,9 +158,18 @@ describe Toys::Utils::Terminal do
     it "is not styled for a tty when NO_COLOR is set" do
       refute(Toys::Utils::Terminal.infer_styled(tty_output, env: { "NO_COLOR" => "1" }))
     end
+
+    it "is not styled for a tty when NO_COLOR is set to a falsy-looking value" do
+      refute(Toys::Utils::Terminal.infer_styled(tty_output, env: { "NO_COLOR" => "0" }))
+    end
+
+    it "ignores an empty NO_COLOR" do
+      assert(Toys::Utils::Terminal.infer_styled(tty_output, env: { "NO_COLOR" => "" }))
+    end
   end
 
-  describe "NO_COLOR integration" do
+  describe "environment integration" do
+    let(:env_names) { ["NO_COLOR", "FORCE_COLOR", "TERM"] }
     let(:output_with_tty) do
       def output.tty?
         true
@@ -170,11 +179,12 @@ describe Toys::Utils::Terminal do
     let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output_with_tty) }
 
     before do
-      @save_no_color = ::ENV["NO_COLOR"]
+      @saved_env = env_names.to_h { |name| [name, ::ENV[name]] }
+      env_names.each { |name| ::ENV.delete(name) }
     end
 
     after do
-      ::ENV["NO_COLOR"] = @save_no_color
+      @saved_env.each { |name, value| ::ENV[name] = value }
     end
 
     it "uses tty when NO_COLOR is not set" do

@@ -111,14 +111,14 @@ module Toys
       # and it is available to tools that write styled output by other means.
       #
       # Output is styled if the output is a tty and the `NO_COLOR` environment
-      # variable is not set.
+      # variable is not set to a nonempty value.
       #
       # @param output [IO,Logger,nil] The output stream.
       # @param env [Hash{String=>String}] The environment. Defaults to `ENV`.
       # @return [boolean] Whether output should be styled.
       #
       def self.infer_styled(output, env: ::ENV)
-        return false if env["NO_COLOR"]
+        return false unless env["NO_COLOR"].to_s.empty?
         output.respond_to?(:tty?) && output.tty?
       end
 
