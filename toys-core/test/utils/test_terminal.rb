@@ -166,6 +166,14 @@ describe Toys::Utils::Terminal do
     it "ignores an empty NO_COLOR" do
       assert(Toys::Utils::Terminal.infer_styled(tty_output, env: { "NO_COLOR" => "" }))
     end
+
+    it "is not styled for a tty when TERM is dumb" do
+      refute(Toys::Utils::Terminal.infer_styled(tty_output, env: { "TERM" => "dumb" }))
+    end
+
+    it "is styled for a tty when TERM is some other value" do
+      assert(Toys::Utils::Terminal.infer_styled(tty_output, env: { "TERM" => "xterm-256color" }))
+    end
   end
 
   describe "environment integration" do
@@ -193,6 +201,11 @@ describe Toys::Utils::Terminal do
 
     it "disables styling when NO_COLOR is set" do
       ::ENV["NO_COLOR"] = "true"
+      refute(terminal.styled)
+    end
+
+    it "disables styling when TERM is dumb" do
+      ::ENV["TERM"] = "dumb"
       refute(terminal.styled)
     end
   end

@@ -110,8 +110,9 @@ module Toys
       # terminal uses when it is not told explicitly whether to style output,
       # and it is available to tools that write styled output by other means.
       #
-      # Output is styled if the output is a tty and the `NO_COLOR` environment
-      # variable is not set to a nonempty value.
+      # Output is styled if the output is a tty, the `NO_COLOR` environment
+      # variable is not set to a nonempty value, and the `TERM` environment
+      # variable is not set to `dumb`.
       #
       # @param output [IO,Logger,nil] The output stream.
       # @param env [Hash{String=>String}] The environment. Defaults to `ENV`.
@@ -119,6 +120,7 @@ module Toys
       #
       def self.infer_styled(output, env: ::ENV)
         return false unless env["NO_COLOR"].to_s.empty?
+        return false if env["TERM"] == "dumb"
         output.respond_to?(:tty?) && output.tty?
       end
 
