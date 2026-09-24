@@ -63,3 +63,11 @@ The Ruby class a tool's definition is evaluated against, and which is
 instantiated to run it. Every tool definition has one, whether the definition
 came from a DSL block, a toys file, or an explicit subclass of Toys::Tool.
 _Avoid_: Tool module, tool namespace, DSL class
+
+**Styled output**:
+Terminal output that carries ANSI escape sequences for any visual styling:
+color, and also text attributes such as bold and underline. Styling is enabled
+or disabled as a whole, so an environment setting that speaks of "color", such
+as `NO_COLOR` or `FORCE_COLOR`, turns all styled output off or on, not only
+color.
+_Avoid_: Colored output, color, ANSI output

@@ -105,12 +105,59 @@ module Toys
       end
 
       ##
+      # Infers whether styled output should be written to the given output,
+      # from the output itself and the environment. This is the rule a
+      # terminal uses when it is not told explicitly whether to style output,
+      # and it is available to tools that write styled output by other means.
+      #
+      # The following checks are applied in order, and the first that applies
+      # decides the result:
+      #
+      #  1. If the `FORCE_COLOR` environment variable is set to `0` or `false`
+      #     (in any case), output is not styled. This follows Node.js and the
+      #     chalk library, which are the most common consumers of
+      #     `FORCE_COLOR`, rather than the
+      #     [force-color.org](https://force-color.org) standard, which would
+      #     force styling on for these values.
+      #  2. If the `FORCE_COLOR` environment variable is set to any other
+      #     nonempty value, output is styled. Following the force-color.org
+      #     standard, this overrides `NO_COLOR`, so that color can be forced
+      #     for one run even when `NO_COLOR` is set as a general preference.
+      #     An empty `FORCE_COLOR` is treated as if it were unset, also
+      #     following the force-color.org standard.
+      #  3. If the `NO_COLOR` environment variable is set to a nonempty value,
+      #     output is not styled, following the
+      #     [no-color.org](https://no-color.org) standard.
+      #  4. If the `TERM` environment variable is set to `dumb`, output is not
+      #     styled.
+      #  5. Otherwise, output is styled if the output is a tty.
+      #
+      # Note that all styling is affected, not only color. Also note that an
+      # explicit choice, such as passing `styled: true` or `styled: false` to
+      # {Terminal#initialize}, takes precedence over all of these checks,
+      # because this method is then not called at all.
+      #
+      # @param output [IO,Logger,nil] The output stream.
+      # @param env [Hash{String=>String}] The environment. Defaults to `ENV`.
+      # @return [boolean] Whether output should be styled.
+      #
+      def self.infer_styled(output, env: ::ENV)
+        force_color = env["FORCE_COLOR"].to_s
+        return false if force_color == "0" || force_color.casecmp?("false")
+        return true unless force_color.empty?
+        return false unless env["NO_COLOR"].to_s.empty?
+        return false if env["TERM"] == "dumb"
+        output.respond_to?(:tty?) && output.tty?
+      end
+
+      ##
       # Create a terminal.
       #
       # @param input [IO,nil] Input stream.
       # @param output [IO,Logger,nil] Output stream or logger.
       # @param styled [boolean,nil] Whether to output ansi styles. If `nil`, the
-      #     setting is inferred from whether the output has a tty.
+      #     setting is inferred from the output and the environment. See
+      #     {Terminal.infer_styled}.
       #
       def initialize(input: $stdin, output: $stdout, styled: nil)
         require "monitor"
@@ -118,7 +165,7 @@ module Toys
         @output = output
         @styled =
           if styled.nil?
-            output.respond_to?(:tty?) && output.tty? && !::ENV["NO_COLOR"]
+            Terminal.infer_styled(output)
           else
             styled ? true : false
           end

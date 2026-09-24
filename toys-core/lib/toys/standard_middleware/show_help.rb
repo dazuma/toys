@@ -165,8 +165,9 @@ module Toys
       #     false) if the output stream is not a tty.
       # @param stream [IO] Output stream to write to. Default is stdout.
       # @param styled_output [boolean,nil] Cause the tool to display help text
-      #     with ansi styles. If `nil`, display styles if the output stream is
-      #     a tty. Default is `nil`.
+      #     with ansi styles. If `nil`, whether to display styles is inferred
+      #     from the output stream and the environment. See
+      #     {Toys::Utils::Terminal.infer_styled}. Default is `nil`.
       #
       def initialize(help_flags: false,
                      usage_flags: false,
@@ -297,7 +298,8 @@ module Toys
           include_hidden: context[SHOW_ALL_SUBTOOLS_KEY],
           show_source_path: @show_source_path,
           separate_sources: @separate_sources,
-          wrap_width: terminal.width
+          wrap_width: terminal.width,
+          styled: terminal.styled
         )
         require "toys/utils/pager"
         Utils::Pager.start(command: @use_pager, fallback_io: terminal) do |io|

@@ -238,6 +238,45 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
   end
 
+  describe "with a pager" do
+    let(:string_io) do
+      out = ::StringIO.new
+      def out.tty?
+        true
+      end
+      out
+    end
+    let(:pager_command) { [::RbConfig.ruby, "-e", "$stdout.write($stdin.read)"] }
+
+    before do
+      skip "Pager is disabled on JRuby" if Toys::Compat.jruby?
+      skip "Skipped test on Windows" if Toys::Compat.windows?
+    end
+
+    def paged_help(styled_output)
+      cli = make_cli(help_flags: true, use_pager: pager_command, styled_output: styled_output)
+      cli.add_source do
+        tool "foo" do
+          # Empty tool
+        end
+      end
+      out, _err = capture_subprocess_io do
+        cli.run("foo", "--help")
+      end
+      assert_empty(string_io.string)
+      assert_match(/SYNOPSIS.*toys foo/m, out)
+      out
+    end
+
+    it "omits styles when styled output is disabled" do
+      refute_match(/\e\[/, paged_help(false))
+    end
+
+    it "includes styles when styled output is enabled" do
+      assert_match(/\e\[/, paged_help(true))
+    end
+  end
+
   describe "report_usage_error" do
     let(:cli) {
       make_cli(help_flags: true, allow_root_args: true)

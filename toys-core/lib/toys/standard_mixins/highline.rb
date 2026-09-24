@@ -27,6 +27,11 @@ module Toys
     # The arguments will be passed on to the
     # [HighLine constructor](https://www.rubydoc.info/gems/highline/HighLine:initialize).
     #
+    # Whether the HighLine object uses color is inferred from its output
+    # stream and the environment, using the same rule as a terminal. See
+    # {Toys::Utils::Terminal.infer_styled}. You can override it by setting
+    # `use_color` on the HighLine object.
+    #
     module Highline
       include Mixin
 
@@ -131,10 +136,12 @@ module Toys
 
       on_initialize do |*args|
         require "toys/utils/gems"
+        require "toys/utils/terminal"
         ::Toys::Utils::Gems.activate("highline", "~> 2.0")
         require "highline"
-        self[::Toys::StandardMixins::Highline::KEY] = ::HighLine.new(*args)
-        self[::Toys::StandardMixins::Highline::KEY].use_color = $stdout.tty?
+        highline = ::HighLine.new(*args)
+        highline.use_color = ::Toys::Utils::Terminal.infer_styled(highline.output)
+        self[::Toys::StandardMixins::Highline::KEY] = highline
       end
     end
   end

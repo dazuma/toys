@@ -22,8 +22,9 @@ module Toys
       #     occurs. Default is {USAGE_ERROR_EXIT_CODE}.
       # @param stream [IO] Output stream to write to. Default is stderr.
       # @param styled_output [boolean,nil] Cause the tool to display help text
-      #     with ansi styles. If `nil`, display styles if the output stream is
-      #     a tty. Default is `nil`.
+      #     with ansi styles. If `nil`, whether to display styles is inferred
+      #     from the output stream and the environment. See
+      #     {Toys::Utils::Terminal.infer_styled}. Default is `nil`.
       #
       def initialize(exit_code: nil, stream: $stderr, styled_output: nil)
         @exit_code = exit_code || USAGE_ERROR_EXIT_CODE

@@ -39,4 +39,54 @@ describe Toys::StandardMixins::Highline do
       cli.run("foo")
     end
   end
+
+  describe "color" do
+    let(:env_names) { ["NO_COLOR", "FORCE_COLOR", "TERM"] }
+    let(:tty_output) do
+      out = ::StringIO.new
+      def out.tty?
+        true
+      end
+      out
+    end
+
+    before do
+      @saved_env = env_names.to_h { |name| [name, ::ENV[name]] }
+      env_names.each { |name| ::ENV.delete(name) }
+    end
+
+    after do
+      @saved_env.each { |name, value| ::ENV[name] = value }
+    end
+
+    def use_color_for(*highline_args)
+      cli.add_source do
+        tool "foo" do
+          include :highline, *highline_args
+          to_run do
+            exit(highline.use_color? ? 1 : 2)
+          end
+        end
+      end
+      cli.run("foo") == 1
+    end
+
+    it "uses color when the highline output is a tty" do
+      assert(use_color_for($stdin, tty_output))
+    end
+
+    it "does not use color when the highline output is not a tty" do
+      refute(use_color_for($stdin, ::StringIO.new))
+    end
+
+    it "does not use color when NO_COLOR is set" do
+      ::ENV["NO_COLOR"] = "1"
+      refute(use_color_for($stdin, tty_output))
+    end
+
+    it "uses color when FORCE_COLOR is set" do
+      ::ENV["FORCE_COLOR"] = "1"
+      assert(use_color_for($stdin, ::StringIO.new))
+    end
+  end
 end
