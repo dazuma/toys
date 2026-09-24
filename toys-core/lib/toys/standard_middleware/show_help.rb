@@ -298,7 +298,8 @@ module Toys
           include_hidden: context[SHOW_ALL_SUBTOOLS_KEY],
           show_source_path: @show_source_path,
           separate_sources: @separate_sources,
-          wrap_width: terminal.width
+          wrap_width: terminal.width,
+          styled: terminal.styled
         )
         require "toys/utils/pager"
         Utils::Pager.start(command: @use_pager, fallback_io: terminal) do |io|
