@@ -165,8 +165,9 @@ module Toys
       #     false) if the output stream is not a tty.
       # @param stream [IO] Output stream to write to. Default is stdout.
       # @param styled_output [boolean,nil] Cause the tool to display help text
-      #     with ansi styles. If `nil`, display styles if the output stream is
-      #     a tty. Default is `nil`.
+      #     with ansi styles. If `nil`, whether to display styles is inferred
+      #     from the output stream and the environment. See
+      #     {Toys::Utils::Terminal.infer_styled}. Default is `nil`.
       #
       def initialize(help_flags: false,
                      usage_flags: false,
