@@ -28,6 +28,38 @@ describe Toys::StandardMiddleware::ShowHelp do
     assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
   end
 
+  ["-h", "-?"].each do |short_flag|
+    it "responds to #{short_flag} by default" do
+      cli = make_cli(help_flags: true)
+      cli.add_source do
+        tool "foo" do
+          # Empty tool
+        end
+      end
+      cli.run("foo", short_flag)
+      assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+    end
+  end
+
+  it "allows the tool to claim -h for its own flag" do
+    cli = make_cli(help_flags: true)
+    cli.add_source do
+      tool "foo" do
+        flag :host, "-h", "--host=HOST"
+        def run
+          puts "NORMAL RUN #{host}"
+        end
+      end
+    end
+    out, _err = capture_subprocess_io do
+      cli.run("foo", "-h", "example.com")
+    end
+    assert_includes(out, "NORMAL RUN example.com")
+    assert_empty(string_io.string)
+    cli.run("foo", "--help")
+    assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+  end
+
   it "causes a tool to respond to usage flags" do
     cli = make_cli(usage_flags: true)
     cli.add_source do

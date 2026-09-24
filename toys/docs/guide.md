@@ -233,7 +233,7 @@ However, Toys adds a few standard flags globally to every tool. (It is possible
 for individual tools to override these flags, but most tools should support
 them.) These standard flags include:
 
- *  `--help` (also `-?`) which displays the full help screen for the tool.
+ *  `--help` (also `-h` or `-?`) which displays the full help screen for the tool.
  *  `--usage` which displays a shorter usage screen for the tool.
  *  `--verbose` (also `-v`) which increases the verbosity. This affects the
     tool's logging display, increasing the number of log levels shown. This
