@@ -17,7 +17,7 @@ module Toys
       # Default help flags
       # @return [Array<String>]
       #
-      DEFAULT_HELP_FLAGS = ["-?", "--help"].freeze
+      DEFAULT_HELP_FLAGS = ["-h", "-?", "--help"].freeze
 
       ##
       # Default usage flags
