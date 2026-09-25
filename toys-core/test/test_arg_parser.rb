@@ -1118,6 +1118,23 @@ describe Toys::ArgParser do
       assert_errors_include(["foo"], root_arg_parser.errors) if supports_suggestions?
     end
 
+    it "includes namespace suggestions" do
+      subtool = loader.get_tool([tool_name, "bar"], priority, activate: true)
+      subtool.run_handler = proc {}
+      root_arg_parser.parse(["fop"])
+      root_arg_parser.finish
+      assert_errors_include('Tool not found: "fop"', root_arg_parser.errors)
+      assert_errors_include(["foo"], root_arg_parser.errors) if supports_suggestions?
+    end
+
+    it "omits non-runnable tools without runnable subtools from suggestions" do
+      tool
+      root_arg_parser.parse(["fop"])
+      root_arg_parser.finish
+      assert_errors_include('Tool not found: "fop"', root_arg_parser.errors)
+      assert_errors_include([], root_arg_parser.errors) if supports_suggestions?
+    end
+
     it "honors defaults for optional arg" do
       tool.add_optional_arg(:b, default: "hello")
       tool.add_required_arg(:a)

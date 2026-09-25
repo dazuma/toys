@@ -641,7 +641,8 @@ module Toys
           if @tool.runnable? || !@seen_flags.empty?
             ExtraArgumentsError.new(arguments: @unmatched_positional)
           else
-            dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
+            subtools = @loader.list_subtools(@tool.full_name, include_namespaces: true)
+            dictionary = subtools.map(&:simple_name)
             first_arg = @unmatched_positional.first
             ToolUnrecognizedError.new(full_name: @tool.full_name + [first_arg],
                                       suggestions: Compat.suggestions(first_arg, dictionary))
