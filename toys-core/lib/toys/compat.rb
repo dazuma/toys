@@ -22,127 +22,133 @@ module Toys
     #
     RUBY_VERSION_CODE = ruby_version
 
-    ##
-    # @private
-    # Whether the current Ruby implementation is JRuby
-    #
-    # @return [boolean]
-    #
-    def self.jruby?
-      ::RUBY_ENGINE == "jruby"
-    end
+    class << self
+      ##
+      # @private
+      # Whether the current Ruby implementation is JRuby
+      #
+      # @return [boolean]
+      #
+      def jruby?
+        ::RUBY_ENGINE == "jruby"
+      end
 
-    ##
-    # @private
-    # Whether the current Ruby implementation is TruffleRuby
-    #
-    # @return [boolean]
-    #
-    def self.truffleruby?
-      ::RUBY_ENGINE == "truffleruby"
-    end
+      ##
+      # @private
+      # Whether the current Ruby implementation is TruffleRuby
+      #
+      # @return [boolean]
+      #
+      def truffleruby?
+        ::RUBY_ENGINE == "truffleruby"
+      end
 
-    ##
-    # @private
-    # Whether we are running on Windows
-    #
-    # @return [boolean]
-    #
-    def self.windows?
-      ::RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
-    end
+      ##
+      # @private
+      # Whether we are running on Windows
+      #
+      # @return [boolean]
+      #
+      def windows?
+        ::RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+      end
 
-    ##
-    # @private
-    # Whether we are running on Mac OS
-    #
-    # @return [boolean]
-    #
-    def self.macos?
-      ::RbConfig::CONFIG["host_os"] =~ /darwin/
-    end
+      ##
+      # @private
+      # Whether we are running on Mac OS
+      #
+      # @return [boolean]
+      #
+      def macos?
+        ::RbConfig::CONFIG["host_os"] =~ /darwin/
+      end
 
-    ##
-    # @private
-    # Whether fork is supported on the current Ruby and OS
-    #
-    # @return [boolean]
-    #
-    def self.allow_fork?
-      !jruby? && !truffleruby? && !windows?
-    end
+      ##
+      # @private
+      # Whether fork is supported on the current Ruby and OS
+      #
+      # @return [boolean]
+      #
+      def allow_fork?
+        !jruby? && !truffleruby? && !windows?
+      end
 
-    ##
-    # @private
-    # Whether it is possible to get suggestions from DidYouMean. If this
-    # returns false, {Compat.suggestions} will always return the empty array.
-    #
-    # @return [boolean]
-    #
-    def self.supports_suggestions?
-      unless defined?(@supports_suggestions)
-        begin
-          require "did_you_mean"
-        rescue ::LoadError
-          require "rubygems"
+      ##
+      # @private
+      # Whether it is possible to get suggestions from DidYouMean. If this
+      # returns false, {Compat.suggestions} will always return the empty array.
+      #
+      # @return [boolean]
+      #
+      def supports_suggestions?
+        unless defined?(@supports_suggestions)
           begin
             require "did_you_mean"
           rescue ::LoadError
-            # Oh well, it's not available
+            require "rubygems"
+            begin
+              require "did_you_mean"
+            rescue ::LoadError
+              # Oh well, it's not available
+            end
           end
+          @supports_suggestions = defined?(::DidYouMean::SpellChecker)
         end
-        @supports_suggestions = defined?(::DidYouMean::SpellChecker)
+        @supports_suggestions
       end
-      @supports_suggestions
-    end
 
-    ##
-    # @private
-    # A list of suggestions from DidYouMean.
-    #
-    # @param word [String] A value that seems wrong
-    # @param list [Array<String>] A list of valid values
-    #
-    # @return [Array<String>] A possibly empty array of suggestions from the
-    #     valid list that could match the given word.
-    #
-    def self.suggestions(word, list)
-      if supports_suggestions?
-        ::DidYouMean::SpellChecker.new(dictionary: list).correct(word)
-      else
-        []
+      ##
+      # @private
+      # A list of suggestions from DidYouMean.
+      #
+      # @param word [String] A value that seems wrong
+      # @param list [Array<String>] A list of valid values
+      #
+      # @return [Array<String>] A possibly empty array of suggestions from the
+      #     valid list that could match the given word.
+      #
+      def suggestions(word, list)
+        if supports_suggestions?
+          ::DidYouMean::SpellChecker.new(dictionary: list).correct(word)
+        else
+          []
+        end
       end
-    end
 
-    ##
-    # @private
-    # A list of gems that should generally not be included in a bundle, usually
-    # because the Ruby implementation handles the library specially and cannot
-    # install the real gem. Currently, this includes the `pathname` gem for
-    # TruffleRuby, since TruffleRuby includes a special version of it.
-    #
-    # @return [Array<String>]
-    #
-    def self.gems_to_omit_from_bundles
-      if truffleruby?
-        ["pathname"]
-      else
-        []
+      ##
+      # @private
+      # A list of gems that should generally not be included in a bundle,
+      # usually because the Ruby implementation handles the library specially
+      # and cannot install the real gem. Currently, this includes the
+      # `pathname` gem for TruffleRuby, since TruffleRuby includes a special
+      # version of it.
+      #
+      # @return [Array<String>]
+      #
+      def gems_to_omit_from_bundles
+        if truffleruby?
+          ["pathname"]
+        else
+          []
+        end
       end
-    end
 
-    ##
-    # @private
-    # Sets the backtrace on an exception. In Ruby < 3.4, Exception#set_backtrace
-    # required a string array, whereas in newer Rubies, it would accept an array
-    # of backtrace locations.
-    #
-    # @param [Exception] exception
-    # @param [nil,Array<String>,Array<Thread::Backtrace::Location>] backtrace
-    #
-    def self.set_backtrace(exception, backtrace)
-      backtrace = backtrace.map(&:to_s) if RUBY_VERSION_CODE < 30400 && !backtrace.nil?
-      exception.set_backtrace(backtrace)
+      ##
+      # @private
+      # Sets the backtrace on an exception. In Ruby `< 3.4`,
+      # `Exception#set_backtrace` required a string array, whereas in newer
+      # Rubies, it would accept an array of backtrace locations.
+      #
+      # @param [Exception] exception
+      # @param [nil,Array<String>,Array<Thread::Backtrace::Location>] backtrace
+      #
+      # @return [Exception] The modified exception
+      #
+      def set_backtrace(exception, backtrace)
+        backtrace = backtrace.map(&:to_s) if RUBY_VERSION_CODE < 30400 && !backtrace.nil?
+        exception.set_backtrace(backtrace)
+        exception
+      end
     end
   end
 end
