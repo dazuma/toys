@@ -56,3 +56,17 @@ Formatting and lint rules are enforced by RuboCop (see `.rubocop-common.yml`). B
 - Unless instructed otherwise, always git commit after a step is complete and the tests and rubocop both pass.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
 - Avoid making changes to multiple gems in the same commit.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `dazuma/toys` by default, or as local markdown under `.scratch/` when explicitly requested. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage labels are used as-is (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` covers all gems. See `docs/agents/domain.md`.
