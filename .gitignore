@@ -7,7 +7,7 @@
 /*/doc/
 /*/pkg/
 /**/tmp/
-/docs/
+/docs/local/
 /.scratch/
 Gemfile.lock
 gems.locked
