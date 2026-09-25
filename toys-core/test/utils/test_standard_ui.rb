@@ -410,6 +410,21 @@ describe Toys::Utils::StandardUI do
       assert_match(/\A\e\[91;1m\[[^\]]+ERROR\]\e\[0m  foobar\n\z/, output_content)
     end
 
+    it "does not style the debug prefix in the simple format" do
+      logger = styled_ui.create_logger(nil)
+      logger.level = ::Logger::DEBUG
+      logger.debug("foobar")
+      assert_equal("DEBUG: foobar\n", output_content)
+    end
+
+    it "does not style the debug header in the detailed format" do
+      logger = styled_ui.create_logger(nil)
+      logger.level = ::Logger::DEBUG
+      logger.verbosity = 1
+      logger.debug("foobar")
+      assert_match(/\A\[[^\]]+DEBUG\]  foobar\n\z/, output_content)
+    end
+
     it "uses the verbose log format only at positive verbosity" do
       refute(unstyled_ui.verbose_log_format?(-1))
       refute(unstyled_ui.verbose_log_format?(0))

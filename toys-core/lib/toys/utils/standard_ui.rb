@@ -73,7 +73,7 @@ module Toys
           "ERROR" => [:bright_red, :bold],
           "WARN" => [:bright_yellow],
           "INFO" => [:bright_cyan],
-          "DEBUG" => [:white],
+          "DEBUG" => [],
         }
       end
 
