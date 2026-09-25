@@ -781,6 +781,6 @@ describe "toys do source ordering" do
     _out, err = capture_subprocess_io do
       refute_equal(0, run_do("--path=zzz-nonexistent", "shared-tool"))
     end
-    assert_match(/ERROR\]  Unable to resolve the given tool sources:/, err)
+    assert_match(/^ERROR: Unable to resolve the given tool sources:/, err)
   end
 end
