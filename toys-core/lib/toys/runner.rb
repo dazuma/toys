@@ -404,15 +404,15 @@ module Toys
       end
 
       # Prepares the runtime environment for the tool, applying lib paths and
-      # initializers, and then calls the tool within its middleware stack and
-      # within the logger level implied by the verbosity, returning the
-      # resulting exit code.
+      # initializers, and then calls the tool within its middleware stack,
+      # returning the resulting exit code. The initializers and the tool both
+      # run within the logger level implied by the verbosity.
       def execute_tool(context, &block)
         @tool.source_info&.find_lib_paths&.reverse_each do |path|
           $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
         end
-        @tool.run_initializers(context)
         with_logger_level(context) do
+          @tool.run_initializers(context)
           executor = build_executor(context, &block)
           catch(:result) do
             executor.call

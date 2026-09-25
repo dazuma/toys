@@ -271,6 +271,19 @@ describe Toys::Runner do
       assert_equal(0, runner.run(["foo"], verbosity: 1))
     end
 
+    it "applies the logger level before running initializers" do
+      levels = []
+      cli.add_source do
+        tool "foo" do
+          t = Toys::DSL::Internal.current_tool(self, true)
+          t.add_initializer(proc { levels << logger.level })
+          to_run { nil }
+        end
+      end
+      assert_equal(0, make_runner.run(["foo"], verbosity: 1))
+      assert_equal([Logger::WARN - 1], levels)
+    end
+
     it "restores the logger level after running" do
       cli.add_source do
         tool "foo" do
