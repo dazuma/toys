@@ -19,6 +19,31 @@ module Toys
     #
     class StandardUI
       ##
+      # The logger class created by {StandardUI#create_logger}. It is a
+      # standard `Logger` that also has a `verbosity` attribute, which the
+      # {Toys::Runner} sets to the verbosity of the run, as described in
+      # {Toys::Runner}. The formatter installed by {StandardUI#create_logger}
+      # uses it to choose a format.
+      #
+      class VerbosityLogger < ::Logger
+        ##
+        # Create a logger. Takes the same arguments as the standard `Logger`.
+        # The verbosity is initially zero.
+        #
+        def initialize(*args, **kwargs)
+          super
+          @verbosity = 0
+        end
+
+        ##
+        # The verbosity of the current run, or zero if not running.
+        #
+        # @return [Integer]
+        #
+        attr_accessor :verbosity
+      end
+
+      ##
       # Create a Standard UI.
       #
       # By default, all output is written to `$stderr`, and will share a single
@@ -142,18 +167,36 @@ module Toys
       # specification in {Toys::Runner}, this must take a {Toys::ToolDefinition}
       # as an argument, and return a `Logger`.
       #
-      # The base implementation returns a logger that writes to the UI's
-      # terminal, using {#format_log_entry} as the formatter. It sets the level
-      # to `Logger::WARN` by default. Either this method or the helper methods
-      # can be overridden to change this behavior.
+      # The base implementation returns a
+      # {Toys::Utils::StandardUI::VerbosityLogger}, which receives the
+      # verbosity of the run from the {Toys::Runner}. The logger writes to the
+      # UI's terminal. It formats each entry using {#format_verbose_log_entry}
+      # if {#verbose_log_format?} returns true for the verbosity, or
+      # {#format_simple_log_entry} otherwise. It sets the level to
+      # `Logger::WARN` by default. Either this method or the helper methods can
+      # be overridden to change this behavior.
+      #
+      # If {#format_log_entry} is overridden, however, the override formats
+      # every entry regardless of verbosity. That behavior is deprecated.
       #
       # @param _tool {Toys::ToolDefinition} The tool definition of the tool to
       #     be executed
       # @return [Logger]
       #
       def create_logger(_tool)
-        logger = ::Logger.new(@terminal)
-        logger.formatter = method(:format_log_entry).to_proc
+        logger = VerbosityLogger.new(@terminal)
+        logger.formatter =
+          if method(:format_log_entry).owner == StandardUI
+            proc do |severity, time, progname, msg|
+              if verbose_log_format?(logger.verbosity)
+                format_verbose_log_entry(severity, time, progname, msg)
+              else
+                format_simple_log_entry(severity, time, progname, msg)
+              end
+            end
+          else
+            method(:format_log_entry).to_proc
+          end
         logger.level = ::Logger::WARN
         logger
       end
@@ -227,9 +270,54 @@ module Toys
       end
 
       ##
+      # Determines whether loggers created by this UI's logger factory use
+      # the verbose format, {#format_verbose_log_entry}, rather than the simple
+      # format, {#format_simple_log_entry}, for the given verbosity.
+      #
+      # The base implementation returns true if the verbosity is positive. This
+      # method can be overridden to change the behavior of loggers created by
+      # this UI.
+      #
+      # @param verbosity [Integer] The verbosity of the run.
+      # @return [boolean]
+      #
+      def verbose_log_format?(verbosity)
+        verbosity.positive?
+      end
+
+      ##
       # Implementation of the formatter used by loggers created by this UI's
-      # logger factory. This interface is defined by the standard `Logger`
-      # class.
+      # logger factory when the simple format is in effect. This interface is
+      # defined by the standard `Logger` class.
+      #
+      # The base implementation prefixes the first line of the message with the
+      # severity, styled using {#log_header_severity_styles}. If the message is
+      # an exception, it includes the exception message and class, but omits
+      # the backtrace.
+      #
+      # This method can be overridden to change the behavior of loggers created
+      # by this UI.
+      #
+      # @param severity [String]
+      # @param _time [Time]
+      # @param _progname [String]
+      # @param msg [Object]
+      # @return [String]
+      #
+      def format_simple_log_entry(severity, _time, _progname, msg)
+        header = style_log_header("#{severity}:", severity)
+        "#{header} #{log_message_string(msg, backtrace: false)}\n"
+      end
+
+      ##
+      # Implementation of the formatter used by loggers created by this UI's
+      # logger factory when the verbose format is in effect. This interface is
+      # defined by the standard `Logger` class.
+      #
+      # The base implementation prefixes the message with a header containing
+      # the timestamp and severity, styled using {#log_header_severity_styles}.
+      # If the message is an exception, it includes the exception message and
+      # class, followed by the backtrace.
       #
       # This method can be overridden to change the behavior of loggers created
       # by this UI.
@@ -240,24 +328,59 @@ module Toys
       # @param msg [Object]
       # @return [String]
       #
-      def format_log_entry(severity, time, _progname, msg)
-        msg_str =
-          case msg
-          when ::String
-            msg
-          when ::Exception
-            "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
-          else
-            msg.inspect
-          end
+      def format_verbose_log_entry(severity, time, _progname, msg)
         timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-        header = format("[%<time>s %<sev>5s]", time: timestr, sev: severity)
-        styles = log_header_severity_styles[severity]
-        header = @terminal.apply_styles(header, *styles) if styles
-        "#{header}  #{msg_str}\n"
+        header = style_log_header(format("[%<time>s %<sev>5s]", time: timestr, sev: severity), severity)
+        "#{header}  #{log_message_string(msg, backtrace: true)}\n"
+      end
+
+      ##
+      # A legacy formatter for loggers created by this UI's logger factory.
+      # This interface is defined by the standard `Logger` class.
+      #
+      # The base implementation calls {#format_verbose_log_entry}, and is not
+      # used by loggers created by this UI's logger factory unless it is
+      # overridden. If a subclass overrides this method, the override is used
+      # to format every entry regardless of verbosity, and
+      # {#verbose_log_format?}, {#format_verbose_log_entry}, and
+      # {#format_simple_log_entry} are not called by the logger. The override
+      # may call `super` to get the verbose format.
+      #
+      # @deprecated Override {#format_simple_log_entry} and
+      #     {#format_verbose_log_entry} instead.
+      #
+      # @param severity [String]
+      # @param time [Time]
+      # @param progname [String]
+      # @param msg [Object]
+      # @return [String]
+      #
+      def format_log_entry(severity, time, progname, msg)
+        format_verbose_log_entry(severity, time, progname, msg)
       end
 
       private
+
+      # Applies the styles for the given severity to a log entry header.
+      def style_log_header(header, severity)
+        styles = log_header_severity_styles[severity]
+        styles ? @terminal.apply_styles(header, *styles) : header
+      end
+
+      # Renders a log message object as a string, optionally including the
+      # backtrace if the message is an exception.
+      def log_message_string(msg, backtrace:)
+        case msg
+        when ::String
+          msg
+        when ::Exception
+          lines = ["#{msg.message} (#{msg.class})"]
+          lines.concat(msg.backtrace || []) if backtrace
+          lines.join("\n")
+        else
+          msg.inspect
+        end
+      end
 
       # Walks the chain of nested ContextualErrors starting from the given
       # error, to determine which errors to use for which purposes. Returns,

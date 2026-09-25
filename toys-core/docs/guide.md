@@ -705,7 +705,8 @@ cli = Toys::CLI.new(logger_factory: my_logger_factory)
 #### StandardUI logging
 
 {Toys::Utils::StandardUI} implements the logger used by the `toys` gem, which
-formats log entries with the severity and timestamp using ANSI coloring.
+formats log entries with a severity prefix using ANSI coloring, and adds a
+timestamp when the tool is run with positive verbosity.
 
 You can use this logger by passing the proc returned by
 {Toys::Utils::StandardUI#logger_factory_proc} to the CLI constructor:
@@ -718,8 +719,10 @@ cli = Toys::CLI.new(logger_factory: standard_ui.logger_factory_proc)
 You can also customize the logger by subclassing StandardUI and overriding its
 methods or adjusting its parameters. In particular, you can alter the
 {Toys::Utils::StandardUI#log_header_severity_styles} mapping to adjust styling,
-or override {Toys::Utils::StandardUI#create_logger} or
-{Toys::Utils::StandardUI#format_log_entry} to adjust content and
+or override {Toys::Utils::StandardUI#create_logger},
+{Toys::Utils::StandardUI#verbose_log_format?},
+{Toys::Utils::StandardUI#format_simple_log_entry}, or
+{Toys::Utils::StandardUI#format_verbose_log_entry} to adjust content and
 formatting.
 
 ### Handling errors

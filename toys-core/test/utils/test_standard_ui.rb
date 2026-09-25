@@ -2,6 +2,7 @@
 
 require "helper"
 require "toys/utils/standard_ui"
+require "toys/utils/terminal"
 
 describe Toys::Utils::StandardUI do
   let(:output_buffer) { StringIO.new }
@@ -299,12 +300,251 @@ describe Toys::Utils::StandardUI do
     end
   end
 
-  describe "create_logger" do
-    it "makes a logger that outputs the expected format" do
-      logger = default_ui.create_logger(nil)
-      logger.warn "foobar"
-      assert_includes(output_content, "  WARN]")
-      assert_includes(output_content, "foobar")
+  describe "logging" do
+    let(:unstyled_ui) {
+      Toys::Utils::StandardUI.new(output: Toys::Utils::Terminal.new(output: output_buffer, styled: false))
+    }
+    let(:styled_ui) {
+      Toys::Utils::StandardUI.new(output: Toys::Utils::Terminal.new(output: output_buffer, styled: true))
+    }
+    let(:detailed_header) { /\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d  WARN\]/ }
+
+    # A subclass that refers to plain `Logger` searches the ancestors of the
+    # class before the top level, so StandardUI must not define a `Logger`
+    # constant that would shadow `::Logger`.
+    it "does not shadow ::Logger in subclasses" do
+      refute(Toys::Utils::StandardUI.const_defined?(:Logger, false))
+    end
+
+    def raise_error
+      raise "boom"
+    rescue ::RuntimeError => e
+      e
+    end
+
+    it "makes a logger supporting the verbosity protocol" do
+      logger = unstyled_ui.create_logger(nil)
+      assert_instance_of(Toys::Utils::StandardUI::VerbosityLogger, logger)
+      assert_kind_of(::Logger, logger)
+      assert_equal(0, logger.verbosity)
+      logger.verbosity = 2
+      assert_equal(2, logger.verbosity)
+    end
+
+    it "makes a logger with a level of WARN" do
+      assert_equal(::Logger::WARN, unstyled_ui.create_logger(nil).level)
+    end
+
+    it "uses the simple format at zero verbosity" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.warn("foobar")
+      assert_equal("WARN: foobar\n", output_content)
+    end
+
+    it "uses the simple format at negative verbosity" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.verbosity = -1
+      logger.error("foobar")
+      assert_equal("ERROR: foobar\n", output_content)
+    end
+
+    it "uses the detailed format at positive verbosity" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.verbosity = 1
+      logger.warn("foobar")
+      assert_match(/\A#{detailed_header}  foobar\n\z/, output_content)
+    end
+
+    it "follows verbosity changes on an existing logger" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.warn("one")
+      logger.verbosity = 1
+      logger.warn("two")
+      logger.verbosity = 0
+      logger.warn("three")
+      lines = output_content.lines
+      assert_equal("WARN: one\n", lines[0])
+      assert_match(/\A#{detailed_header}  two\n\z/, lines[1])
+      assert_equal("WARN: three\n", lines[2])
+    end
+
+    it "prefixes only the first line of a multi-line message in the simple format" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.error("line one\nline two")
+      assert_equal("ERROR: line one\nline two\n", output_content)
+    end
+
+    it "omits the backtrace of an exception in the simple format" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.error(raise_error)
+      assert_equal("ERROR: boom (RuntimeError)\n", output_content)
+    end
+
+    it "includes the backtrace of an exception in the detailed format" do
+      error = raise_error
+      logger = unstyled_ui.create_logger(nil)
+      logger.verbosity = 1
+      logger.error(error)
+      lines = output_content.lines
+      assert_match(/ERROR\]  boom \(RuntimeError\)\n\z/, lines[0])
+      assert_equal(error.backtrace.map { |line| "#{line}\n" }, lines[1..])
+    end
+
+    it "inspects a message that is not a string" do
+      logger = unstyled_ui.create_logger(nil)
+      logger.warn([:foo, 1])
+      assert_equal("WARN: [:foo, 1]\n", output_content)
+    end
+
+    it "styles the prefix in the simple format" do
+      logger = styled_ui.create_logger(nil)
+      logger.error("foobar")
+      expected_prefix = styled_ui.terminal.apply_styles("ERROR:", :bright_red, :bold)
+      assert_equal("#{expected_prefix} foobar\n", output_content)
+    end
+
+    it "styles the header in the detailed format" do
+      logger = styled_ui.create_logger(nil)
+      logger.verbosity = 1
+      logger.error("foobar")
+      assert_match(/\A\e\[91;1m\[[^\]]+ERROR\]\e\[0m  foobar\n\z/, output_content)
+    end
+
+    it "uses the verbose log format only at positive verbosity" do
+      refute(unstyled_ui.verbose_log_format?(-1))
+      refute(unstyled_ui.verbose_log_format?(0))
+      assert(unstyled_ui.verbose_log_format?(1))
+    end
+
+    it "formats a simple log entry" do
+      entry = unstyled_ui.format_simple_log_entry("WARN", ::Time.now, nil, "foobar")
+      assert_equal("WARN: foobar\n", entry)
+    end
+
+    it "formats a verbose log entry" do
+      entry = unstyled_ui.format_verbose_log_entry("WARN", ::Time.new(2026, 1, 2, 3, 4, 5), nil, "foobar")
+      assert_equal("[2026-01-02 03:04:05  WARN]  foobar\n", entry)
+    end
+
+    describe "in a subclass" do
+      let(:subclass_ui) {
+        klass = ::Class.new(Toys::Utils::StandardUI) do
+          def verbose_log_format?(verbosity)
+            verbosity > 1
+          end
+
+          def format_simple_log_entry(severity, _time, _progname, msg)
+            "simple #{severity} #{msg}\n"
+          end
+
+          def format_verbose_log_entry(severity, _time, _progname, msg)
+            "verbose #{severity} #{msg}\n"
+          end
+        end
+        klass.new(output: Toys::Utils::Terminal.new(output: output_buffer, styled: false))
+      }
+
+      it "dispatches through the overridable methods" do
+        logger = subclass_ui.create_logger(nil)
+        logger.verbosity = 1
+        logger.warn("one")
+        logger.verbosity = 2
+        logger.warn("two")
+        assert_equal("simple WARN one\nverbose WARN two\n", output_content)
+      end
+    end
+
+    it "formats a verbose log entry from format_log_entry" do
+      entry = unstyled_ui.format_log_entry("WARN", ::Time.new(2026, 1, 2, 3, 4, 5), nil, "foobar")
+      assert_equal("[2026-01-02 03:04:05  WARN]  foobar\n", entry)
+    end
+
+    describe "in a subclass that defines format_log_entry" do
+      def make_ui(&block)
+        klass = ::Class.new(Toys::Utils::StandardUI) do
+          def verbose_log_format?(_verbosity)
+            raise "should not be called"
+          end
+
+          def format_simple_log_entry(_severity, _time, _progname, _msg)
+            raise "should not be called"
+          end
+
+          def format_verbose_log_entry(_severity, _time, _progname, _msg)
+            raise "should not be called"
+          end
+
+          class_eval(&block)
+        end
+        klass.new(output: Toys::Utils::Terminal.new(output: output_buffer, styled: false))
+      end
+
+      it "uses a public format_log_entry at every verbosity" do
+        ui = make_ui do
+          def format_log_entry(severity, _time, _progname, msg)
+            "custom #{severity} #{msg}\n"
+          end
+        end
+        logger = ui.create_logger(nil)
+        logger.warn("one")
+        logger.verbosity = 1
+        logger.warn("two")
+        assert_equal("custom WARN one\ncustom WARN two\n", output_content)
+      end
+
+      it "supports calling super from format_log_entry at every verbosity" do
+        ui = make_ui do
+          def format_verbose_log_entry(severity, _time, _progname, msg)
+            "verbose #{severity} #{msg}\n"
+          end
+
+          def format_log_entry(severity, time, progname, msg)
+            "custom #{super}"
+          end
+        end
+        logger = ui.create_logger(nil)
+        logger.warn("one")
+        logger.verbosity = 1
+        logger.warn("two")
+        assert_equal("custom verbose WARN one\ncustom verbose WARN two\n", output_content)
+      end
+
+      it "uses a format_log_entry defined on a single instance" do
+        ui = make_ui { nil }
+        ui.define_singleton_method(:format_log_entry) do |severity, _time, _progname, msg|
+          "custom #{severity} #{msg}\n"
+        end
+        logger = ui.create_logger(nil)
+        logger.warn("one")
+        assert_equal("custom WARN one\n", output_content)
+      end
+
+      it "uses a private format_log_entry" do
+        ui = make_ui do
+          private
+
+          def format_log_entry(severity, _time, _progname, msg)
+            "custom #{severity} #{msg}\n"
+          end
+        end
+        logger = ui.create_logger(nil)
+        logger.warn("one")
+        assert_equal("custom WARN one\n", output_content)
+      end
+    end
+
+    it "switches format with verbosity flags when used by a CLI" do
+      cli = Toys::CLI.new(executable_name: "toys", **unstyled_ui.cli_args)
+      cli.add_source do
+        tool "foo" do
+          to_run { logger.warn("foobar") }
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+      assert_equal(0, cli.run("foo", "-v"))
+      lines = output_content.lines
+      assert_equal("WARN: foobar\n", lines[0])
+      assert_match(/\A#{detailed_header}  foobar\n\z/, lines[1])
     end
   end
 end
