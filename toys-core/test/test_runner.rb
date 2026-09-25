@@ -466,6 +466,114 @@ describe Toys::Runner do
       end
     end
 
+    describe "verbosity protocol" do
+      let(:verbosity_logger_class) {
+        ::Class.new(::Logger) do
+          attr_accessor :verbosity
+        end
+      }
+      let(:logger) {
+        verbosity_logger_class.new(logger_io).tap do |lgr|
+          lgr.level = Logger::WARN
+          lgr.verbosity = :unset
+        end
+      }
+
+      it "sets the verbosity on a logger that supports it" do
+        verbosities = []
+        cli.add_source do
+          tool "foo" do
+            t = Toys::DSL::Internal.current_tool(self, true)
+            t.add_initializer(proc { verbosities << logger.verbosity })
+            to_run { verbosities << logger.verbosity }
+          end
+        end
+        assert_equal(0, make_runner.run(["foo"], verbosity: 2))
+        assert_equal([2, 2], verbosities)
+      end
+
+      it "sets the verbosity independently of the base level" do
+        verbosities = []
+        cli.add_source do
+          tool "foo" do
+            to_run { verbosities << logger.verbosity }
+          end
+        end
+        assert_equal(0, make_runner(base_level: Logger::INFO).run(["foo"], verbosity: -1))
+        assert_equal([-1], verbosities)
+      end
+
+      it "sets the verbosity after flags have modified it" do
+        verbosities = []
+        cli.add_source do
+          tool "foo" do
+            flag Toys::Context::Key::VERBOSITY, "-v" do
+              handler { |_val, cur| cur + 1 }
+            end
+            to_run { verbosities << logger.verbosity }
+          end
+        end
+        assert_equal(0, make_runner.run(["foo", "-v", "-v"], verbosity: 1))
+        assert_equal([3], verbosities)
+      end
+
+      it "ignores a logger that has only a verbosity writer" do
+        written = []
+        writer_only_logger = Logger.new(logger_io)
+        writer_only_logger.define_singleton_method(:verbosity=) { |val| written << val }
+        cli.add_source do
+          tool "foo" do
+            to_run { nil }
+          end
+        end
+        runner = make_runner(logger_factory: proc { writer_only_logger })
+        assert_equal(0, runner.run(["foo"], verbosity: 2, wrap_errors: false, handle_errors: false))
+        assert_empty(written)
+      end
+
+      it "restores the verbosity after running" do
+        cli.add_source do
+          tool "foo" do
+            to_run { nil }
+          end
+        end
+        assert_equal(0, make_runner.run(["foo"], verbosity: 2))
+        assert_equal(:unset, logger.verbosity)
+      end
+
+      it "restores the verbosity after a failed run" do
+        cli.add_source do
+          tool "foo" do
+            to_run { raise "whoops" }
+          end
+        end
+        assert_raises(::RuntimeError) do
+          make_runner.run(["foo"], verbosity: 2, wrap_errors: false, handle_errors: false)
+        end
+        assert_equal(:unset, logger.verbosity)
+      end
+
+      it "restores the enclosing verbosity after a nested run" do
+        verbosities = []
+        runner = nil
+        cli.add_source do
+          tool "inner" do
+            to_run { verbosities << logger.verbosity }
+          end
+          tool "outer" do
+            to_run do
+              verbosities << logger.verbosity
+              runner.run(["inner"], verbosity: -1)
+              verbosities << logger.verbosity
+            end
+          end
+        end
+        runner = make_runner
+        assert_equal(0, runner.run(["outer"], verbosity: 2))
+        assert_equal([2, -1, 2], verbosities)
+      end
+    end
+
     describe "default factory" do
       it "is the same proc returned by the CLI" do
         assert_same(Toys::Runner::DEFAULT_LOGGER_FACTORY, Toys::CLI.default_logger_factory)

@@ -38,6 +38,15 @@ module Toys
   #       end
   #     end
   #
+  # While a tool runs, the Runner sets the level of the tool's logger to reflect
+  # the verbosity, as described under the `base_level` parameter of
+  # {#initialize}. A logger can also receive the verbosity itself, by
+  # implementing a `verbosity` attribute: if the logger responds to both
+  # `verbosity` and `verbosity=`, the Runner sets it to the verbosity (an
+  # Integer) for the duration of the run, and restores the previous value
+  # afterward. This lets a logger vary its behavior, such as its formatting, by
+  # verbosity independently of its level.
+  #
   class Runner
     ##
     # The singleton default logger_factory Proc, which simply returns a new
@@ -74,7 +83,8 @@ module Toys
     # @param logger_factory [Proc,nil] A proc that takes a
     #     {Toys::ToolDefinition} as an argument, and returns a logger to use
     #     when running that tool. If not given,
-    #     {Toys::Runner::DEFAULT_LOGGER_FACTORY} is used.
+    #     {Toys::Runner::DEFAULT_LOGGER_FACTORY} is used. See {Toys::Runner}
+    #     for how a logger can receive the verbosity of the run.
     # @param base_level [Integer,nil] The logger level that corresponds to zero
     #     verbosity. If not provided, the level the logger has before a run
     #     adjusts it is used (typically Logger::WARN). A run nested inside
@@ -426,20 +436,36 @@ module Toys
       # afterward. The restoration must cover the level assignment itself,
       # because a base level that cannot be combined with the verbosity fails
       # there, and a base level left recorded behind a failed run would be
-      # picked up by later runs sharing the logger. Yields directly if the tool
-      # has no logger.
-      def with_logger_level(context)
+      # picked up by later runs sharing the logger. Also sets the verbosity on
+      # a logger that supports it, as described in {Runner}. Yields directly if
+      # the tool has no logger.
+      def with_logger_level(context, &block)
         cur_logger = context[Context::Key::LOGGER]
         return yield unless cur_logger
+        verbosity = context[Context::Key::VERBOSITY].to_i
         original_level = cur_logger.level
         base_level = @base_level || base_levels[cur_logger] || original_level
         saved_base_level = set_base_level(cur_logger, base_level)
         begin
-          cur_logger.level = base_level - context[Context::Key::VERBOSITY].to_i
-          yield
+          cur_logger.level = base_level - verbosity
+          with_logger_verbosity(cur_logger, verbosity, &block)
         ensure
           set_base_level(cur_logger, saved_base_level)
           cur_logger.level = original_level
+        end
+      end
+
+      # Sets the verbosity on a logger that supports it for the duration of
+      # the block, and restores it afterward. Yields directly if the logger
+      # does not have both a reader and a writer for the verbosity.
+      def with_logger_verbosity(logger, verbosity)
+        return yield unless logger.respond_to?(:verbosity) && logger.respond_to?(:verbosity=)
+        original_verbosity = logger.verbosity
+        begin
+          logger.verbosity = verbosity
+          yield
+        ensure
+          logger.verbosity = original_verbosity
         end
       end
 

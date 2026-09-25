@@ -88,6 +88,8 @@ module Toys
     #     as an argument, and returns a `Logger` to use when running that tool.
     #     Optional. If not provided (and no global logger is set),
     #     {Toys::CLI.default_logger_factory} is called to get a basic default.
+    #     See {Toys::Runner} for how a logger can receive the verbosity of
+    #     the run.
     # @param base_level [Integer] The logger level that should correspond
     #     to zero verbosity.
     #     Optional. If not provided, defaults to the level the logger has
