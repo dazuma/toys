@@ -1461,6 +1461,19 @@ tool file the error occurred, but doesn't give you the entire stack trace
 (which could include a number of frames internal to the Toys framework). If you
 want to see the full stack trace, set the `TOYS_TRACE` environment variable.
 
+### Warnings
+
+Toys may display warnings on the standard error stream, for example when a
+tool uses a feature of Toys that has been deprecated. These warnings are
+separate from the logger described above, and are not affected by verbosity
+or by the `--quiet` flag. If the same warning is triggered repeatedly during a
+single run, Toys displays only the first few instances.
+
+To suppress these warnings entirely, set the `TOYS_SUPPRESS_WARNINGS`
+environment variable to a nonempty value. Because Toys uses Ruby's standard
+`Kernel#warn` mechanism to display them, they are also silenced if Ruby
+warnings are disabled, for example by running Ruby with the `-W0` flag.
+
 ### Running tools from tools
 
 A common operation a tool might want to do is "call" another tool. This can be
