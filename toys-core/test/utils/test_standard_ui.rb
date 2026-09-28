@@ -475,18 +475,35 @@ describe Toys::Utils::StandardUI do
     end
 
     describe "in a subclass that defines format_log_entry" do
-      def make_ui(&block)
+      before do
+        @old_suppress_env = ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV]
+        ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV] = nil
+        Toys::Warnings.reset_counts
+      end
+
+      after do
+        Toys::Warnings.reset_counts
+        ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV] = @old_suppress_env
+      end
+
+      def make_ui(*methods_to_omit, &block)
         klass = ::Class.new(Toys::Utils::StandardUI) do
-          def verbose_log_format?(_verbosity)
-            raise "should not be called"
+          unless methods_to_omit.include?(:verbose_log_format?)
+            def verbose_log_format?(_verbosity)
+              raise "should not be called"
+            end
           end
 
-          def format_simple_log_entry(_severity, _time, _progname, _msg)
-            raise "should not be called"
+          unless methods_to_omit.include?(:format_simple_log_entry)
+            def format_simple_log_entry(_severity, _time, _progname, _msg)
+              raise "should not be called"
+            end
           end
 
-          def format_verbose_log_entry(_severity, _time, _progname, _msg)
-            raise "should not be called"
+          unless methods_to_omit.include?(:format_verbose_log_entry)
+            def format_verbose_log_entry(_severity, _time, _progname, _msg)
+              raise "should not be called"
+            end
           end
 
           class_eval(&block)
@@ -500,7 +517,11 @@ describe Toys::Utils::StandardUI do
             "custom #{severity} #{msg}\n"
           end
         end
-        logger = ui.create_logger(nil)
+        logger = nil
+        _out, err = capture_io do
+          logger = ui.create_logger(nil)
+        end
+        assert_includes(err, "Overriding StandardUI#format_log_entry is deprecated.")
         logger.warn("one")
         logger.verbosity = 1
         logger.warn("two")
@@ -508,7 +529,7 @@ describe Toys::Utils::StandardUI do
       end
 
       it "supports calling super from format_log_entry at every verbosity" do
-        ui = make_ui do
+        ui = make_ui(:format_verbose_log_entry) do
           def format_verbose_log_entry(severity, _time, _progname, msg)
             "verbose #{severity} #{msg}\n"
           end
@@ -517,7 +538,11 @@ describe Toys::Utils::StandardUI do
             "custom #{super}"
           end
         end
-        logger = ui.create_logger(nil)
+        logger = nil
+        _out, err = capture_io do
+          logger = ui.create_logger(nil)
+        end
+        assert_includes(err, "Overriding StandardUI#format_log_entry is deprecated.")
         logger.warn("one")
         logger.verbosity = 1
         logger.warn("two")
@@ -529,7 +554,11 @@ describe Toys::Utils::StandardUI do
         ui.define_singleton_method(:format_log_entry) do |severity, _time, _progname, msg|
           "custom #{severity} #{msg}\n"
         end
-        logger = ui.create_logger(nil)
+        logger = nil
+        _out, err = capture_io do
+          logger = ui.create_logger(nil)
+        end
+        assert_includes(err, "Overriding StandardUI#format_log_entry is deprecated.")
         logger.warn("one")
         assert_equal("custom WARN one\n", output_content)
       end
@@ -542,7 +571,11 @@ describe Toys::Utils::StandardUI do
             "custom #{severity} #{msg}\n"
           end
         end
-        logger = ui.create_logger(nil)
+        logger = nil
+        _out, err = capture_io do
+          logger = ui.create_logger(nil)
+        end
+        assert_includes(err, "Overriding StandardUI#format_log_entry is deprecated.")
         logger.warn("one")
         assert_equal("custom WARN one\n", output_content)
       end

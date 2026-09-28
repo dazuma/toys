@@ -1128,26 +1128,44 @@ describe Toys::CLI do
 
     # The add_config_* methods are deprecated in favor of add_source, so they
     # get only enough coverage to show that they still reach the source list.
+    describe "deprecated methods" do
+      before do
+        @old_suppress_env = ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV]
+        ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV] = nil
+        Toys::Warnings.reset_counts
+      end
 
-    it "adds a source through add_config_block" do
-      cli.add_config_block do
-        tool "foo" do
-          def run
-            exit(3)
+      after do
+        Toys::Warnings.reset_counts
+        ENV[Toys::Warnings::SUPPRESS_WARNINGS_ENV] = @old_suppress_env
+      end
+
+      it "adds a source through add_config_block" do
+        _out, err = capture_io do
+          cli.add_config_block do
+            tool "foo" do
+              def run
+                exit(3)
+              end
+            end
           end
         end
+        assert_includes(err, "CLI#add_config_block is deprecated.")
+        assert_equal(3, cli.run("foo"))
       end
-      assert_equal(3, cli.run("foo"))
-    end
 
-    it "adds a source through add_config_path" do
-      cli.add_config_path(File.join(config_items_dir, ".toys.rb"))
-      tool, remaining = cli.loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_equal([], remaining)
-      # add_config_path, unlike add_search_path, defaults the context
-      # directory to the parent of the given path.
-      assert_equal(config_items_dir, tool.context_directory)
+      it "adds a source through add_config_path" do
+        _out, err = capture_io do
+          cli.add_config_path(File.join(config_items_dir, ".toys.rb"))
+        end
+        assert_includes(err, "CLI#add_config_path is deprecated.")
+        tool, remaining = cli.loader.lookup(["tool-1"])
+        assert_equal("file tool-1 short description", tool.desc.to_s)
+        assert_equal([], remaining)
+        # add_config_path, unlike add_search_path, defaults the context
+        # directory to the parent of the given path.
+        assert_equal(config_items_dir, tool.context_directory)
+      end
     end
 
     describe "add_search_path" do
@@ -1548,6 +1566,15 @@ describe Toys::CLI do
   end
 
   describe "source list finalization" do
+    before do
+      @old_max_count = Toys::Warnings.max_count
+    end
+
+    after do
+      Toys::Warnings.max_count = @old_max_count
+      Toys::Warnings.reset_counts
+    end
+
     it "raises when adding a source after the loader is built" do
       cli.loader
       assert_raises(Toys::SourceListFinalizedError) do
@@ -1575,6 +1602,7 @@ describe Toys::CLI do
     end
 
     it "raises from every source-adding method" do
+      Toys::Warnings.max_count = 0
       cli.loader
       [
         -> { cli.add_config_path(lookup_cases_dir) },

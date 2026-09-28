@@ -185,8 +185,9 @@ module Toys
       #
       def create_logger(_tool)
         logger = VerbosityLogger.new(@terminal)
+        format_log_entry_method = method(:format_log_entry)
         logger.formatter =
-          if method(:format_log_entry).owner == StandardUI
+          if format_log_entry_method.owner == StandardUI
             proc do |severity, time, progname, msg|
               if verbose_log_format?(logger.verbosity)
                 format_verbose_log_entry(severity, time, progname, msg)
@@ -195,7 +196,12 @@ module Toys
               end
             end
           else
-            method(:format_log_entry).to_proc
+            message = "Overriding StandardUI#format_log_entry is deprecated. Override " \
+                      "format_verbose_log_entry and/or format_simple_log_entry instead."
+            source_loc = format_log_entry_method.source_location
+            message = "#{source_loc[0]}:#{source_loc[1]}: #{message}" if source_loc
+            Warnings.warn(:format_log_entry_deprecated, message)
+            format_log_entry_method.to_proc
           end
         logger.level = ::Logger::WARN
         logger
