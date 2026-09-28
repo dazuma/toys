@@ -186,10 +186,11 @@ module Toys
 
         def setup_gems(step_context)
           if (uses_gems = step_context.option("uses_gems"))
+            gems_service = ::Toys::Utils::Gems.new(on_missing: :install)
             Array(uses_gems).each do |gem_info|
-              ::Toys::Utils::Gems.activate(*Array(gem_info))
+              gems_service.activate(*Array(gem_info))
             end
-            ::Toys::Utils::Gems.activate("yard")
+            gems_service.activate("yard")
             [
               "gem 'yard'",
               "puts 'Loading gems explicitly: #{uses_gems.inspect}'",
