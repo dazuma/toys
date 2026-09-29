@@ -583,6 +583,9 @@ module Toys
                         high_priority: false,
                         source_name: nil,
                         context_directory: :parent)
+      Warnings.warn(:add_config_path_deprecated,
+                    "CLI#add_config_path is deprecated. Use add_source instead.",
+                    uplevel: 1)
       path = SourceSpec.check_and_normalize_path(path)
       context_directory = resolve_context_directory(context_directory, path)
       spec = SourceSpec.path(path, source_name: source_name, context_directory: context_directory)
@@ -633,6 +636,9 @@ module Toys
                          source_name: nil,
                          context_directory: nil,
                          &block)
+      Warnings.warn(:add_config_block_deprecated,
+                    "CLI#add_config_block is deprecated. Use add_source instead.",
+                    uplevel: 1)
       spec = SourceSpec.block(source_name: source_name, context_directory: context_directory, &block)
       add_source(spec, high_priority: high_priority)
     end

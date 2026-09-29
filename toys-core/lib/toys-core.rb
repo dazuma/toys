@@ -55,7 +55,8 @@
 #   {Toys::Middleware}, which are resolved by name through
 #   {Toys::ModuleLookup}, as well as {Toys::WrappableString},
 #   {Toys::ToolNameSplitter} which interprets delimiters in tool names, the
-#   named sentinel {Toys::UniqueKey}, and the error classes.
+#   named sentinel {Toys::UniqueKey}, the warning reporter {Toys::Warnings},
+#   and the error classes.
 #
 # The deliberate upward dependencies are:
 #
@@ -168,6 +169,7 @@ end
 
 require "toys/compat"
 require "toys/unique_key"
+require "toys/warnings"
 
 require "toys/acceptor"
 require "toys/arg_parser"
