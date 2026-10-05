@@ -121,9 +121,10 @@ Toys searches up the directory hierarchy for Toys files. So it will find this
 also read multiple files if it finds them, so you can "scope" your tools more
 specifically or generally by locating them in your directory hierarchy.
 
-If you want to define "global" tools that apply anywhere, write a Toys file
-either in your home directory, or in the system configuration directory
-(usually `/etc`). Toys always searches these locations.
+If you want to define "global" tools that apply anywhere, write a Toys file in
+your home directory, or put tool files in the `toys` directory under your user
+configuration directory (usually `~/.config/toys`) or the system configuration
+directory (usually `/etc/xdg/toys`). Toys searches these locations by default.
 
 ### A more sophisticated example
 
