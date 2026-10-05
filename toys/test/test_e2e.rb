@@ -8,7 +8,9 @@ describe "toys e2e" do
   let(:e2e_cases_dir) { File.join(File.dirname(__dir__), "test-data", "e2e-cases") }
 
   def run_toys(*args, **opts)
-    exec_service.exec_ruby([Toys.executable_path, *args], **opts)
+    # Keep the developer's real global sources out of the runs.
+    env = {"TOYS_GLOBAL_SOURCES" => "none"}.merge(opts.delete(:env) || {})
+    exec_service.exec_ruby([Toys.executable_path, *args], env: env, **opts)
   end
 
   describe "loading tools from .toys.rb" do
@@ -84,6 +86,20 @@ describe "toys e2e" do
       result = run_toys("greet", chdir: "#{e2e_cases_dir}/simple/subdir", out: :capture, err: :capture)
       assert(result.success?)
       assert_equal("hello world\n", result.captured_out)
+    end
+  end
+
+  describe "selecting global sources" do
+    it "reports an invalid TOYS_GLOBAL_SOURCES without a backtrace and exits 2" do
+      result = run_toys("greet",
+                        chdir: "#{e2e_cases_dir}/simple",
+                        env: {"TOYS_GLOBAL_SOURCES" => "home,bogus"},
+                        out: :capture, err: :capture)
+      assert_equal(2, result.exit_code)
+      assert_empty(result.captured_out)
+      assert_includes(result.captured_err, "TOYS_GLOBAL_SOURCES")
+      assert_includes(result.captured_err, "\"home,bogus\"")
+      refute_match(/\.rb:\d+/, result.captured_err)
     end
   end
 

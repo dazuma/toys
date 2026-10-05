@@ -1736,12 +1736,26 @@ When Toys runs, it looks for tools in a **search path**. Specifically:
     working directory*.
 2.  It does the same in the *parent directory* of the current directory, and
     then its parent, and so on until it hits either the root of the file system
-    or one of the global directories described in (3).
-3.  It looks in a list of *global directories*, specified in the environment
-    variable `TOYS_PATH`. This variable can contain a colon-delimited list of
-    directory paths. If the variable is not set, the current user's *home
-    directory*, and the system configuration directory (`/etc` on Unix systems)
-    are used by default. Toys does *not* search parents of global directories.
+    or the current user's *home directory*. The home directory itself is not
+    part of this step.
+3.  It looks in a list of *global sources*:
+    *   A `.toys.rb` file and/or a `.toys` directory in the current user's
+        home directory.
+    *   The `toys` directory under the user configuration directory given by
+        the `XDG_CONFIG_HOME` environment variable (`~/.config/toys` by
+        default).
+    *   The `toys` directory under each system configuration directory given by
+        the colon-delimited `XDG_CONFIG_DIRS` environment variable
+        (`/etc/xdg/toys` by default), in order.
+
+    Unlike `.toys` directories, the `toys` directories under the configuration
+    directories are not tied to any project directory, so tools loaded from
+    them have no
+    [context directory](#working-directory-and-context-directory) by default.
+
+    Toys does *not* search parents of global sources. If the current working
+    directory is inside one of the `toys` configuration directories, Toys
+    skips steps (1) and (2) and loads only the global sources.
 
 It uses the *first* implementation that it finds for the requested tool. For
 example, if the tool `greet` is defined in the `.toys.rb` file in the current
@@ -1768,6 +1782,15 @@ Note that in the search path above, steps (1) and (2) are *context-dependent*.
 That is, they may be different depending on what directory you are in. However,
 step (3) is *not* context-dependent, and is searched regardless of where you
 are located. Tools defined here are *global*, available everywhere.
+
+You can choose which global sources are searched by setting the
+`TOYS_GLOBAL_SOURCES` environment variable. The global sources form three
+groups: `home` (the home directory), `user` (the user configuration directory),
+and `site` (the system configuration directories). Set the variable to a
+comma-delimited list of the groups to search, in that order. For example,
+`TOYS_GLOBAL_SOURCES=user,site` omits the home directory. Set it to `none` to
+search no global sources, which can be useful for reproducible runs in CI. If
+the variable is unset or empty, all three groups are searched.
 
 #### Stopping search
 

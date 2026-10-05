@@ -66,10 +66,27 @@ module Toys
     DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys."
 
     ##
-    # Name of the toys path environment variable.
+    # Name of the environment variable that selects which groups of global
+    # sources are searched.
     # @return [String]
     #
-    TOYS_PATH_ENV = "TOYS_PATH"
+    GLOBAL_SOURCES_ENV = "TOYS_GLOBAL_SOURCES"
+
+    ##
+    # The groups of global sources, in search order. The `home` group is
+    # `$HOME/.toys.rb` and `$HOME/.toys/`, the `user` group is the `toys`
+    # tool directory under `$XDG_CONFIG_HOME`, and the `site` group is the
+    # `toys` tool directories under each of `$XDG_CONFIG_DIRS`.
+    # @return [Array<String>]
+    #
+    GLOBAL_SOURCE_GROUPS = ["home", "user", "site"].freeze
+
+    ##
+    # Raised by the constructor if the `TOYS_GLOBAL_SOURCES` environment
+    # variable has an invalid value.
+    #
+    class InvalidGlobalSourcesError < ::StandardError
+    end
 
     ##
     # Create a standard CLI, configured with the appropriate paths and
@@ -77,7 +94,8 @@ module Toys
     #
     # @param custom_paths [String,Array<String>] Custom paths to use. If set,
     #     the CLI uses only the given paths. If not, the CLI will search for
-    #     paths from the current directory and global paths.
+    #     paths from the current directory and global paths, as selected by
+    #     the `TOYS_GLOBAL_SOURCES` environment variable.
     # @param include_builtins [boolean] Add the builtin tools. Default is true.
     # @param cur_dir [String,nil] Starting search directory for sources.
     #     Defaults to the current working directory.
@@ -87,6 +105,8 @@ module Toys
     # @param gems_util [Toys::Utils::Gems,nil] A custom Gems utility instance
     #     to use when resolving gem sources. Optional. If nil or not
     #     specified, uses a process-wide default Gems utility.
+    # @raise [InvalidGlobalSourcesError] if no custom paths are given and the
+    #     `TOYS_GLOBAL_SOURCES` environment variable has an invalid value.
     #
     def initialize(custom_paths: nil,
                    include_builtins: true,
@@ -112,7 +132,7 @@ module Toys
       if custom_paths
         Array(custom_paths).each { |path| add_source(path) }
       else
-        add_current_directory_paths(cur_dir)
+        add_default_sources(cur_dir)
       end
       add_builtins if include_builtins
     end
@@ -130,19 +150,169 @@ module Toys
     end
 
     ##
-    # Add paths for the given current directory and its ancestors, plus the
-    # global paths.
+    # Add the sources found by the default search: the current directory and
+    # its ancestors, followed by the selected global sources.
     #
-    # @param cur_dir [String] The starting directory path, or nil to use the
-    #     current directory
+    # @param cur_dir [String,nil] The starting directory path, or nil to use
+    #     the current directory
     # @return [self]
     #
-    def add_current_directory_paths(cur_dir)
-      cur_dir = skip_toys_dir(cur_dir || ::Dir.pwd, TOPLEVEL_TOOL_DIR_NAME)
-      global_dirs = default_global_dirs
-      add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
-      global_dirs.each { |path| add_search_path(path) }
+    def add_default_sources(cur_dir)
+      groups = selected_global_groups
+      warn_removed_global_paths
+      require "toys/utils/xdg"
+      xdg = Utils::XDG.new
+      home_dir = real_directory(xdg.home_dir)
+      user_dirs = [real_directory(::File.join(xdg.config_home, "toys"))].compact
+      site_dirs = xdg.config_dirs.map { |dir| real_directory(::File.join(dir, "toys")) }.compact
+      walk_dirs = upward_walk_dirs(cur_dir || ::Dir.pwd, home_dir, user_dirs + site_dirs)
+      walk_dirs.each { |dir| add_search_path(dir) }
+      warn_etc_toys_files(walk_dirs)
+      add_global_sources(groups, home_dir, user_dirs, site_dirs)
       self
+    end
+
+    ##
+    # Parse and validate the global sources environment variable.
+    #
+    # @return [Array<String>] The selected groups
+    # @raise [InvalidGlobalSourcesError] if the value is invalid
+    #
+    def selected_global_groups
+      value = ::ENV[GLOBAL_SOURCES_ENV].to_s
+      return GLOBAL_SOURCE_GROUPS if value.empty?
+      return [] if value == "none"
+      groups = value.split(",", -1)
+      return groups if GLOBAL_SOURCE_GROUPS.select { |group| groups.include?(group) } == groups
+      raise InvalidGlobalSourcesError,
+            "Invalid value for #{GLOBAL_SOURCES_ENV}: #{value.inspect}. Expected \"none\", or a" \
+            " comma-delimited list of groups from #{GLOBAL_SOURCE_GROUPS.join(',')} in that order."
+    end
+
+    ##
+    # Add the global sources in the selected groups, skipping any directory
+    # that resolves to one already added.
+    #
+    # @param groups [Array<String>] The selected groups
+    # @param home_dir [String,nil] The real path of the home directory
+    # @param user_dirs [Array<String>] Real paths of the user tool directories
+    # @param site_dirs [Array<String>] Real paths of the site tool directories
+    #
+    def add_global_sources(groups, home_dir, user_dirs, site_dirs)
+      added_dirs = []
+      if groups.include?("home") && home_dir
+        add_search_path(home_dir)
+        home_toys_dir = real_directory(::File.join(home_dir, TOPLEVEL_TOOL_DIR_NAME))
+        added_dirs << home_toys_dir if home_toys_dir
+      end
+      tool_dirs = []
+      tool_dirs.concat(user_dirs) if groups.include?("user")
+      tool_dirs.concat(site_dirs) if groups.include?("site")
+      tool_dirs.each do |dir|
+        next if added_dirs.include?(dir) || !::File.readable?(dir)
+        added_dirs << dir
+        add_source(SourceSpec.path(dir))
+      end
+    end
+
+    ##
+    # Returns the directories searched by the upward walk from the given
+    # directory, or none if the directory is inside a global tool directory.
+    #
+    # @param cur_dir [String] The starting directory
+    # @param home_dir [String,nil] The real path of the home directory
+    # @param global_tool_dirs [Array<String>] Real paths of the global tool
+    #     directories
+    # @return [Array<String>]
+    #
+    def upward_walk_dirs(cur_dir, home_dir, global_tool_dirs)
+      cur_dir = real_directory(cur_dir) || ::File.expand_path(cur_dir)
+      cur_dir = skip_toys_dir(cur_dir, TOPLEVEL_TOOL_DIR_NAME)
+      return [] if global_tool_dirs.any? { |dir| path_within?(cur_dir, dir) }
+      walk_up(cur_dir, home_dir)
+    end
+
+    ##
+    # Returns the directories visited by the upward walk, starting at the
+    # given directory and stopping before the given terminating directory or
+    # after the root.
+    #
+    # @param start [String] The starting directory
+    # @param terminate [String,nil] The directory to stop before
+    # @return [Array<String>]
+    #
+    def walk_up(start, terminate)
+      dirs = []
+      dir = start
+      loop do
+        break if dir == terminate
+        dirs << dir
+        parent = ::File.dirname(dir)
+        break if parent == dir
+        dir = parent
+      end
+      dirs
+    end
+
+    ##
+    # Determines whether the given path is the given directory or is inside
+    # it, comparing whole path components.
+    #
+    # @param path [String] The path to check
+    # @param dir [String] The directory
+    # @return [boolean]
+    #
+    def path_within?(path, dir)
+      loop do
+        return true if path == dir
+        parent = ::File.dirname(path)
+        return false if parent == path
+        path = parent
+      end
+    end
+
+    ##
+    # Returns the real path of the given directory, or nil if it does not
+    # exist or is not a directory.
+    #
+    # @param path [String] The directory path
+    # @return [String,nil]
+    #
+    def real_directory(path)
+      return nil unless ::File.directory?(path)
+      ::File.realpath(path)
+    rescue ::SystemCallError
+      nil
+    end
+
+    ##
+    # Warns if the removed `TOYS_PATH` environment variable is set.
+    #
+    def warn_removed_global_paths
+      return if ::ENV["TOYS_PATH"].to_s.empty?
+      Warnings.warn(:toys_path_removed,
+                    "TOYS_PATH is no longer supported and is ignored. To relocate global tool" \
+                    " directories, set XDG_CONFIG_HOME or XDG_CONFIG_DIRS. To suppress them, set" \
+                    " #{GLOBAL_SOURCES_ENV}. To load tools from a path once, use `toys do --path`.",
+                    max_count: 1)
+    end
+
+    ##
+    # Warns if the removed `/etc` toys file or directory exists and was not
+    # loaded by the upward walk.
+    #
+    # @param walk_dirs [Array<String>] The directories visited by the walk
+    #
+    def warn_etc_toys_files(walk_dirs)
+      etc_dir = real_directory("/etc")
+      return if etc_dir.nil? || walk_dirs.include?(etc_dir)
+      file_path = ::File.join(etc_dir, TOPLEVEL_TOOL_FILE_NAME)
+      dir_path = ::File.join(etc_dir, TOPLEVEL_TOOL_DIR_NAME)
+      return unless ::File.exist?(file_path) || ::File.exist?(dir_path)
+      Warnings.warn(:etc_toys_removed,
+                    "/etc/#{TOPLEVEL_TOOL_FILE_NAME} and /etc/#{TOPLEVEL_TOOL_DIR_NAME} are no longer" \
+                    " loaded. Move global tools into the /etc/xdg/toys directory instead.",
+                    max_count: 1)
     end
 
     ##
@@ -163,21 +333,6 @@ module Toys
           dir = parent
         end
       end
-    end
-
-    ##
-    # Returns the default set of global source directories.
-    #
-    # @return [Array<String>]
-    #
-    def default_global_dirs
-      paths = ::ENV[TOYS_PATH_ENV].to_s.split(::File::PATH_SEPARATOR)
-      paths = [::Dir.home, "/etc"] if paths.empty?
-      paths
-        .compact
-        .uniq
-        .select { |path| ::File.directory?(path) && ::File.readable?(path) }
-        .map { |path| ::File.realpath(::File.expand_path(path)) }
     end
 
     ##
