@@ -353,8 +353,8 @@ module Toys
     # source list. If the given search directory path does not exist or does
     # not contain either the file or directory, nothing is added.
     #
-    # The main Toys executable uses this method to load tools from directories
-    # in the `TOYS_PATH`.
+    # The main Toys executable uses this method to load tools from the
+    # directories in its upward walk and from the home directory.
     #
     # @param search_path [String,Pathname] A directory path to search for the
     #     well-known source file and directory. Must be a String or a Pathname.
@@ -406,9 +406,6 @@ module Toys
     # for toplevel tool files and directories, and add any found. Starts at the
     # given directory and works up through parent directories until it reaches
     # the file system root or it encounters one of the "terminate" directories.
-    #
-    # The main Toys executable uses this method to load tools from the current
-    # directory and its ancestors.
     #
     # @param start [String,Pathname,nil] The first directory path to search.
     #     If not given, defaults to the current working directory. If provided,
