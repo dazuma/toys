@@ -8,4 +8,11 @@ $LOAD_PATH.delete(::ENV["TOYS_LIB_PATH"])
 $LOAD_PATH.unshift(::ENV["TOYS_LIB_PATH"])
 require "toys"
 
-exit(::Toys::StandardCLI.new.run(::ARGV))
+begin
+  cli = ::Toys::StandardCLI.new
+rescue ::Toys::StandardCLI::InvalidGlobalSourcesError => e
+  # Not Kernel#warn, which -W0 would silence, hiding why toys exited.
+  $stderr.puts(e.message) # rubocop:disable Style/StderrPuts
+  exit(2)
+end
+exit(cli.run(::ARGV))
