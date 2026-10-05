@@ -49,21 +49,25 @@ describe "toys system bash-completion" do
       skip "Skipped test because bash is not available on Windows" if Toys::Compat.windows?
     end
 
-    # Registers completion using the real script, then runs the registered
-    # command the way bash does: the -C command string with the command name,
-    # current word, and previous word appended. The toys executable is a stub
-    # that emits a candidate on stdout and noise on stderr.
+    # Runs the real script with the complete builtin shadowed by a function
+    # that captures the -C command string. (Parsing `complete -p` output is not
+    # portable: bash 3.2 does not quote the command.) Then runs the captured
+    # command the way bash does: with the command name, current word, and
+    # previous word appended. The toys executable is a stub that emits a
+    # candidate on stdout and noise on stderr.
     def run_registered_command
       Dir.mktmpdir("toys_bash_completion_test") do |dir|
         stub_path = File.join(dir, "toys")
         File.write(stub_path, "#!/bin/sh\necho \"hello \"\necho \"stderr noise\" >&2\n")
         File.chmod(0o755, stub_path)
         script = <<~BASH
+          complete() {
+            while [[ $# -gt 0 ]]; do
+              [[ "$1" == "-C" ]] && cmd="$2"
+              shift
+            done
+          }
           source "#{script_path}"
-          eval "spec=($(complete -p toys))"
-          for i in "${!spec[@]}"; do
-            [[ "${spec[$i]}" == "-C" ]] && cmd="${spec[$((i + 1))]}"
-          done
           eval "${cmd} toys hel toys"
         BASH
         env = { "PATH" => "#{dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}" }
