@@ -17,7 +17,7 @@ describe Toys::StandardCLI do
     let(:cache_dir) { File.join(tmp_dir, "cache") }
     let(:custom_path) { File.join(tmp_dir, "custom") }
     let(:xdg_cache_home) { File.join(tmp_dir, "xdg-cache") }
-    let(:default_cache_dir) { File.join(xdg_cache_home, "git-cache", "v1") }
+    let(:default_cache_dir) { File.join(xdg_cache_home, "git-cache") }
 
     def exec_git(*args)
       result = exec_tool.exec(["git"] + args, out: :capture, err: :null)
@@ -259,6 +259,48 @@ describe Toys::StandardCLI do
         assert_nil(cli.loader.lookup_specific(["above-home"]))
         assert_nil(cli.loader.lookup_specific(["from-home"]))
         assert_equal("walk", tool_desc(cli, "from-walk"))
+      end
+    end
+
+    # A relative $HOME makes the home directory undeterminable: depending on
+    # the Ruby version, Dir.home either returns it unchanged or raises, and the
+    # XDG utility falls back to "/" in both cases. That fallback is treated as
+    # an ordinary home directory.
+    describe "when the home directory cannot be determined" do
+      before do
+        ENV["HOME"] = "relative-home"
+        write_tool(File.join(work_dir, ".toys"), "from-walk", "walk")
+        write_tool(user_dir, "from-user", "user")
+        File.write(File.join(tmp_dir, ".toys.rb"), "tool('above-old-home') { desc 'above'; def run; end }\n")
+      end
+
+      it "walks past the former home directory" do
+        cli = make_cli
+        assert_equal("walk", tool_desc(cli, "from-walk"))
+        assert_equal("above", tool_desc(cli, "above-old-home"))
+      end
+
+      # Run from a directory where the relative path resolves to a real
+      # directory, so a regression that honors the relative $HOME is visible
+      # whether or not Dir.home raises on this Ruby.
+      it "does not resolve the relative $HOME against the current directory" do
+        write_tool(File.join(tmp_dir, "relative-home", ".toys"), "from-relative-home", "relative home")
+        cli = Dir.chdir(tmp_dir) { make_cli }
+        assert_equal("", tool_desc(cli, "from-relative-home"))
+        assert_equal("walk", tool_desc(cli, "from-walk"))
+      end
+
+      it "loads the user directory from XDG_CONFIG_HOME" do
+        cli = make_cli
+        assert_equal("user", tool_desc(cli, "from-user"))
+      end
+
+      it "loads the walk with global sources disabled" do
+        ENV["TOYS_GLOBAL_SOURCES"] = "none"
+        cli = make_cli
+        assert_equal("walk", tool_desc(cli, "from-walk"))
+        assert_equal("above", tool_desc(cli, "above-old-home"))
+        assert_equal("", tool_desc(cli, "from-user"))
       end
     end
 

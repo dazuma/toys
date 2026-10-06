@@ -18,7 +18,7 @@ describe Toys::Utils::GitCache do
     assert(defined?(::Toys::Utils::GitCache::RepoInfo))
     assert(defined?(::Toys::Utils::GitCache::RefInfo))
     assert(defined?(::Toys::Utils::GitCache::SourceInfo))
-    assert(defined?(::Toys::Utils::GitCache::RepoLock))
+    assert(defined?(::Toys::Utils::GitCache::RepoState))
   end
 
   # The vendored library is generated from the git_cache gem, so a constructor
@@ -34,7 +34,7 @@ describe Toys::Utils::GitCache do
   it "uses the default cache dir" do
     sample_remote = "https://github.com/dazuma/toys.git"
     git_cache = Toys::Utils::GitCache.new
-    expected_cache_dir = File.join(Dir.home, ".cache", "git-cache", "v1")
+    expected_cache_dir = File.join(Dir.home, ".cache", "git-cache")
     assert_equal(expected_cache_dir, git_cache.cache_dir)
     expected_remote_dir = Digest::MD5.hexdigest(sample_remote)
     assert_equal(expected_remote_dir, Toys::Utils::GitCache.remote_dir_name(sample_remote))
