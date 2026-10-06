@@ -17,7 +17,7 @@ describe Toys::StandardCLI do
     let(:cache_dir) { File.join(tmp_dir, "cache") }
     let(:custom_path) { File.join(tmp_dir, "custom") }
     let(:xdg_cache_home) { File.join(tmp_dir, "xdg-cache") }
-    let(:default_cache_dir) { File.join(xdg_cache_home, "git-cache", "v1") }
+    let(:default_cache_dir) { File.join(xdg_cache_home, "git-cache") }
 
     def exec_git(*args)
       result = exec_tool.exec(["git"] + args, out: :capture, err: :null)

@@ -156,7 +156,7 @@ describe "toys system git-cache" do
       output = capture_git_cache_output(["show", local_remote])
 
       assert(File.directory?(File.join(output["base_dir"], "repo")))
-      assert(File.file?(File.join(output["base_dir"], "repo.lock")))
+      assert(File.file?(File.join(output["base_dir"], "state.json")))
       assert_equal(local_remote, output["remote"])
       assert_equal(timestamp1, output["last_accessed"])
 
