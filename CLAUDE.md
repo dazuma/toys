@@ -69,4 +69,4 @@ The five canonical triage labels are used as-is (`needs-triage`, `needs-info`, `
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md` covers all gems. See `docs/agents/domain.md`.
+Single-context: one root `GLOSSARY.md` covers all gems. See `docs/agents/domain.md`.
