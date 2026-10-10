@@ -30,19 +30,24 @@ module Toys
       #     stream. Default is `true`.
       # @param exec_service [Toys::Utils::Exec] The service to use for
       #     executing commands, or `nil` (the default) to use a default.
+      # @param output [IO,StringIO,nil] The stream to which the pager process
+      #     writes its output, and the default fallback stream. If `nil` (the
+      #     default), the pager process inherits the parent's standard output.
       # @param fallback_io [IO] An IO-like object to write to if the pager is
-      #     disabled. Defaults to `$stdout`.
+      #     disabled or could not be executed. Defaults to the `output` stream
+      #     if one is given, otherwise `$stdout`.
       # @param rescue_broken_pipes [boolean] If `true` (the default), broken
       #     pipes are silently rescued. This prevents the exception from
       #     propagating out if the pager is interrupted. Set this parameter to
       #     `false` to disable this behavior.
       #
-      def initialize(command: true, exec_service: nil, fallback_io: nil,
+      def initialize(command: true, exec_service: nil, output: nil, fallback_io: nil,
                      rescue_broken_pipes: true)
         @command = command == true ? Pager.default_command : command
         @command ||= nil
         @exec_service = exec_service || Pager.default_exec_service
-        @fallback_io = fallback_io || $stdout
+        @output = output
+        @fallback_io = fallback_io
         @rescue_broken_pipes = rescue_broken_pipes
       end
 
@@ -63,7 +68,9 @@ module Toys
       #
       def start
         if @command
-          result = @exec_service.exec(@command, in: :controller) do |controller|
+          exec_opts = { in: :controller }
+          exec_opts[:out] = @output if @output
+          result = @exec_service.exec(@command, **exec_opts) do |controller|
             yield controller.in if controller.pid
           rescue ::Errno::EPIPE => e
             if @rescue_broken_pipes
@@ -74,7 +81,7 @@ module Toys
           end
           return result.exit_code unless result.failed?
         end
-        yield @fallback_io
+        yield fallback_io
         0
       end
 
@@ -89,11 +96,31 @@ module Toys
       attr_accessor :command
 
       ##
+      # The stream to which the pager process writes its output, or `nil` if
+      # the pager process inherits the parent's standard output.
+      #
+      # @return [IO,StringIO,nil]
+      #
+      attr_accessor :output
+
+      ##
       # The IO stream used if the pager is disabled or could not be executed.
+      # If not set explicitly, this is the {#output} stream if one is set,
+      # otherwise `$stdout`.
       #
       # @return [IO]
       #
-      attr_accessor :fallback_io
+      def fallback_io
+        @fallback_io || @output || $stdout
+      end
+
+      ##
+      # Set the IO stream used if the pager is disabled or could not be
+      # executed. Set to `nil` to use the default.
+      #
+      # @param value [IO,nil]
+      #
+      attr_writer :fallback_io
 
       class << self
         ##
@@ -108,8 +135,12 @@ module Toys
         #     stream. Default is `true`.
         # @param exec_service [Toys::Utils::Exec] The service to use for
         #     executing commands, or `nil` (the default) to use a default.
+        # @param output [IO,StringIO,nil] The stream to which the pager process
+        #     writes its output, and the default fallback stream. If `nil` (the
+        #     default), the pager process inherits the parent's standard output.
         # @param fallback_io [IO] An IO-like object to write to if the pager is
-        #     disabled. Defaults to `$stdout`.
+        #     disabled or could not be executed. Defaults to the `output` stream
+        #     if one is given, otherwise `$stdout`.
         # @param rescue_broken_pipes [boolean] If `true` (the default), broken
         #     pipes are silently rescued. This prevents the exception from
         #     propagating out if the pager is interrupted. Set this parameter to
@@ -124,11 +155,12 @@ module Toys
         #
         def start(command: true,
                   exec_service: nil,
+                  output: nil,
                   fallback_io: nil,
                   rescue_broken_pipes: true,
                   &block)
-          pager = new(command: command, exec_service: exec_service, fallback_io: fallback_io,
-                      rescue_broken_pipes: rescue_broken_pipes)
+          pager = new(command: command, exec_service: exec_service, output: output,
+                      fallback_io: fallback_io, rescue_broken_pipes: rescue_broken_pipes)
           pager.start(&block)
         end
 
