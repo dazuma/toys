@@ -1,5 +1,26 @@
 # Release History
 
+### v0.25.0 / 2026-10-10
+
+* ADDED: Added Toys::Utils::Terminal.infer_styled, the rule a terminal uses to decide whether to style output
+* ADDED: The FORCE_COLOR environment variable forces styled output on, or off when set to 0 or false
+* ADDED: The show_help middleware includes -h in the default help flags
+* ADDED: StandardUI logs with a simple severity prefix unless verbosity is positive
+* ADDED: Issue warnings for deprecated interfaces
+* ADDED: Utils::Pager supports an output option
+* FIXED: The :push handler creates a new array rather than appending in place, so that a frozen or non-cloneable default doesn't cause problems
+* FIXED: An empty NO_COLOR environment variable no longer disables styled output, per the no-color.org spec
+* FIXED: Styled output is disabled when the TERM environment variable is set to dumb
+* FIXED: The highline mixin decides whether to use color from its own output stream, and honors NO_COLOR, FORCE_COLOR, and TERM=dumb
+* FIXED: Help text displayed through a pager honors the styled output setting, including NO_COLOR, FORCE_COLOR, and TERM=dumb
+* FIXED: Tool-not-found suggestions include namespaces
+* FIXED: Tool initializers run within the logger level implied by the verbosity
+* FIXED: StandardUI no longer colors the DEBUG log header
+* FIXED: Re-vendor simple_xdg to pick up home directory fix
+* FIXED: Re-vendor git_cache 0.2.0 to report an unwritable cache directory clearly and fix repo lock races
+* FIXED: Show_help writes paged help to the configured stream
+* DOCS: Documentation no longer references a few obsolete features such as the TOYS_PATH variable
+
 ### v0.24.0 / 2026-09-11
 
 Feature updates:

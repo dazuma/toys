@@ -1,5 +1,20 @@
 # Release History
 
+### v0.25.0 / 2026-10-10
+
+* BREAKING CHANGE: The TOYS_PATH environment variable is no longer supported. Use XDG_CONFIG_HOME, XDG_CONFIG_DIRS, or TOYS_GLOBAL_SOURCES instead.
+* BREAKING CHANGE: Toys no longer loads global tools from /etc/.toys.rb or /etc/.toys/. Move them into /etc/xdg/toys instead.
+* BREAKING CHANGE: Removed the Toys::StandardCLI::TOYS_PATH_ENV constant.
+* ADDED: The show_help middleware includes -h in the default help flags
+* ADDED: StandardUI logs with a simple severity prefix unless verbosity is positive
+* ADDED: Issue warnings for deprecated interfaces
+* ADDED: Toys now loads global tools from the XDG config directories
+* ADDED: The TOYS_GLOBAL_SOURCES environment variable selects which global sources are searched
+* FIXED: The :push handler creates a new array rather than appending in place, so that a frozen or non-cloneable default doesn't cause problems
+* FIXED: Tool initializers run within the logger level implied by the verbosity
+* FIXED: Bash tab completion discards stderr from the completion command
+* FIXED: Re-vendor git_cache 0.2.0 to report an unwritable cache directory clearly and fix repo lock races
+
 ### v0.24.0 / 2026-09-11
 
 * Feature: The `toys do` builtin provides an `--on-missing-gem` flag that governs how the `--gem` flag handles gems that are not installed.
