@@ -302,7 +302,7 @@ module Toys
           styled: terminal.styled
         )
         require "toys/utils/pager"
-        Utils::Pager.start(command: @use_pager, fallback_io: terminal) do |io|
+        Utils::Pager.start(command: @use_pager, output: @stream, fallback_io: terminal) do |io|
           io.puts(str)
         end
       rescue Utils::HelpText::HelpGenerationError => e
