@@ -295,9 +295,9 @@ describe Toys::StandardMiddleware::ShowHelp do
       out, _err = capture_subprocess_io do
         cli.run("foo", "--help")
       end
-      assert_empty(string_io.string)
-      assert_match(/SYNOPSIS.*toys foo/m, out)
-      out
+      assert_empty(out)
+      assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+      string_io.string
     end
 
     it "omits styles when styled output is disabled" do
