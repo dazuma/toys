@@ -1,5 +1,35 @@
 # Release History
 
+### v0.25.0 / 2026-10-10
+
+This is a release candidate release toward version 1.0. It includes a variety of fixes and small features, largely around adherence to clig.dev and other common CLI guidelines.
+
+* Major updates
+    * ADDED: The `-h` flag is now a standard help flag, similar to `--help`.
+* Updates to tool lookup
+    * ADDED: Toys now loads global tools from the XDG config directories
+    * ADDED: The `TOYS_GLOBAL_SOURCES` environment variable selects which global sources are searched
+    * BREAKING CHANGE: The `TOYS_PATH` environment variable is no longer supported. Use `XDG_CONFIG_HOME`, `XDG_CONFIG_DIRS`, or `TOYS_GLOBAL_SOURCES` instead.
+    * BREAKING CHANGE: Toys no longer loads global tools from `/etc/.toys.rb` or `/etc/.toys/`. Move them into `/etc/xdg/toys` instead.
+    * BREAKING CHANGE: Removed the `Toys::StandardCLI::TOYS_PATH_ENV` constant.
+* Updates to logging and warnings
+    * ADDED: Warnings are displayed when a tool invokes a deprecated interface. They can be turned off by setting `TOYS_SUPPRESS_WARNINGS` to a nonempty value.
+    * ADDED: Logs display with a simplified severity prefix unless verbosity is positive
+    * FIXED: The `DEBUG` log prefix is no longer colored white
+    * FIXED: Logs emitted from tool initializers honor the verbosity
+* Updates to ANSI coloring control
+    * ADDED: The `FORCE_COLOR` environment variable forces styled output on, or off when set to 0 or false
+    * FIXED: An empty `NO_COLOR` environment variable no longer disables styled output, per the no-color.org spec
+    * FIXED: Styled output is disabled when the `TERM` environment variable is set to `dumb`
+    * FIXED: The highline mixin decides whether to use color from its own output stream, and honors `NO_COLOR`, `FORCE_COLOR`, and `TERM=dumb`
+    * FIXED: Help text displayed through a pager honors the styled output setting, including `NO_COLOR`, `FORCE_COLOR`, and `TERM=dumb`
+* Other fixes
+    * FIXED: Bash tab completion discards stderr from the completion command, preventing unwanted output if warnings are emitted.
+    * FIXED: Tool-not-found suggestions include namespaces
+    * FIXED: The `:push` handler creates a new array rather than appending in place, so that a frozen or non-cloneable default doesn't cause problems
+    * FIXED: Re-vendor `simple_xdg` 0.1.2 to pick up home directory fix
+    * FIXED: Re-vendor `git_cache` 0.2.0 to report an unwritable cache directory clearly and fix repo lock races
+
 ### v0.24.0 / 2026-09-11
 
 * Feature: The `toys do` builtin provides an `--on-missing-gem` flag that governs how the `--gem` flag handles gems that are not installed.
